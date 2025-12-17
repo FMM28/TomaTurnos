@@ -1,7 +1,8 @@
-from app.extensions import db
+from app.extensions import db, bcrypt
 from .base import BaseModel
+from flask_login import UserMixin
 
-class Usuario(BaseModel):
+class Usuario(UserMixin,BaseModel):
     __tablename__ = "usuario"
 
     id_usuario = db.Column(db.Integer, primary_key=True)
@@ -11,3 +12,17 @@ class Usuario(BaseModel):
 
     asignaciones = db.relationship("Asignacion", back_populates="usuario")
     atenciones = db.relationship("Atencion", back_populates="usuario")
+
+    def set_password(self, raw_password):
+        self.password = bcrypt.generate_password_hash(
+            raw_password
+        ).decode("utf-8")
+
+    def check_password(self, raw_password):
+        return bcrypt.check_password_hash(
+            self.password,
+            raw_password
+        )
+
+    def get_id(self):
+        return str(self.id_usuario)

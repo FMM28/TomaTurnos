@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+    <form method="POST" class="login-box">
+        <h2>Iniciar sesión</h2>
+
+        <label>
+            Usuario
+            <input type="text" name="username" required>
+        </label>
+
+        <label>
+            Contraseña
+            <input type="password" name="password" required>
+        </label>
+
+        <button type="submit">Entrar</button>
+    </form>
+</div>
+{% endblock %}

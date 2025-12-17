@@ -1,0 +1,33 @@
+1. Crear la bd turnos
+2. Crear .env configurando la conexion a la bd
+3. Ejecutar
+    flask db init
+    flask db migrate -m "initial schema"
+    flask db upgrade
+4. Generar una llave de sesion
+    Ejemplo: Ejecutar
+    python -c "import secrets; print(secrets.token_hex(32))"
+5. Crear primer usuario
+    Ejecutar:
+        flask shell
+    Dentro del shell pegar, modificando el nombre del usuario(username) y la contraseña(password), solo el valor entre comillas("admin123") 
+from app import db
+from app.models import Usuario
+from app.extensions import bcrypt
+
+u = Usuario(
+    username="admin",
+    password=bcrypt.generate_password_hash("admin123").decode("utf-8"),
+    role="admin"
+)
+
+db.session.add(u)
+db.session.commit()
+
+    Probar conexion:
+    correr app
+        flask run
+    curl -X POST http://127.0.0.1:5000/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"username":"admin","password":"123456"}'
+
