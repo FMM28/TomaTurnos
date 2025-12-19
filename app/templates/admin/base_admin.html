@@ -2,21 +2,48 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Admin{% endblock %}</title>
-
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 </head>
 <body>
 
 <div class="admin-layout">
-
+    
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    
     {% include "admin/_sidebar.html" %}
 
     <main class="admin-content">
+        
+        <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Abrir menú">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        
         {% block content %}{% endblock %}
     </main>
 
 </div>
+
+<script>
+    function toggleSidebar() {
+        const sidebar = document.querySelector('.admin-sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+    }
+
+    // Cerrar sidebar al hacer clic en un enlace en móvil
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                toggleSidebar();
+            }
+        });
+    });
+</script>
 
 </body>
 </html>

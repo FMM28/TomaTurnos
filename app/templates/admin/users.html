@@ -1,0 +1,74 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+
+<section class="users-page">
+
+    <header class="page-header">
+        <h1 class="page-title">Usuarios</h1>
+        <a href="{{ url_for('admin.create_user') }}" class="btn-create">
+            Crear nuevo usuario
+        </a>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Usuario</th>
+                    <th>Rol</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id_usuario }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.role or '—' }}</td>
+                    <td>
+                        <div class="actions-cell">
+                            <a href="{{ url_for('admin.edit_user', id=user.id_usuario) }}" 
+                               class="btn-edit">
+                                Editar
+                            </a>
+                            <form method="POST" 
+                                  action="{{ url_for('admin.delete_user', id=user.id_usuario) }}" 
+                                  class="delete-form">
+                                <button type="submit" 
+                                        class="btn-delete"
+                                        onclick="return confirm('¿Estás seguro de eliminar este usuario?')">
+                                    Eliminar
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="empty-state">
+                        No hay usuarios registrados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</section>
+
+{% endblock %}

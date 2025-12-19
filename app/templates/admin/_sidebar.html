@@ -7,12 +7,12 @@
 
     <nav class="sidebar-menu">
 
-        <a href="#" class="menu-item">
+        <a href="{{ url_for('admin.dashboard') }}" class="menu-item">
             <img class="icon" src="{{ url_for('static', filename='icons/home.svg') }}" alt="">
             <span class="label">Inicio</span>
         </a>
 
-        <a href="#" class="menu-item">
+        <a href="{{ url_for('admin.users') }}" class="menu-item">
             <img class="icon" src="{{ url_for('static', filename='icons/usuario.svg') }}" alt="">
             <span class="label">Usuarios</span>
         </a>
