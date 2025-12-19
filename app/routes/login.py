@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from app.models import Usuario
-from app.extensions import db, bcrypt
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -12,15 +11,22 @@ def login():
 
         user = Usuario.query.filter_by(username=username).first()
 
-        if user and bcrypt.check_password_hash(user.password, password):
+        if user and user.check_password(password):
             session["user_id"] = user.id_usuario
+            session["username"] = user.username
             session["role"] = user.role
-            flash("Bienvenido", "success")
-            return redirect(url_for("main.index"))
+            
+            if user.role == "admin":
+                return redirect(url_for("admin.dashboard"))
+            elif user.role == "ventanilla":
+                return redirect(url_for("ventanilla.dashboard"))
+            elif user.role == "kiosco":
+                return redirect(url_for("kiosco.dashboard"))
 
         flash("Usuario o contraseña incorrectos", "danger")
 
     return render_template("login/login.html")
+
 
 
 @auth_bp.route("/logout")

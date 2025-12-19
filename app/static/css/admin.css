@@ -1,0 +1,106 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, sans-serif;
+}
+
+body {
+    background-color: #f4f4f4;
+}
+
+/* Layout general */
+.admin-layout {
+    display: flex;
+    height: 100vh;
+}
+
+/* Sidebar */
+.admin-sidebar {
+    width: 240px;
+    background-color: #2f2f2f;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header del sidebar */
+.sidebar-header {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #444;
+}
+
+.sidebar-header img {
+    width: 40px;
+    height: auto;
+}
+
+/* Menú */
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0;
+}
+
+.menu-item:hover .icon {
+    filter: invert(100%);
+}
+
+.menu-item.active {
+    background-color: #555;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: #ddd;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.menu-item:hover {
+    background-color: #444;
+}
+
+.menu-item .icon {
+    width: 20px;
+    text-align: center;
+}
+
+.menu-item.logout {
+    margin-top: auto;
+    background-color: #3a1f1f;
+}
+
+.menu-item.logout:hover {
+    background-color: #522;
+}
+
+/* Contenido */
+.admin-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+/* Dashboard */
+.dashboard-cards {
+    margin-top: 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    font-weight: bold;
+    text-align: center;
+}

@@ -1,0 +1,32 @@
+<aside class="admin-sidebar">
+
+    <div class="sidebar-header">
+        <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo">
+        <span>Administrador</span>
+    </div>
+
+    <nav class="sidebar-menu">
+
+        <a href="#" class="menu-item">
+            <img class="icon" src="{{ url_for('static', filename='icons/home.svg') }}" alt="">
+            <span class="label">Inicio</span>
+        </a>
+
+        <a href="#" class="menu-item">
+            <img class="icon" src="{{ url_for('static', filename='icons/usuario.svg') }}" alt="">
+            <span class="label">Usuarios</span>
+        </a>
+
+        <a href="#" class="menu-item">
+            <img class="icon" src="{{ url_for('static', filename='icons/ventanilla.svg') }}" alt="">
+            <span class="label">Áreas</span>
+        </a>
+
+        <a href="{{ url_for('auth.logout') }}" class="menu-item logout">
+            <img class="icon" src="{{ url_for('static', filename='icons/logout.svg') }}" alt="">
+            <span class="label">Salir</span>
+        </a>
+
+    </nav>
+
+</aside>
