@@ -5,7 +5,7 @@ class Ventanilla(BaseModel):
     __tablename__ = "ventanilla"
 
     id_ventanilla = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(45), nullable=False)
+    name = db.Column(db.String(45), nullable=False, unique=True)
 
     id_area = db.Column(
         db.Integer,

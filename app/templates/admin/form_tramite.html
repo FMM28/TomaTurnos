@@ -6,7 +6,7 @@
 <div class="form-page">
     <div class="page-header">
         <h1 class="page-title">{{ 'Editar Trámite' if tramite else 'Nuevo Trámite' }}</h1>
-        <span style="color: #666; font-size: 1rem;">Área: {{ area.name }}</span>
+        <span class="info-span">Área: {{ area.name }}</span>
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}

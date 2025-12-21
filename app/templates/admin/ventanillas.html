@@ -1,14 +1,14 @@
 {% extends "admin/base_admin.html" %}
 
-{% block title %}Gestión de Áreas y Trámites{% endblock %}
+{% block title %}Gestión de Ventanillas{% endblock %}
 
 {% block content %}
 <div class="users-page">
     <div class="page-header">
-        <h1 class="page-title">Gestión de Áreas y Trámites</h1>
+        <h1 class="page-title">Gestión de Ventanillas</h1>
         <div class="header-actions">
-            <a href="{{ url_for('admin.ventanillas') }}" class="btn-primary">Ventanillas</a>
-            <a href="{{ url_for('admin.create_area') }}" class="btn-create">+Nueva Área</a>
+            <a href="{{ url_for('admin.areas') }}" class="btn-secondary">← Volver a Áreas</a>
+            <a href="{{ url_for('admin.create_ventanilla') }}" class="btn-create">+Nueva Ventanilla</a>
         </div>
     </div>
 
@@ -23,28 +23,26 @@
     {% endwith %}
 
     <div class="table-container">
-        <div class="table-header">
-            <h2 class="table-title">Áreas</h2>
-        </div>
         <table class="data-table">
             <thead>
                 <tr>
                     <th>ID</th>
                     <th>Nombre</th>
+                    <th>Área</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
-                {% if areas %}
-                    {% for area in areas %}
+                {% if ventanillas %}
+                    {% for ventanilla in ventanillas %}
                     <tr>
-                        <td>{{ area.id_area }}</td>
-                        <td><strong>{{ area.name }}</strong></td>
+                        <td>{{ ventanilla.id_ventanilla }}</td>
+                        <td><strong>{{ ventanilla.name }}</strong></td>
+                        <td>{{ ventanilla.area.name if ventanilla.area else 'Sin área asignada' }}</td>
                         <td>
                             <div class="actions-cell">
-                                <a href="{{ url_for('admin.tramites', id_area=area.id_area) }}" class="btn-view">Trámites</a>
-                                <a href="{{ url_for('admin.edit_area', id_area=area.id_area) }}" class="btn-edit">Editar</a>
-                                <form method="POST" action="{{ url_for('admin.delete_area', id_area=area.id_area) }}" class="delete-form" onsubmit="return confirm('¿Está seguro de eliminar esta área? Se eliminarán también todos sus trámites.');">
+                                <a href="{{ url_for('admin.edit_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" class="btn-edit">Editar</a>
+                                <form method="POST" action="{{ url_for('admin.delete_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" class="delete-form" onsubmit="return confirm('¿Está seguro de eliminar esta ventanilla?');">
                                     <button type="submit" class="btn-delete">Eliminar</button>
                                 </form>
                             </div>
@@ -53,11 +51,12 @@
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="3" class="empty-state">No hay áreas registradas</td>
+                        <td colspan="4" class="empty-state">No hay ventanillas registradas</td>
                     </tr>
                 {% endif %}
             </tbody>
         </table>
     </div>
 </div>
+
 {% endblock %}

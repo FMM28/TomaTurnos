@@ -22,8 +22,8 @@
     {% endwith %}
 
     <div class="table-container">
-        <div style="padding: 1.5rem; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; background-color: #f1f8f4;">
-            <h2 style="margin: 0; font-size: 1.3rem; color: #2d2d2d;">Lista de Trámites</h2>
+        <div class="table-header">
+            <h2 class="table-title">Lista de Trámites</h2>
             <a href="{{ url_for('admin.create_tramite', id_area=area.id_area) }}" class="btn-create">
                 + Nuevo Trámite
             </a>

@@ -3,6 +3,7 @@ from app.auth.decorators import login_required, role_required
 from app.services.user_service import UserService
 from app.services.area_service import AreaService
 from app.services.tramite_service import TramiteService
+from app.services.ventanilla_service import VentanillaService
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -27,16 +28,17 @@ def users():
 @role_required("admin")
 def create_user():
     if request.method == "POST":
-        try:
-            UserService.create_user(
-                username=request.form["username"],
-                role=request.form["role"],
-                password=request.form["password"]
-            )
-            flash("Usuario creado correctamente", "success")
+        user, error = UserService.create_user(
+            username=request.form["username"],
+            role=request.form["role"],
+            password=request.form["password"]
+        )
+        
+        if error:
+            flash(error, "error")
+        else:
+            flash("Usuario creado exitosamente", "success")
             return redirect(url_for("admin.users"))
-        except Exception as e:
-            flash(f"Error al crear usuario: {str(e)}", "error")
             
     return render_template("admin/create_user.html")
 
@@ -48,17 +50,18 @@ def edit_user(id):
     user = UserService.get_user_by_id_or_404(id)
 
     if request.method == "POST":
-        try:
-            UserService.update_user(
-                user_id=id,
-                username=request.form["username"],
-                role=request.form["role"],
-                password=request.form.get("password")
-            )
-            flash("Usuario actualizado correctamente", "success")
+        user_updated, error = UserService.update_user(
+            user_id=id,
+            username=request.form["username"],
+            role=request.form["role"],
+            password=request.form.get("password")
+        )
+        
+        if error:
+            flash(error, "error")
+        else:
+            flash("Usuario actualizado exitosamente", "success")
             return redirect(url_for("admin.users"))
-        except Exception as e:
-            flash(f"Error al actualizar usuario: {str(e)}", "error")
 
     return render_template("admin/edit_user.html", user=user)
 
@@ -67,11 +70,12 @@ def edit_user(id):
 @login_required
 @role_required("admin")
 def delete_user(id):
-    try:
-        UserService.delete_user(id)
-        flash("Usuario eliminado correctamente", "info")
-    except Exception as e:
-        flash(f"Error al eliminar usuario: {str(e)}", "error")
+    success, error = UserService.delete_user(id)
+    
+    if error:
+        flash(error, "error")
+    else:
+        flash("Usuario eliminado exitosamente", "success")
     
     return redirect(url_for("admin.users"))
 
@@ -91,14 +95,13 @@ def create_area():
     if request.method == "POST":
         nombre = request.form.get("nombre", "")
         
-        try:
-            AreaService.create_area(nombre)
+        area, error = AreaService.create_area(nombre)
+        
+        if error:
+            flash(error, "error")
+        else:
             flash("Área creada exitosamente", "success")
             return redirect(url_for("admin.areas"))
-        except ValueError as e:
-            flash(str(e), "error")
-        except Exception as e:
-            flash(str(e), "error")
     
     return render_template("admin/form_area.html", area=None)
 
@@ -112,14 +115,13 @@ def edit_area(id_area):
     if request.method == "POST":
         nombre = request.form.get("nombre", "")
         
-        try:
-            AreaService.update_area(id_area, nombre)
+        area_updated, error = AreaService.update_area(id_area, nombre)
+        
+        if error:
+            flash(error, "error")
+        else:
             flash("Área actualizada exitosamente", "success")
             return redirect(url_for("admin.areas"))
-        except ValueError as e:
-            flash(str(e), "error")
-        except Exception as e:
-            flash(str(e), "error")
     
     return render_template("admin/form_area.html", area=area)
 
@@ -128,11 +130,12 @@ def edit_area(id_area):
 @login_required
 @role_required("admin")
 def delete_area(id_area):
-    try:
-        AreaService.delete_area(id_area)
+    success, error = AreaService.delete_area(id_area)
+    
+    if error:
+        flash(error, "error")
+    else:
         flash("Área eliminada exitosamente", "success")
-    except Exception as e:
-        flash(str(e), "error")
     
     return redirect(url_for("admin.areas"))
 
@@ -155,14 +158,13 @@ def create_tramite(id_area):
     if request.method == "POST":
         nombre = request.form.get("nombre", "")
         
-        try:
-            TramiteService.create_tramite(id_area, nombre)
+        tramite, error = TramiteService.create_tramite(id_area, nombre)
+        
+        if error:
+            flash(error, "error")
+        else:
             flash("Trámite creado exitosamente", "success")
             return redirect(url_for("admin.tramites", id_area=id_area))
-        except ValueError as e:
-            flash(str(e), "error")
-        except Exception as e:
-            flash(str(e), "error")
     
     return render_template("admin/form_tramite.html", area=area, tramite=None)
 
@@ -177,14 +179,13 @@ def edit_tramite(id_tramite):
     if request.method == "POST":
         nombre = request.form.get("nombre", "")
         
-        try:
-            TramiteService.update_tramite(id_tramite, nombre)
+        tramite_updated, error = TramiteService.update_tramite(id_tramite, nombre)
+        
+        if error:
+            flash(error, "error")
+        else:
             flash("Trámite actualizado exitosamente", "success")
             return redirect(url_for("admin.tramites", id_area=tramite.id_area))
-        except ValueError as e:
-            flash(str(e), "error")
-        except Exception as e:
-            flash(str(e), "error")
     
     return render_template("admin/form_tramite.html", area=area, tramite=tramite)
 
@@ -193,10 +194,84 @@ def edit_tramite(id_tramite):
 @login_required
 @role_required("admin")
 def delete_tramite(id_tramite):
-    try:
-        id_area = TramiteService.delete_tramite(id_tramite)
+    id_area, error = TramiteService.delete_tramite(id_tramite)
+    
+    if error:
+        flash(error, "error")
+        return redirect(url_for("admin.areas"))
+    else:
         flash("Trámite eliminado exitosamente", "success")
         return redirect(url_for("admin.tramites", id_area=id_area))
-    except Exception as e:
-        flash(str(e), "error")
-        return redirect(url_for("admin.areas"))
+
+
+@admin_bp.route('/ventanillas')
+@login_required
+@role_required("admin")
+def ventanillas():
+    ventanillas = VentanillaService.get_all_ventanillas()
+    return render_template('admin/ventanillas.html', ventanillas=ventanillas)
+
+
+@admin_bp.route('/ventanillas/create', methods=['GET', 'POST'])
+@login_required
+@role_required("admin")
+def create_ventanilla():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        id_area = request.form.get('id_area', '').strip()
+        id_area = int(id_area) if id_area else None
+        
+        ventanilla, error = VentanillaService.create_ventanilla(name, id_area)
+        
+        if error:
+            flash(error, 'error')
+        else:
+            flash('Ventanilla creada exitosamente', 'success')
+            return redirect(url_for('admin.ventanillas'))
+    
+    areas = AreaService.get_all_areas()
+    return render_template('admin/form_ventanilla.html', areas=areas)
+
+
+@admin_bp.route('/ventanillas/<int:id_ventanilla>/edit', methods=['GET', 'POST'])
+@login_required
+@role_required("admin")
+def edit_ventanilla(id_ventanilla):
+    ventanilla = VentanillaService.get_ventanilla_by_id(id_ventanilla)
+    
+    if not ventanilla:
+        flash('Ventanilla no encontrada', 'error')
+        return redirect(url_for('admin.ventanillas'))
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        id_area = request.form.get('id_area', '').strip()
+        id_area = int(id_area) if id_area else None
+        
+        ventanilla_updated, error = VentanillaService.update_ventanilla(
+            id_ventanilla, name, id_area
+        )
+        
+        if error:
+            flash(error, 'error')
+        else:
+            flash('Ventanilla actualizada exitosamente', 'success')
+            return redirect(url_for('admin.ventanillas'))
+    
+    areas = AreaService.get_all_areas()
+    return render_template('admin/form_ventanilla.html', 
+                         ventanilla=ventanilla, areas=areas)
+
+
+@admin_bp.route('/ventanillas/<int:id_ventanilla>/delete', methods=['POST'])
+@login_required
+@role_required("admin")
+def delete_ventanilla(id_ventanilla):
+    success, error = VentanillaService.delete_ventanilla(id_ventanilla)
+    
+    if error:
+        flash(error, 'error')
+    else:
+        flash('Ventanilla eliminada exitosamente', 'success')
+    
+    return redirect(url_for('admin.ventanillas'))
