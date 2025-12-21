@@ -1,0 +1,64 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Trámites - {{ area.name }}{% endblock %}
+
+{% block content %}
+<div class="users-page">
+    <div class="page-header">
+        <h1 class="page-title">Trámites del Área: {{ area.name }}</h1>
+        <a href="{{ url_for('admin.areas') }}" class="btn-secondary">
+            ← Volver a Áreas
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="table-container">
+        <div style="padding: 1.5rem; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; background-color: #f1f8f4;">
+            <h2 style="margin: 0; font-size: 1.3rem; color: #2d2d2d;">Lista de Trámites</h2>
+            <a href="{{ url_for('admin.create_tramite', id_area=area.id_area) }}" class="btn-create">
+                + Nuevo Trámite
+            </a>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if tramites %}
+                    {% for tramite in tramites %}
+                    <tr>
+                        <td>{{ tramite.id_tramite }}</td>
+                        <td><strong>{{ tramite.name }}</strong></td>
+                        <td>
+                            <div class="actions-cell">
+                                <a href="{{ url_for('admin.edit_tramite', id_tramite=tramite.id_tramite) }}" class="btn-edit">Editar</a>
+                                <form method="POST" action="{{ url_for('admin.delete_tramite', id_tramite=tramite.id_tramite) }}" class="delete-form" onsubmit="return confirm('¿Está seguro de eliminar este trámite?');">
+                                    <button type="submit" class="btn-delete">Eliminar</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="empty-state">No hay trámites registrados en esta área</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

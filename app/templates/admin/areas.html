@@ -1,0 +1,62 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Gestión de Áreas y Trámites{% endblock %}
+
+{% block content %}
+<div class="users-page">
+    <div class="page-header">
+        <h1 class="page-title">Gestión de Áreas y Trámites</h1>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Sección de Áreas -->
+    <div class="table-container" style="margin-bottom: 2rem;">
+        <div style="padding: 1.5rem; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa;">
+            <h2 style="margin: 0; font-size: 1.3rem; color: #2d2d2d;">Áreas</h2>
+            <a href="{{ url_for('admin.create_area') }}" class="btn-create">+ Nueva Área</a>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if areas %}
+                    {% for area in areas %}
+                    <tr>
+                        <td>{{ area.id_area }}</td>
+                        <td><strong>{{ area.name }}</strong></td>
+                        <td>
+                            <div class="actions-cell">
+                                <a href="{{ url_for('admin.edit_area', id_area=area.id_area) }}" class="btn-edit">Editar</a>
+                                <form method="POST" action="{{ url_for('admin.delete_area', id_area=area.id_area) }}" class="delete-form" onsubmit="return confirm('¿Está seguro de eliminar esta área? Se eliminarán también todos sus trámites.');">
+                                    <button type="submit" class="btn-delete">Eliminar</button>
+                                </form>
+                                <a href="{{ url_for('admin.tramites', id_area=area.id_area) }}" class="btn-primary" style="min-width: 90px; height: 36px; padding: 0 16px; font-size: 0.875rem; display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">Trámites</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="empty-state">No hay áreas registradas</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
