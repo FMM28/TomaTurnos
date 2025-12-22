@@ -30,6 +30,15 @@ class UserService:
         return Usuario.query.get_or_404(user_id)
     
     @staticmethod
+    def get_usuarios_by_role(role: str) -> List[Usuario]:
+        """Obtiene todos los usuarios con un rol específico"""
+        try:
+            return Usuario.query.filter_by(role=role).order_by(Usuario.username).all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener usuarios con rol {role}: {e}")
+            return []
+    
+    @staticmethod
     def create_user(username: str, role: str, password: str) -> Tuple[Optional[Usuario], Optional[str]]:
         """Crea un nuevo usuario"""
         try:

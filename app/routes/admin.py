@@ -275,3 +275,89 @@ def delete_ventanilla(id_ventanilla):
         flash('Ventanilla eliminada exitosamente', 'success')
     
     return redirect(url_for('admin.ventanillas'))
+
+
+@admin_bp.route('/ventanillas/asignar-usuario/<int:id_ventanilla>', methods=['GET'])
+@login_required
+def asignar_usuario_ventanilla(id_ventanilla):
+    ventanilla = VentanillaService.get_ventanilla_by_id(id_ventanilla)
+    
+    if not ventanilla:
+        flash('Ventanilla no encontrada', 'danger')
+        return redirect(url_for('admin.ventanillas'))
+    
+    todos_usuarios = UserService.get_usuarios_by_role('ventanilla')
+    
+    usuarios_sin_ventanilla = []
+    usuarios_con_ventanilla = []
+    
+    for usuario in todos_usuarios:
+        if ventanilla.id_usuario and usuario.id_usuario == ventanilla.id_usuario:
+            continue
+            
+        ventanilla_usuario = VentanillaService.get_ventanilla_by_usuario(usuario.id_usuario)
+        
+        if ventanilla_usuario:
+            usuarios_con_ventanilla.append(usuario)
+        else:
+            usuarios_sin_ventanilla.append(usuario)
+    
+    return render_template(
+        'admin/asignar_usuario_ventanilla.html',
+        ventanilla=ventanilla,
+        usuarios_sin_ventanilla=usuarios_sin_ventanilla,
+        usuarios_con_ventanilla=usuarios_con_ventanilla
+    )
+
+
+@admin_bp.route('/ventanillas/asignar-usuario/<int:id_ventanilla>/<int:id_usuario>', methods=['POST'])
+@login_required
+def asignar_usuario_ventanilla_post(id_ventanilla, id_usuario):
+    ventanilla = VentanillaService.get_ventanilla_by_id(id_ventanilla)
+    
+    if not ventanilla:
+        flash('Ventanilla no encontrada', 'danger')
+        return redirect(url_for('admin.ventanillas'))
+    
+    ventanilla_anterior = VentanillaService.get_ventanilla_by_usuario(id_usuario)
+    
+    if ventanilla_anterior:
+        _, error = VentanillaService.desasignar_usuario(ventanilla_anterior.id_ventanilla)
+        if error:
+            flash(f'Error al desasignar de ventanilla anterior: {error}', 'danger')
+            return redirect(url_for('admin.asignar_usuario_ventanilla', id_ventanilla=id_ventanilla))
+    
+    _, error = VentanillaService.asignar_usuario(id_ventanilla, id_usuario)
+    
+    if error:
+        flash(f'Error al asignar usuario: {error}', 'danger')
+    else:
+        if ventanilla_anterior:
+            flash(f'Usuario reasignado correctamente de "{ventanilla_anterior.name}" a "{ventanilla.name}"', 'success')
+        else:
+            flash('Usuario asignado correctamente', 'success')
+    
+    return redirect(url_for('admin.asignar_usuario_ventanilla', id_ventanilla=id_ventanilla))
+
+
+@admin_bp.route('/ventanillas/desasignar-usuario/<int:id_ventanilla>', methods=['POST'])
+@login_required
+def desasignar_usuario_ventanilla(id_ventanilla):
+    ventanilla = VentanillaService.get_ventanilla_by_id(id_ventanilla)
+    
+    if not ventanilla:
+        flash('Ventanilla no encontrada', 'danger')
+        return redirect(url_for('admin.ventanillas'))
+    
+    if not ventanilla.id_usuario:
+        flash('Esta ventanilla no tiene usuario asignado', 'warning')
+        return redirect(url_for('admin.asignar_usuario_ventanilla', id_ventanilla=id_ventanilla))
+    
+    _, error = VentanillaService.desasignar_usuario(id_ventanilla)
+    
+    if error:
+        flash(f'Error al desasignar usuario: {error}', 'danger')
+    else:
+        flash('Usuario desasignado correctamente', 'success')
+    
+    return redirect(url_for('admin.asignar_usuario_ventanilla', id_ventanilla=id_ventanilla))
