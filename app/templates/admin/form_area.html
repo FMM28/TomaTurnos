@@ -1,46 +1,19 @@
-{% extends "admin/base_admin.html" %}
+{% extends "admin/base_form.html" %}
 
-{% block title %}{{ 'Editar Área' if area else 'Nueva Área' }}{% endblock %}
+{% set page_title = 'Editar Área' if area else 'Nueva Área' %}
+{% set submit_text = 'Actualizar' if area else 'Crear' %}
+{% set cancel_url = url_for('admin.areas') %}
 
-{% block content %}
-<div class="form-page">
-    <div class="page-header">
-        <h1 class="page-title">{{ 'Editar Área' if area else 'Nueva Área' }}</h1>
+{% block form_fields %}
+    <div class="form-group">
+        <label for="nombre" class="form-label">Nombre del Área *</label>
+        <input 
+            type="text" 
+            class="form-input" 
+            id="nombre" 
+            name="nombre" 
+            value="{{ area.name if area else '' }}"
+            required
+            maxlength="45">
     </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="flash flash-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
-    <div class="form-card">
-        <form method="POST">
-            <div class="form-group">
-                <label for="nombre" class="form-label">Nombre del Área *</label>
-                <input 
-                    type="text" 
-                    class="form-input" 
-                    id="nombre" 
-                    name="nombre" 
-                    value="{{ area.name if area else '' }}"
-                    required
-                    maxlength="45">
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn-primary">
-                    {{ 'Actualizar' if area else 'Crear' }}
-                </button>
-                <a href="{{ url_for('admin.areas') }}" class="btn-secondary">
-                    Cancelar
-                </a>
-            </div>
-        </form>
-    </div>
-</div>
 {% endblock %}

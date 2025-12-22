@@ -403,6 +403,13 @@ body {
     font-style: italic;
 }
 
+.table-actions-container{
+    display: flex;
+    justify-content: space-between;
+    align-items: right;
+    gap: 1rem;
+}
+
 /* Formularios */
 
 .form-card {

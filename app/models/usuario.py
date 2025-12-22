@@ -8,6 +8,9 @@ class Usuario(UserMixin,BaseModel):
     id_usuario = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(45), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
+    nombre = db.Column(db.String(100), nullable=False)
+    ap_paterno = db.Column(db.String(45), nullable=False)
+    ap_materno = db.Column(db.String(45), nullable=True)
     role = db.Column(db.String(45), nullable=False)
 
     asignaciones = db.relationship("Asignacion", back_populates="usuario")

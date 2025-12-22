@@ -1,60 +1,33 @@
-{% extends "admin/base_admin.html" %}
+{% extends "admin/base_form.html" %}
 
-{% block title %}{{ 'Editar' if ventanilla else 'Crear' }} Ventanilla{% endblock %}
+{% set page_title = 'Editar Ventanilla' if ventanilla else 'Crear Ventanilla' %}
+{% set submit_text = 'Actualizar' if ventanilla else 'Crear' %}
+{% set cancel_url = url_for('admin.ventanillas') %}
 
-{% block content %}
-<div class="users-page">
-    <div class="page-header">
-        <h1 class="page-title">{{ 'Editar' if ventanilla else 'Crear' }} Ventanilla</h1>
-        <a href="{{ url_for('admin.ventanillas') }}" class="btn-secondary">← Volver</a>
+{% block form_fields %}
+    <div class="form-group">
+        <label for="name" class="form-label">Nombre de la Ventanilla *</label>
+        <input 
+            type="text" 
+            id="name" 
+            name="name" 
+            class="form-input" 
+            value="{{ ventanilla.name if ventanilla else '' }}" 
+            required
+            maxlength="45"
+            placeholder="Ej: Ventanilla 1">
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="flash flash-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
-    <div class="form-container">
-        <form method="POST" class="user-form">
-            <div class="form-group">
-                <label for="name" class="form-label">Nombre de la Ventanilla *</label>
-                <input 
-                    type="text" 
-                    id="name" 
-                    name="name" 
-                    class="form-input" 
-                    value="{{ ventanilla.name if ventanilla else '' }}" 
-                    required
-                    maxlength="45"
-                    placeholder="Ej: Ventanilla 1">
-            </div>
-
-            <div class="form-group">
-                <label for="id_area" class="form-label">Área</label>
-                <select id="id_area" name="id_area" class="form-input">
-                    <option value="">Sin área asignada</option>
-                    {% for area in areas %}
-                        <option value="{{ area.id_area }}" 
-                            {% if ventanilla and ventanilla.id_area == area.id_area %}selected{% endif %}>
-                            {{ area.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn-primary">
-                    {{ 'Actualizar' if ventanilla else 'Crear' }} Ventanilla
-                </button>
-                <a href="{{ url_for('admin.ventanillas') }}" class="btn-secondary">Cancelar</a>
-            </div>
-        </form>
+    <div class="form-group">
+        <label for="id_area" class="form-label">Área</label>
+        <select id="id_area" name="id_area" class="form-input">
+            <option value="">Sin área asignada</option>
+            {% for area in areas %}
+                <option value="{{ area.id_area }}" 
+                    {% if ventanilla and ventanilla.id_area == area.id_area %}selected{% endif %}>
+                    {{ area.name }}
+                </option>
+            {% endfor %}
+        </select>
     </div>
-</div>
-
 {% endblock %}

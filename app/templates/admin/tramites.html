@@ -1,64 +1,42 @@
-{% extends "admin/base_admin.html" %}
+{% extends "admin/base_table.html" %}
 
-{% block title %}Trámites - {{ area.name }}{% endblock %}
+{% set page_title = "Trámites del Área: " + area.name %}
 
-{% block content %}
-<div class="users-page">
-    <div class="page-header">
-        <h1 class="page-title">Trámites del Área: {{ area.name }}</h1>
-        <a href="{{ url_for('admin.areas') }}" class="btn-secondary">
-            ← Volver a Áreas
-        </a>
-    </div>
+{% block header_actions %}
+    <a href="{{ url_for('admin.areas') }}" class="btn-secondary">← Volver a Áreas</a>
+{% endblock %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="flash flash-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
+{% block table_title %}Lista de Trámites{% endblock %}
 
-    <div class="table-container">
-        <div class="table-header">
-            <h2 class="table-title">Lista de Trámites</h2>
-            <a href="{{ url_for('admin.create_tramite', id_area=area.id_area) }}" class="btn-create">
-                + Nuevo Trámite
-            </a>
-        </div>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if tramites %}
-                    {% for tramite in tramites %}
-                    <tr>
-                        <td>{{ tramite.id_tramite }}</td>
-                        <td><strong>{{ tramite.name }}</strong></td>
-                        <td>
-                            <div class="actions-cell">
-                                <a href="{{ url_for('admin.edit_tramite', id_tramite=tramite.id_tramite) }}" class="btn-edit">Editar</a>
-                                <form method="POST" action="{{ url_for('admin.delete_tramite', id_tramite=tramite.id_tramite) }}" class="delete-form" onsubmit="return confirm('¿Está seguro de eliminar este trámite?');">
-                                    <button type="submit" class="btn-delete">Eliminar</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="4" class="empty-state">No hay trámites registrados en esta área</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
-</div>
+{% block table_actions %}
+    <a href="{{ url_for('admin.create_tramite', id_area=area.id_area) }}" class="btn-create">+ Nuevo Trámite</a>
+{% endblock %}
+
+{% block table_columns %}
+    <th>ID</th>
+    <th>Nombre</th>
+    <th>Acciones</th>
+{% endblock %}
+
+{% block table_body %}
+    {% if tramites %}
+        {% for tramite in tramites %}
+        <tr>
+            <td>{{ tramite.id_tramite }}</td>
+            <td><strong>{{ tramite.name }}</strong></td>
+            <td>
+                <div class="actions-cell">
+                    <a href="{{ url_for('admin.edit_tramite', id_tramite=tramite.id_tramite) }}" class="btn-edit">Editar</a>
+                    <form method="POST" action="{{ url_for('admin.delete_tramite', id_tramite=tramite.id_tramite) }}" class="delete-form" onsubmit="return confirm('¿Está seguro de eliminar este trámite?');">
+                        <button type="submit" class="btn-delete">Eliminar</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    {% else %}
+        <tr>
+            <td colspan="3" class="empty-state">No hay trámites registrados en esta área</td>
+        </tr>
+    {% endif %}
 {% endblock %}

@@ -39,13 +39,22 @@ class UserService:
             return []
     
     @staticmethod
-    def create_user(username: str, role: str, password: str) -> Tuple[Optional[Usuario], Optional[str]]:
+    def create_user(username: str, nombre: str, ap_paterno: str, role: str, password: str, ap_materno: Optional[str] = None) -> Tuple[Optional[Usuario], Optional[str]]:
         """Crea un nuevo usuario"""
         try:
             username = username.strip()
+            nombre = nombre.strip()
+            ap_paterno = ap_paterno.strip()
+            ap_materno = ap_materno.strip() if ap_materno else None
             
             if not username:
                 return None, "El nombre de usuario es requerido"
+            
+            if not nombre:
+                return None, "El nombre es requerido"
+            
+            if not ap_paterno:
+                return None, "El apellido paterno es requerido"
             
             if not password:
                 return None, "La contraseña es requerida"
@@ -53,7 +62,13 @@ class UserService:
             if not role:
                 return None, "El rol es requerido"
             
-            user = Usuario(username=username, role=role)
+            user = Usuario(
+                username=username,
+                nombre=nombre,
+                ap_paterno=ap_paterno,
+                ap_materno=ap_materno,
+                role=role
+            )
             user.set_password(password)
             
             db.session.add(user)
@@ -64,9 +79,9 @@ class UserService:
             error_msg = f"Error al crear el usuario: {str(e)}"
             print(error_msg)
             return None, error_msg
-    
+
     @staticmethod
-    def update_user(user_id: int, username: str, role: str, password: Optional[str] = None) -> Tuple[Optional[Usuario], Optional[str]]:
+    def update_user(user_id: int, username: str, nombre: str, ap_paterno: str, role: str, password: Optional[str] = None, ap_materno: Optional[str] = None) -> Tuple[Optional[Usuario], Optional[str]]:
         """Actualiza un usuario existente"""
         try:
             user = Usuario.query.get(user_id)
@@ -74,14 +89,26 @@ class UserService:
                 return None, "Usuario no encontrado"
             
             username = username.strip()
+            nombre = nombre.strip()
+            ap_paterno = ap_paterno.strip()
+            ap_materno = ap_materno.strip() if ap_materno else None
             
             if not username:
                 return None, "El nombre de usuario es requerido"
+            
+            if not nombre:
+                return None, "El nombre es requerido"
+            
+            if not ap_paterno:
+                return None, "El apellido paterno es requerido"
             
             if not role:
                 return None, "El rol es requerido"
             
             user.username = username
+            user.nombre = nombre
+            user.ap_paterno = ap_paterno
+            user.ap_materno = ap_materno
             user.role = role
             
             if password:

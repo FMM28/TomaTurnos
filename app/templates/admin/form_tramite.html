@@ -1,47 +1,20 @@
-{% extends "admin/base_admin.html" %}
+{% extends "admin/base_form.html" %}
 
-{% block title %}{{ 'Editar Trámite' if tramite else 'Nuevo Trámite' }}{% endblock %}
+{% set page_title = 'Editar Trámite' if tramite else 'Nuevo Trámite' %}
+{% set header_info = 'Área: ' ~ area.name %}
+{% set submit_text = 'Actualizar' if tramite else 'Crear' %}
+{% set cancel_url = url_for('admin.tramites', id_area=area.id_area) %}
 
-{% block content %}
-<div class="form-page">
-    <div class="page-header">
-        <h1 class="page-title">{{ 'Editar Trámite' if tramite else 'Nuevo Trámite' }}</h1>
-        <span class="info-span">Área: {{ area.name }}</span>
+{% block form_fields %}
+    <div class="form-group">
+        <label for="nombre" class="form-label">Nombre del Trámite *</label>
+        <input 
+            type="text" 
+            class="form-input" 
+            id="nombre" 
+            name="nombre" 
+            value="{{ tramite.name if tramite else '' }}"
+            required
+            maxlength="45">
     </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="flash flash-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
-    <div class="form-card">
-        <form method="POST">
-            <div class="form-group">
-                <label for="nombre" class="form-label">Nombre del Trámite *</label>
-                <input 
-                    type="text" 
-                    class="form-input" 
-                    id="nombre" 
-                    name="nombre" 
-                    value="{{ tramite.name if tramite else '' }}"
-                    required
-                    maxlength="45">
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn-primary">
-                    {{ 'Actualizar' if tramite else 'Crear' }}
-                </button>
-                <a href="{{ url_for('admin.tramites', id_area=area.id_area) }}" class="btn-secondary">
-                    Cancelar
-                </a>
-            </div>
-        </form>
-    </div>
-</div>
 {% endblock %}

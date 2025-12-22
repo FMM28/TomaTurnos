@@ -1,71 +1,53 @@
-{% extends "admin/base_admin.html" %}
+{% extends "admin/base_table.html" %}
 
-{% block title %}Gestión de Ventanillas{% endblock %}
+{% set page_title = "Gestión de Ventanillas" %}
 
-{% block content %}
-<div class="users-page">
-    <div class="page-header">
-        <h1 class="page-title">Gestión de Ventanillas</h1>
-        <div class="header-actions">
-            <a href="{{ url_for('admin.areas') }}" class="btn-secondary">← Volver a Áreas</a>
-            <a href="{{ url_for('admin.create_ventanilla') }}" class="btn-create">+Nueva Ventanilla</a>
-        </div>
-    </div>
+{% block header_actions %}
+    <a href="{{ url_for('admin.areas') }}" class="btn-secondary">← Volver a Áreas</a>
+{% endblock %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="flash flash-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
+{% block table_title %}Lista de Ventanillas{% endblock %}
 
-    <div class="table-container">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Área</th>
-                    <th>Usuario Asignado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if ventanillas %}
-                    {% for ventanilla in ventanillas %}
-                    <tr>
-                        <td>{{ ventanilla.id_ventanilla }}</td>
-                        <td><strong>{{ ventanilla.name }}</strong></td>
-                        <td>{{ ventanilla.area.name if ventanilla.area else 'Sin área asignada' }}</td>
-                        <td>
-                            {% if ventanilla.usuario %}
-                                <span class="badge badge-success">{{ ventanilla.usuario.username }}</span>
-                            {% else %}
-                                <span class="badge badge-secondary">Sin asignar</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="actions-cell">
-                                <a href="{{ url_for('admin.asignar_usuario_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" class="btn-user">Usuario</a>
-                                <a href="{{ url_for('admin.edit_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" class="btn-edit">Editar</a>
-                                <form method="POST" action="{{ url_for('admin.delete_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" class="delete-form" onsubmit="return confirm('¿Está seguro de eliminar esta ventanilla?');">
-                                    <button type="submit" class="btn-delete">Eliminar</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
+{% block table_actions %}
+    <a href="{{ url_for('admin.create_ventanilla') }}" class="btn-create">+ Nueva Ventanilla</a>
+{% endblock %}
+
+{% block table_columns %}
+    <th>ID</th>
+    <th>Nombre</th>
+    <th>Área</th>
+    <th>Usuario Asignado</th>
+    <th>Acciones</th>
+{% endblock %}
+
+{% block table_body %}
+    {% if ventanillas %}
+        {% for ventanilla in ventanillas %}
+        <tr>
+            <td>{{ ventanilla.id_ventanilla }}</td>
+            <td><strong>{{ ventanilla.name }}</strong></td>
+            <td>{{ ventanilla.area.name if ventanilla.area else 'Sin área asignada' }}</td>
+            <td>
+                {% if ventanilla.usuario %}
+                    <span class="badge badge-success">{{ ventanilla.usuario.username }}</span>
                 {% else %}
-                    <tr>
-                        <td colspan="5" class="empty-state">No hay ventanillas registradas</td>
-                    </tr>
+                    <span class="badge badge-secondary">Sin asignar</span>
                 {% endif %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
+            </td>
+            <td>
+                <div class="actions-cell">
+                    <a href="{{ url_for('admin.asignar_usuario_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" class="btn-user">Usuario</a>
+                    <a href="{{ url_for('admin.edit_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" class="btn-edit">Editar</a>
+                    <form method="POST" action="{{ url_for('admin.delete_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" class="delete-form" onsubmit="return confirm('¿Está seguro de eliminar esta ventanilla?');">
+                        <button type="submit" class="btn-delete">Eliminar</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    {% else %}
+        <tr>
+            <td colspan="5" class="empty-state">No hay ventanillas registradas</td>
+        </tr>
+    {% endif %}
 {% endblock %}

@@ -31,7 +31,10 @@ def create_user():
         user, error = UserService.create_user(
             username=request.form["username"],
             role=request.form["role"],
-            password=request.form["password"]
+            password=request.form["password"],
+            nombre=request.form["nombre"],
+            ap_paterno=request.form["ap_paterno"],
+            ap_materno=request.form.get("ap_materno")
         )
         
         if error:
@@ -40,7 +43,7 @@ def create_user():
             flash("Usuario creado exitosamente", "success")
             return redirect(url_for("admin.users"))
             
-    return render_template("admin/create_user.html")
+    return render_template("admin/form_user.html", user=None)
 
 
 @admin_bp.route("/users/<int:id>/edit", methods=["GET", "POST"])
@@ -54,7 +57,10 @@ def edit_user(id):
             user_id=id,
             username=request.form["username"],
             role=request.form["role"],
-            password=request.form.get("password")
+            password=request.form.get("password"),
+            nombre=request.form["nombre"],
+            ap_paterno=request.form["ap_paterno"],
+            ap_materno=request.form.get("ap_materno")
         )
         
         if error:
@@ -63,7 +69,7 @@ def edit_user(id):
             flash("Usuario actualizado exitosamente", "success")
             return redirect(url_for("admin.users"))
 
-    return render_template("admin/edit_user.html", user=user)
+    return render_template("admin/form_user.html", user=user)
 
 
 @admin_bp.route("/users/<int:id>/delete", methods=["POST"])
