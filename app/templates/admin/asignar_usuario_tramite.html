@@ -45,6 +45,7 @@
                                              id_tramite=tramite.id_tramite,
                                              id_usuario=usuario.id_usuario) }}"
                           onsubmit="return confirm('¿Desea desasignar este usuario del trámite?');">
+                        <input type="hidden" name="next" value="{{ url_for('admin.asignar_usuario_tramite', id_tramite=tramite.id_tramite) }}">
                         <button type="submit" class="btn-unassign">Desasignar</button>
                     </form>
                 </div>
@@ -66,9 +67,8 @@
                     </div>
 
                     <form method="POST"
-                          action="{{ url_for('admin.asignar_usuario_tramite_post',
-                                             id_tramite=tramite.id_tramite,
-                                             id_usuario=usuario.id_usuario) }}">
+                        action="{{ url_for('admin.asignar_usuario_tramite_post', id_tramite=tramite.id_tramite, id_usuario=usuario.id_usuario) }}">
+                        <input type="hidden" name="next" value="{{ url_for('admin.asignar_usuario_tramite', id_tramite=tramite.id_tramite) }}">
                         <button type="submit" class="btn-assign">Asignar</button>
                     </form>
                 </div>

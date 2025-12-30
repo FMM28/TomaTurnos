@@ -394,21 +394,17 @@ def asignar_usuario_tramite_post(id_tramite, id_usuario):
     tramite = TramiteService.get_tramite_by_id(id_tramite)
     usuario = UserService.get_user_by_id(id_usuario)
 
+    redirect_to = request.form.get('next')
+
     if not tramite or not usuario:
         flash('Trámite o usuario no encontrado', 'danger')
-        return redirect(url_for(
-            'admin.asignar_usuario_tramite',
-            id_tramite=id_tramite
-        ))
+        return redirect(redirect_to or url_for('admin.index'))
 
     usuarios_ids_asignados = AsignacionService.get_usuarios_by_tramite(id_tramite)
 
     if id_usuario in usuarios_ids_asignados:
         flash('El usuario ya está asignado a este trámite', 'warning')
-        return redirect(url_for(
-            'admin.asignar_usuario_tramite',
-            id_tramite=id_tramite
-        ))
+        return redirect(redirect_to)
 
     _, error = AsignacionService.create_asignacion(id_tramite, id_usuario)
 
@@ -417,14 +413,13 @@ def asignar_usuario_tramite_post(id_tramite, id_usuario):
     else:
         flash('Usuario asignado correctamente al trámite', 'success')
 
-    return redirect(url_for(
-        'admin.asignar_usuario_tramite',
-        id_tramite=id_tramite
-    ))
+    return redirect(redirect_to)
 
 @admin_bp.route('/tramites/desasignar-usuario/<int:id_tramite>/<int:id_usuario>', methods=['POST'])
 @login_required
 def desasignar_usuario_tramite(id_tramite, id_usuario):
+    redirect_to = request.form.get('next')
+
     asignaciones = AsignacionService.get_asignaciones_by_tramite(id_tramite)
 
     asignacion = next(
@@ -434,10 +429,7 @@ def desasignar_usuario_tramite(id_tramite, id_usuario):
 
     if not asignacion:
         flash('El usuario no está asignado a este trámite', 'warning')
-        return redirect(url_for(
-            'admin.asignar_usuario_tramite',
-            id_tramite=id_tramite
-        ))
+        return redirect(redirect_to)
 
     error = AsignacionService.delete_asignacion(asignacion.id_asignacion)
 
@@ -446,7 +438,42 @@ def desasignar_usuario_tramite(id_tramite, id_usuario):
     else:
         flash('Usuario desasignado correctamente del trámite', 'success')
 
-    return redirect(url_for(
-        'admin.asignar_usuario_tramite',
-        id_tramite=id_tramite
-    ))
+    return redirect(redirect_to)
+
+
+@admin_bp.route('/usuarios/<int:id_usuario>/tramites')
+def tramites_usuario(id_usuario):
+    usuario = UserService.get_user_by_id_or_404(id_usuario)
+
+    asignaciones = AsignacionService.get_asignaciones_by_usuario(id_usuario)
+
+    tramites_asignados_ids = {
+        asignacion.id_tramite for asignacion in asignaciones
+    }
+
+    tramites_asignados = [
+        TramiteService.get_tramite_by_id(tramite_id)
+        for tramite_id in tramites_asignados_ids
+    ]
+
+    areas = AreaService.get_all_areas()
+    tramites_por_area = {}
+
+    for area in areas:
+        tramites_area = TramiteService.get_tramites_by_area(area.id_area)
+
+        tramites_no_asignados = [
+            tramite for tramite in tramites_area
+            if tramite.id_tramite not in tramites_asignados_ids
+        ]
+
+        if tramites_no_asignados:
+            tramites_por_area[area] = tramites_no_asignados
+
+    return render_template(
+        'admin/user_tramites.html',
+        usuario=usuario,
+        tramites_asignados=tramites_asignados,
+        tramites_por_area=tramites_por_area
+    )
+

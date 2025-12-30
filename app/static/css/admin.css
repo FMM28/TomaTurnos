@@ -10,6 +10,8 @@ body {
     background-color: #f4f4f4;
     color: #2d2d2d;
     line-height: 1.6;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
 }
 
 /* Layout general */
@@ -626,7 +628,70 @@ body {
     text-align: center;
 }
 
-/* Responsive - Tablets */
+/* Trámites por Usuario */
+
+.area-collapse {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.area-collapse[open] {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.area-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.9rem 1.2rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    background-color: #f8f9fa;
+    color: #343a40;
+    user-select: none;
+}
+
+.area-title:hover {
+    background-color: #eef1f3;
+}
+
+.area-title .badge {
+    background-color: #e2e3e5;
+    color: #495057;
+    font-size: 0.75rem;
+}
+
+.area-collapse summary {
+    list-style: none;
+}
+
+.area-collapse summary::-webkit-details-marker {
+    display: none;
+}
+
+.area-collapse .user-card {
+    border: none;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0;
+    margin: 0;
+    padding: 0.9rem 1.2rem;
+}
+
+.area-collapse .user-card:hover {
+    box-shadow: none;
+    background-color: #fafafa;
+}
+
+.users-section .user-card.assigned {
+    border-left: 4px solid #ffc107;
+}
+
+
+/* Responsive */
 
 @media (max-width: 1024px) {
     .admin-content {
@@ -707,5 +772,26 @@ body {
     .btn-delete {
         width: 100%;
         text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .area-title {
+        font-size: 0.95rem;
+        padding: 0.8rem 1rem;
+    }
+
+    .area-collapse .user-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .area-collapse .user-card form {
+        width: 100%;
+    }
+
+    .area-collapse .btn-assign {
+        width: 100%;
     }
 }

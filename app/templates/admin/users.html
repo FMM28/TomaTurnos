@@ -5,7 +5,7 @@
 {% block table_title %}Lista de Usuarios{% endblock %}
 
 {% block table_actions %}
-    <a href="{{ url_for('admin.create_user') }}" class="btn-create">+ Crear Nuevo Usuario</a>
+    <a href="{{ url_for('admin.create_user') }}" class="btn-create">+ Nuevo Usuario</a>
 {% endblock %}
 
 {% block table_columns %}
@@ -23,9 +23,12 @@
             <td>{{ user.id_usuario }}</td>
             <td>{{ user.username }}</td>
             <td>{{ user.nombre }} {{ user.ap_paterno }} {{ user.ap_materno or '' }}</td>
-            <td>{{ user.role or '—' }}</td>
+            <td>{{ user.role }}</td>
             <td>
                 <div class="actions-cell">
+                    {% if user.role == 'ventanilla' %}
+                        <a href="{{ url_for('admin.tramites_usuario', id_usuario=user.id_usuario) }}" class="btn-view">Trámites</a>
+                    {% endif %}
                     <a href="{{ url_for('admin.edit_user', id=user.id_usuario) }}" class="btn-edit">Editar</a>
                     <form method="POST" action="{{ url_for('admin.delete_user', id=user.id_usuario) }}" class="delete-form" onsubmit="return confirm('¿Estás seguro de eliminar este usuario?');">
                         <button type="submit" class="btn-delete">Eliminar</button>
