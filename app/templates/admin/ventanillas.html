@@ -29,7 +29,9 @@
             <td>{{ ventanilla.area.name if ventanilla.area else 'Sin área asignada' }}</td>
             <td>
                 {% if ventanilla.usuario %}
-                    <span class="badge badge-success">{{ ventanilla.usuario.username }}</span>
+                    <span class="badge badge-success">
+                        {{ ventanilla.usuario.nombre }} {{ ventanilla.usuario.ap_paterno }} {% if ventanilla.usuario.ap_materno %} {{ ventanilla.usuario.ap_materno }}{% endif %}
+                    </span>
                 {% else %}
                     <span class="badge badge-secondary">Sin asignar</span>
                 {% endif %}

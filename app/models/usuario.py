@@ -16,6 +16,8 @@ class Usuario(UserMixin,BaseModel):
     asignaciones = db.relationship("Asignacion", back_populates="usuario")
     atenciones = db.relationship("Atencion", back_populates="usuario")
     ventanilla = db.relationship("Ventanilla", back_populates="usuario", uselist=False)
+    suplentes_asignados = db.relationship("Suplente", foreign_keys="Suplente.id_usuario", back_populates="usuario")
+    suplencias = db.relationship("Suplente", foreign_keys="Suplente.id_suplente_usuario", back_populates="suplente_usuario")
 
     def set_password(self, raw_password):
         self.password = bcrypt.generate_password_hash(

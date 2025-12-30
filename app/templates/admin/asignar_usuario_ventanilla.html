@@ -27,7 +27,7 @@
         <h3>Usuario Actualmente Asignado</h3>
         <div class="user-card active">
             <div class="user-info">
-                <span class="user-name">{{ ventanilla.usuario.username }}</span>
+                <span class="user-name">{{ ventanilla.usuario.nombre }} {{ ventanilla.usuario.ap_paterno }} {% if ventanilla.usuario.ap_materno %} {{ ventanilla.usuario.ap_materno }}{% endif %}</span>
             </div>
             <form method="POST" action="{{ url_for('admin.desasignar_usuario_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" onsubmit="return confirm('¿Está seguro de desasignar este usuario?');">
                 <button type="submit" class="btn-unassign">Desasignar</button>
@@ -45,7 +45,7 @@
             {% for usuario in usuarios_sin_ventanilla %}
             <div class="user-card">
                 <div class="user-info">
-                    <span class="user-name">{{ usuario.username }}</span>
+                    <span class="user-name">{{ usuario.nombre }} {{ usuario.ap_paterno }} {% if usuario.ap_materno %} {{ usuario.ap_materno }}{% endif %}</span>
                     <span class="badge badge-available">Disponible</span>
                 </div>
                 <form method="POST" action="{{ url_for('admin.asignar_usuario_ventanilla_post', id_ventanilla=ventanilla.id_ventanilla, id_usuario=usuario.id_usuario) }}">
@@ -62,10 +62,10 @@
             {% for usuario in usuarios_con_ventanilla %}
             <div class="user-card assigned">
                 <div class="user-info">
-                    <span class="user-name">{{ usuario.username }}</span>
+                    <span class="user-name">{{ usuario.nombre }} {{ usuario.ap_paterno }} {% if usuario.ap_materno %} {{ usuario.ap_materno }}{% endif %}</span>
                     <span class="badge badge-assigned">Asignado a: {{ usuario.ventanilla.name }}</span>
                 </div>
-                <button type="button" class="btn-reassign" onclick="confirmarReasignacion('{{ usuario.id_usuario }}', '{{ usuario.username }}', '{{ usuario.ventanilla.name }}', '{{ ventanilla.name }}')">
+                <button type="button" class="btn-reassign" onclick="confirmarReasignacion('{{ usuario.id_usuario }}', '{{ usuario.nombre }} {{ usuario.ap_paterno }} {% if usuario.ap_materno %} {{ usuario.ap_materno }}{% endif %}', '{{ usuario.ventanilla.name }}', '{{ ventanilla.name }}')">
                     Reasignar
                 </button>
             </div>

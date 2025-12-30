@@ -26,6 +26,7 @@
             <td><strong>{{ tramite.name }}</strong></td>
             <td>
                 <div class="actions-cell">
+                    <a href="{{ url_for('admin.asignar_usuario_tramite', id_tramite=tramite.id_tramite) }}" class="btn-user">Usuarios</a>
                     <a href="{{ url_for('admin.edit_tramite', id_tramite=tramite.id_tramite) }}" class="btn-edit">Editar</a>
                     <form method="POST" action="{{ url_for('admin.delete_tramite', id_tramite=tramite.id_tramite) }}" class="delete-form" onsubmit="return confirm('¿Está seguro de eliminar este trámite?');">
                         <button type="submit" class="btn-delete">Eliminar</button>
