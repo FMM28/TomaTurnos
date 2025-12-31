@@ -29,6 +29,9 @@
                     {% if user.role == 'ventanilla' %}
                         <a href="{{ url_for('admin.tramites_usuario', id_usuario=user.id_usuario) }}" class="btn-view">Trámites</a>
                     {% endif %}
+                    {% if user.role == 'ventanilla' %}
+                        <a href="{{ url_for('admin.suplentes_usuario', id_usuario=user.id_usuario) }}" class="btn-user">Suplentes</a>
+                    {% endif %}
                     <a href="{{ url_for('admin.edit_user', id=user.id_usuario) }}" class="btn-edit">Editar</a>
                     <form method="POST" action="{{ url_for('admin.delete_user', id=user.id_usuario) }}" class="delete-form" onsubmit="return confirm('¿Estás seguro de eliminar este usuario?');">
                         <button type="submit" class="btn-delete">Eliminar</button>

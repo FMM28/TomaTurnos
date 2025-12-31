@@ -5,6 +5,7 @@ from app.services.area_service import AreaService
 from app.services.tramite_service import TramiteService
 from app.services.ventanilla_service import VentanillaService
 from app.services.asignacion_service import AsignacionService
+from app.services.suplente_service import SuplenteService
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -369,6 +370,7 @@ def desasignar_usuario_ventanilla(id_ventanilla):
     
     return redirect(url_for('admin.asignar_usuario_ventanilla', id_ventanilla=id_ventanilla))
 
+
 @admin_bp.route('/tramites/asignar-usuario/<int:id_tramite>', methods=['GET'])
 @login_required
 def asignar_usuario_tramite(id_tramite):
@@ -387,6 +389,7 @@ def asignar_usuario_tramite(id_tramite):
         usuarios_asignados=usuarios_asignados,
         usuarios_sin_asignar=usuarios_sin_asignar
     )
+
 
 @admin_bp.route('/tramites/asignar-usuario/<int:id_tramite>/<int:id_usuario>', methods=['POST'])
 @login_required
@@ -441,7 +444,7 @@ def desasignar_usuario_tramite(id_tramite, id_usuario):
     return redirect(redirect_to)
 
 
-@admin_bp.route('/usuarios/<int:id_usuario>/tramites')
+@admin_bp.route('/users/<int:id_usuario>/tramites')
 def tramites_usuario(id_usuario):
     usuario = UserService.get_user_by_id_or_404(id_usuario)
 
@@ -477,3 +480,89 @@ def tramites_usuario(id_usuario):
         tramites_por_area=tramites_por_area
     )
 
+
+@admin_bp.route('/users/<int:id_usuario>/suplentes')
+@login_required
+def suplentes_usuario(id_usuario):
+    usuario = UserService.get_user_by_id_or_404(id_usuario)
+
+    suplentes = SuplenteService.get_suplentes_by_usuario(id_usuario)
+
+    suplentes_activos = [s for s in suplentes if s.activo]
+    suplentes_inactivos = [s for s in suplentes if not s.activo]
+
+    suplentes_ids = {s.id_suplente_usuario for s in suplentes}
+
+    todos_usuarios = UserService.get_usuarios_by_role('ventanilla')
+    usuarios_no_asignados = [
+        u for u in todos_usuarios
+        if u.id_usuario != id_usuario and u.id_usuario not in suplentes_ids
+    ]
+
+    return render_template(
+        'admin/suplentes.html',
+        usuario=usuario,
+        suplentes_activos=suplentes_activos,
+        suplentes_inactivos=suplentes_inactivos,
+        usuarios_no_asignados=usuarios_no_asignados
+    )
+
+
+@admin_bp.route('/users/<int:id_usuario>/suplentes/asignar/<int:id_suplente_usuario>', methods=['POST'])
+@login_required
+def asignar_suplente(id_usuario, id_suplente_usuario):
+    _, error = SuplenteService.create_suplente(
+        id_usuario=id_usuario,
+        id_suplente_usuario=id_suplente_usuario,
+        activo=False
+    )
+
+    if error:
+        flash(error, 'danger')
+    else:
+        flash('Suplente asignado correctamente', 'success')
+
+    return redirect(url_for('admin.suplentes_usuario', id_usuario=id_usuario))
+
+
+@admin_bp.route('/suplentes/<int:id_suplente>/activar', methods=['POST'])
+@login_required
+def activar_suplente(id_suplente):
+    ok, error = SuplenteService.activate_suplente(id_suplente)
+
+    if error:
+        flash(error, 'danger')
+    else:
+        flash('Suplente activado', 'success')
+
+    suplente = SuplenteService.get_suplente_by_id(id_suplente)
+    return redirect(url_for('admin.suplentes_usuario', id_usuario=suplente.id_usuario))
+
+
+@admin_bp.route('/suplentes/<int:id_suplente>/desactivar', methods=['POST'])
+@login_required
+def desactivar_suplente(id_suplente):
+    ok, error = SuplenteService.deactivate_suplente(id_suplente)
+
+    if error:
+        flash(error, 'danger')
+    else:
+        flash('Suplente desactivado', 'success')
+
+    suplente = SuplenteService.get_suplente_by_id(id_suplente)
+    return redirect(url_for('admin.suplentes_usuario', id_usuario=suplente.id_usuario))
+
+
+@admin_bp.route('/suplentes/<int:id_suplente>/eliminar', methods=['POST'])
+@login_required
+def eliminar_suplente(id_suplente):
+    suplente = SuplenteService.get_suplente_by_id(id_suplente)
+
+    error = SuplenteService.delete_suplente(id_suplente)
+
+    if error:
+        flash(error, 'danger')
+    else:
+        flash('Suplente desasignado', 'success')
+
+    return redirect(url_for('admin.suplentes_usuario', id_usuario=suplente.id_usuario))
