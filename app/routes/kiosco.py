@@ -4,6 +4,7 @@ from app.services.tramite_service import TramiteService
 from app.services.ticket_service import TicketService
 from app.services.ticket_tramite_service import TicketTramiteService
 from app.services.turno_service import TurnoService
+from app.services.impresion_service import ImpresionService
 from app.extensions import db
 
 kiosco_bp = Blueprint("kiosco", __name__, url_prefix="/kiosco")
@@ -105,12 +106,30 @@ def kiosco_checkout():
 
             db.session.commit()
             session.pop("kiosk_ticket", None)
-            
-            return redirect(url_for("kiosco.selector_area"))
-            
+
+            return redirect(url_for("kiosco.kiosco_print_ticket", id_ticket=nuevo_ticket.id_ticket))
+
         except Exception as e:
             db.session.rollback()
             flash(f"Error inesperado: {str(e)}", "error")
             return redirect(url_for("kiosco.selector_area"))
 
     return render_template("kiosco/checkout_confirm.html", tramites=ticket_session["tramites"])
+
+@kiosco_bp.route("/ticket/print/<int:id_ticket>")
+def kiosco_print_ticket(id_ticket):
+    ticket = TicketService.get_ticket_by_id_or_404(id_ticket)
+    print(ticket)
+    tramites = TicketTramiteService.get_tramites_by_ticket(id_ticket)
+
+
+    ticket_data = {
+        "turno": ticket.turno,
+        "tramites": [t.name for t in tramites],
+        "fecha_hora": ticket.fecha_hora.strftime("%d/%m/%Y %H:%M:%S")
+    }
+
+    impresora = ImpresionService()
+    impresora.print_ticket(ticket_data)
+
+    return redirect(url_for("kiosco.selector_area"))

@@ -9,9 +9,7 @@ class TurnoService:
     def obtener_siguiente_turno() -> int:
         max_turno = current_app.config["MAX_TURNO"]
 
-        ultimo = db.session.query(
-            func.max(Ticket.id_ticket)
-        ).scalar()
+        ultimo = db.session.query(Ticket).order_by(Ticket.turno.desc()).first()
 
         if not ultimo or ultimo.turno >= max_turno:
             return 1

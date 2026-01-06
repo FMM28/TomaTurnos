@@ -17,3 +17,5 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY")
 
     MAX_TURNO = int(os.getenv("MAX_TURNO", 999))
+
+    PRINT_MODE = "mock" 

@@ -1,4 +1,4 @@
-from app.models import TicketTramite
+from app.models import TicketTramite, Tramite
 from app.extensions import db
 from typing import List, Optional, Tuple
 from sqlalchemy.exc import SQLAlchemyError
@@ -120,10 +120,16 @@ class TicketTramiteService:
             return False, error_msg
 
     @staticmethod
-    def get_ticket_tramites_by_ticket(ticket_id: int) -> List[TicketTramite]:
-        """Obtiene todos los TicketTramites asociados a un ticket específico"""
+    def get_tramites_by_ticket(ticket_id: int) -> List[Tramite]:
+        """Obtiene los trámites asociados a un ticket usando JOIN"""
         try:
-            return TicketTramite.query.filter_by(ticket_id=ticket_id).order_by(TicketTramite.id_ticket_tramite).all()
+            return (
+                db.session.query(Tramite)
+                .join(TicketTramite, TicketTramite.id_tramite == Tramite.id_tramite)
+                .filter(TicketTramite.id_ticket == ticket_id)
+                .order_by(TicketTramite.id_ticket_tramite)
+                .all()
+            )
         except SQLAlchemyError as e:
-            print(f"Error al obtener TicketTramites del ticket {ticket_id}: {e}")
+            print(f"Error al obtener trámites del ticket {ticket_id}: {e}")
             return []
