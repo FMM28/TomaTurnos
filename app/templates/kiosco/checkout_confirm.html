@@ -1,0 +1,56 @@
+{% extends "kiosco/base.html" %}
+
+{% block content %}
+
+<div class="checkout-container">
+    <div class="checkout-card">
+        
+        <header class="checkout-header">
+            <h1 class="checkout-title">Confirmar Ticket</h1>
+            <p class="checkout-subtitle">Revise sus trámites seleccionados</p>
+        </header>
+
+        <div class="checkout-body">
+            <h2 class="checkout-section-title">Trámites seleccionados</h2>
+            
+            <div class="checkout-tramites-list">
+                {% for tramite in tramites %}
+                <div class="checkout-tramite-item">
+                    <span class="checkout-tramite-number">{{ loop.index }}</span>
+                    <span class="checkout-tramite-name">{{ tramite.nombre }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="checkout-summary">
+                <div class="checkout-summary-row">
+                    <span class="checkout-summary-label">Total de trámites:</span>
+                    <span class="checkout-summary-value">{{ tramites|length }}</span>
+                </div>
+            </div>
+
+            <div class="checkout-note">
+                <span class="checkout-note-icon">ℹ️</span>
+                <p class="checkout-note-text">
+                    Al confirmar, se generará su número de turno. 
+                    Por favor espere a ser llamado en las pantallas.
+                </p>
+            </div>
+        </div>
+
+        <div class="checkout-actions">
+            <a href="{{ url_for('kiosco.selector_area') }}" 
+               class="checkout-btn checkout-btn-back">
+                ← Volver
+            </a>
+            <form method="post">
+                <button type="submit" class="checkout-btn checkout-btn-confirm">
+                    Imprimir Ticket
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

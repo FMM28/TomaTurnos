@@ -1,0 +1,137 @@
+{% extends "kiosco/base.html" %}
+
+{% block content %}
+
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-content">
+        <h3 class="modal-title">¿Eliminar trámite?</h3>
+        <p class="modal-text" id="modalTramiteName"></p>
+        <div class="modal-actions">
+            <button type="button" class="modal-btn modal-btn-cancel" onclick="closeModal()">
+                Cancelar
+            </button>
+            <button type="button" class="modal-btn modal-btn-confirm" onclick="confirmRemove()">
+                Eliminar
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="tramites-layout">
+
+    <aside class="tramites-sidebar">
+
+        <section class="sidebar-section sidebar-section-top">
+            <h2 class="sidebar-title">Áreas</h2>
+
+            <div class="sidebar-areas">
+                {% for area_idx in areas %}
+                <a href="{{ url_for('kiosco.selector_tramite', id_area=area_idx.id_area) }}"
+                   class="sidebar-area-btn {% if area_idx.id_area == area.id_area %}active{% endif %}">
+                    {{ area_idx.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="sidebar-section sidebar-section-bottom">
+            <h2 class="sidebar-title">Seleccionados</h2>
+
+            <div class="selected-list">
+                {% if ticket.tramites %}
+                    {% for t in ticket.tramites %}
+                    <form method="post"
+                          action="{{ url_for('kiosco.kiosco_remove_tramite', id_area=area.id_area) }}"
+                          class="selected-item-form"
+                          id="removeForm{{ loop.index }}">
+                        <input type="hidden" name="id_tramite" value="{{ t.id_tramite }}">
+                        <button type="button" 
+                                class="selected-item-btn"
+                                onclick="showModal('{{ t.nombre }}', 'removeForm{{ loop.index }}')">
+                            {{ t.nombre }}
+                            <span>×</span>
+                        </button>
+                    </form>
+                    {% endfor %}
+                {% else %}
+                    <p class="selected-empty">Sin trámites</p>
+                {% endif %}
+            </div>
+
+            <a href="{{ url_for('kiosco.kiosco_checkout') }}"
+               class="continue-btn">
+                Continuar
+            </a>
+        </section>
+
+    </aside>
+
+    <main class="tramites-main">
+        <header class="tramites-header">
+            <h1 class="tramites-title">{{ area.name }}</h1>
+        </header>
+
+        <div class="tramites-grid">
+            {% for tramite in tramites %}
+            <form method="post"
+                  action="{{ url_for('kiosco.kiosco_add_tramite', id_area=area.id_area) }}"
+                  class="tramite-form">
+                <input type="hidden" name="id_tramite" value="{{ tramite.id_tramite }}">
+                <button type="submit" class="tramite-card">
+                    {{ tramite.name }}
+                </button>
+            </form>
+            {% endfor %}
+        </div>
+    </main>
+
+</div>
+
+<script>
+let currentFormId = null;
+
+function showModal(tramiteName, formId) {
+    currentFormId = formId;
+    document.getElementById('modalTramiteName').textContent = 
+        `¿Está seguro que desea eliminar "${tramiteName}" de su selección?`;
+    document.getElementById('confirmModal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('confirmModal').classList.remove('active');
+    currentFormId = null;
+}
+
+function confirmRemove() {
+    if (currentFormId) {
+        document.getElementById(currentFormId).submit();
+    }
+}
+
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal();
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const flashMessages = document.querySelectorAll('.flash-message');
+    flashMessages.forEach(message => {
+        setTimeout(() => {
+            message.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => message.remove(), 300);
+        }, 5000);
+    });
+});
+</script>
+
+<style>
+@keyframes slideOut {
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+</style>
+
+{% endblock %}

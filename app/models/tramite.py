@@ -10,7 +10,7 @@ class Tramite(BaseModel):
         db.ForeignKey("area.id_area"),
         nullable=False
     )
-    name = db.Column(db.String(45), nullable=False, unique=True)
+    name = db.Column(db.String(255), nullable=False, unique=True)
 
     area = db.relationship("Area", back_populates="tramites")
     asignaciones = db.relationship("Asignacion", back_populates="tramite")

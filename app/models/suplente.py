@@ -8,13 +8,13 @@ class Suplente(BaseModel):
 
     id_usuario = db.Column(
         db.Integer,
-        db.ForeignKey("usuario.id_usuario"),
+        db.ForeignKey("usuario.id_usuario", ondelete="CASCADE"),
         nullable=False
     )
 
     id_suplente_usuario = db.Column(
         db.Integer,
-        db.ForeignKey("usuario.id_usuario"),
+        db.ForeignKey("usuario.id_usuario", ondelete="CASCADE"),
         nullable=False
     )
 

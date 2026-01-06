@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Kiosco</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/kiosco.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <main class="k-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                    <span class="flash-icon">
+                        {% if category == 'success' %}✓{% elif category == 'error' %}✕{% elif category == 'warning' %}⚠{% else %}ℹ{% endif %}
+                    </span>
+                    <span class="flash-text">{{ message }}</span>
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+
+</html>
