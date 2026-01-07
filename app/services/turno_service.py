@@ -1,3 +1,4 @@
+from typing import List
 from sqlalchemy import func
 from app.models import Ticket
 from app.extensions import db
@@ -15,3 +16,20 @@ class TurnoService:
             return 1
 
         return ultimo.turno + 1
+    
+    @staticmethod
+    def get_turnos_en_espera() -> List[dict]:
+        turnos = (
+            Ticket.query
+            .filter(Ticket.estado == "activo")
+            .order_by(Ticket.fecha_hora.asc())
+            .all()
+        )
+
+        return [
+            {
+                "turno": t.turno,
+                "fecha_hora": t.fecha_hora.strftime("%H:%M")
+            }
+            for t in turnos
+        ]

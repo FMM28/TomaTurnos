@@ -1,0 +1,124 @@
+{% extends "anuncios/base.html" %}
+
+{% block title %}Sistema de Turnos{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- ───── SECCIÓN TURNOS (60%) ───── -->
+    <div class="turnos-section">
+
+        <!-- TURNOS EN LLAMADO (ESTÁTICO POR AHORA) -->
+        <div class="turnos-llamado">
+            <h2>Turnos en Llamado</h2>
+
+            <div class="llamado-grid">
+                {% for turno in turnos_llamado %}
+                <div class="turno-card">
+                    <div class="turno-numero">{{ turno.numero }}</div>
+                    <div class="turno-info">
+                        <span class="turno-ventanilla">{{ turno.ventanilla }}</span>
+                        <span class="turno-servicio">{{ turno.servicio }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="sin-turnos">
+                    <p>No hay turnos en llamado</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- TURNOS EN ESPERA (WEBSOCKET) -->
+        <div class="turnos-espera">
+            <h3>En Espera</h3>
+
+            <div class="espera-lista" id="esperaLista">
+                <!-- Contenido dinámico -->
+                <p class="texto-secundario">Cargando turnos...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ───── SECCIÓN PUBLICIDAD (40%) ───── -->
+    <div class="publicidad-section">
+        <div class="publicidad-contenido">
+            <h2>Publicidad</h2>
+            <!-- Ejemplo -->
+            <!-- <img src="{{ url_for('static', filename='img/publicidad1.jpg') }}"> -->
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+<!-- Socket.IO -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+<script>
+const socket = io();
+
+/* ───── CONEXIÓN ───── */
+socket.on("connect", () => {
+    console.log("Pantalla conectada a WebSocket");
+});
+
+/* ───── ACTUALIZAR TURNOS EN ESPERA ───── */
+socket.on("turnos_en_espera", (turnos) => {
+    const lista = document.getElementById("esperaLista");
+    if (!lista) return;
+
+    lista.innerHTML = "";
+
+    if (!turnos || turnos.length === 0) {
+        const p = document.createElement("p");
+        p.className = "texto-secundario";
+        p.textContent = "No hay turnos en espera";
+        lista.appendChild(p);
+        return;
+    }
+
+    turnos.forEach(t => {
+        const card = document.createElement("div");
+        card.className = "turno-card-pequeno";
+
+        const span = document.createElement("span");
+        span.className = "numero-pequeno";
+        span.textContent = t.turno;
+
+        card.appendChild(span);
+        lista.appendChild(card);
+    });
+
+    activarCarrusel(lista);
+});
+
+/* ───── CARRUSEL ───── */
+function activarCarrusel(lista) {
+    const items = lista.querySelectorAll('.turno-card-pequeno');
+    if (items.length === 0) return;
+
+    lista.classList.remove("carousel");
+
+    let totalWidth = 0;
+    items.forEach(item => {
+        totalWidth += item.offsetWidth + 8;
+    });
+
+    const containerWidth = lista.parentElement.clientWidth;
+
+    if (totalWidth > containerWidth) {
+        const fragment = document.createDocumentFragment();
+        items.forEach(item => {
+            fragment.appendChild(item.cloneNode(true));
+        });
+        lista.appendChild(fragment);
+        lista.classList.add("carousel");
+    }
+}
+</script>
+
+{% endblock %}

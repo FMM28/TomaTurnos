@@ -5,7 +5,7 @@ from app.services.ticket_service import TicketService
 from app.services.ticket_tramite_service import TicketTramiteService
 from app.services.turno_service import TurnoService
 from app.services.impresion_service import ImpresionService
-from app.extensions import db
+from app.extensions import db,socketio
 
 kiosco_bp = Blueprint("kiosco", __name__, url_prefix="/kiosco")
 
@@ -105,6 +105,10 @@ def kiosco_checkout():
                 return redirect(url_for("kiosco.selector_area"))
 
             db.session.commit()
+
+            turnos = TurnoService.get_turnos_en_espera()
+            socketio.emit("turnos_en_espera", turnos)
+
             session.pop("kiosk_ticket", None)
 
             return redirect(url_for("kiosco.kiosco_print_ticket", id_ticket=nuevo_ticket.id_ticket))

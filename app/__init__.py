@@ -1,7 +1,8 @@
 from flask import Flask
 from .config import Config
-from .extensions import db,migrate, bcrypt, login_manager
+from .extensions import db,migrate, bcrypt, login_manager, socketio
 from .routes import register_blueprints
+import app.sockets
 from app import models
 
 def create_app():
@@ -14,5 +15,7 @@ def create_app():
     login_manager.init_app(app)
 
     register_blueprints(app)
+
+    socketio.init_app(app, cors_allowed_origins="*", async_mode='eventlet')
 
     return app

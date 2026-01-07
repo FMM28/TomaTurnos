@@ -29,6 +29,15 @@ class TicketService:
     def get_ticket_by_id_or_404(ticket_id: int) -> Ticket:
         """Obtiene un ticket por su ID o retorna 404"""
         return Ticket.query.get_or_404(ticket_id)
+    
+    @staticmethod
+    def get_tickets_by_estado(estado: str) -> List[Ticket]:
+        """Obtiene tickets por su estado"""
+        try:
+            return Ticket.query.filter_by(estado=estado).order_by(Ticket.id_ticket).all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener tickets con estado {estado}: {e}")
+            return []
 
     @staticmethod
     def create_ticket(
