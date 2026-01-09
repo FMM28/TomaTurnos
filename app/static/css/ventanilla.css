@@ -193,7 +193,7 @@ body {
     border-radius: 8px;
     padding: 1.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    height: fit-content;
+    height: 82vh;
     position: sticky;
     top: 2rem;
 }
@@ -272,6 +272,7 @@ body {
     padding: 2rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     min-height: 500px;
+    height: 82vh;
     display: flex;
     flex-direction: column;
 }

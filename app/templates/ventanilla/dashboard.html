@@ -9,7 +9,7 @@
         <strong>
             {{ usuario.nombre }} {{ usuario.ap_paterno }} {{ usuario.ap_materno or "" }}
         </strong>
-        <span>Ventanilla {{ ventanilla.name }}</span>
+        <span>{{ ventanilla.name }}</span>
     </div>
 
     <a href="{{ url_for('auth.logout') }}" class="btn btn-logout">
@@ -54,7 +54,7 @@
 
         <form method="POST" action="{{ url_for('ventanilla.llamar_siguiente') }}">
             <button class="btn btn-primary"
-                    {% if turno_actual %}disabled{% endif %}>
+                    {% if turno_actual or turnos_en_espera|length == 0 %}disabled{% endif %}>
                 Llamar siguiente
             </button>
         </form>
@@ -133,8 +133,6 @@
 <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
 
 <script>
-
-
 const socket = io({
     transports: ["websocket"],
     reconnection: true,
@@ -170,12 +168,17 @@ function actualizarCola() {
         .then(data => {
             const lista = document.querySelector(".cola-lista");
             const contador = document.querySelector(".cola-contador");
+            const btnLlamar = document.querySelector(".cola form button");
 
             lista.innerHTML = "";
 
             if (!data.cola || data.cola.length === 0) {
                 lista.innerHTML = "<li class='vacio'>Sin turnos</li>";
                 contador.textContent = "0 personas";
+                
+                if (btnLlamar) {
+                    btnLlamar.disabled = true;
+                }
                 return;
             }
 
@@ -192,6 +195,10 @@ function actualizarCola() {
             });
 
             contador.textContent = `${data.total} personas`;
+
+            if (btnLlamar) {
+                btnLlamar.disabled = false;
+            }
         })
         .catch(err => {
             console.error("Error actualizando cola:", err);
