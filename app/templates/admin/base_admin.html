@@ -27,23 +27,7 @@
 
 </div>
 
-<script>
-    function toggleSidebar() {
-        const sidebar = document.querySelector('.admin-sidebar');
-        const overlay = document.querySelector('.sidebar-overlay');
-        sidebar.classList.toggle('active');
-        overlay.classList.toggle('active');
-    }
-
-    // Cerrar sidebar al hacer clic en un enlace en móvil
-    document.querySelectorAll('.menu-item').forEach(item => {
-        item.addEventListener('click', () => {
-            if (window.innerWidth <= 768) {
-                toggleSidebar();
-            }
-        });
-    });
-</script>
+<script src="{{ url_for('static', filename='js/admin_menu.js') }}"></script>
 
 </body>
 </html>

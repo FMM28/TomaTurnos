@@ -588,6 +588,13 @@ body {
     }
 }
 
+@keyframes slideOut {
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
 .modal-actions {
     display: flex;
     gap: 1rem;

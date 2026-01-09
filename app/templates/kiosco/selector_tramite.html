@@ -87,51 +87,7 @@
 
 </div>
 
-<script>
-let currentFormId = null;
-
-function showModal(tramiteName, formId) {
-    currentFormId = formId;
-    document.getElementById('modalTramiteName').textContent = 
-        `¿Está seguro que desea eliminar "${tramiteName}" de su selección?`;
-    document.getElementById('confirmModal').classList.add('active');
-}
-
-function closeModal() {
-    document.getElementById('confirmModal').classList.remove('active');
-    currentFormId = null;
-}
-
-function confirmRemove() {
-    if (currentFormId) {
-        document.getElementById(currentFormId).submit();
-    }
-}
-
-document.getElementById('confirmModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeModal();
-    }
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    const flashMessages = document.querySelectorAll('.flash-message');
-    flashMessages.forEach(message => {
-        setTimeout(() => {
-            message.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => message.remove(), 300);
-        }, 5000);
-    });
-});
-</script>
-
-<style>
-@keyframes slideOut {
-    to {
-        transform: translateX(400px);
-        opacity: 0;
-    }
-}
-</style>
+<script src="{{ url_for('static', filename='js/modal_kiosco.js') }}"></script>
+<script src="{{ url_for('static', filename='js/flash_messages.js') }}"></script>
 
 {% endblock %}
