@@ -1,7 +1,233 @@
-{% extends "base.html" %}
+{% extends "ventanilla/base.html" %}
 
 {% block title %}Dashboard ventanilla{% endblock %}
 
 {% block content %}
-ventanilla
+
+<header class="ventanilla-header">
+    <div class="usuario-info">
+        <strong>
+            {{ usuario.nombre }} {{ usuario.ap_paterno }} {{ usuario.ap_materno or "" }}
+        </strong>
+        <span>Ventanilla {{ ventanilla.name }}</span>
+    </div>
+
+    <a href="{{ url_for('auth.logout') }}" class="btn btn-logout">
+        Cerrar sesión
+    </a>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+        {% for category, message in messages %}
+            <div class="flash-message {{ category }}">
+            <span class="flash-icon">
+                {% if category == 'success' %}✓{% elif category == 'error' %}✕{% elif category == 'warning' %}⚠{% else %}ℹ{% endif %}
+            </span>
+            <span class="flash-text">{{ message }}</span>
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<div class="ventanilla-main">
+
+    <section class="cola">
+        <h3>En espera</h3>
+
+        <div class="cola-contador">
+            {{ turnos_en_espera|length }} personas
+        </div>
+
+        <ul class="cola-lista">
+            {% for tt in turnos_en_espera %}
+                <li>
+                    <strong>{{ tt.ticket.turno }}</strong>
+                    <span class="tramite">{{ tt.tramite.name }}</span>
+                </li>
+            {% else %}
+                <li class="vacio">Sin turnos</li>
+            {% endfor %}
+        </ul>
+
+        <form method="POST" action="{{ url_for('ventanilla.llamar_siguiente') }}">
+            <button class="btn btn-primary"
+                    {% if turno_actual %}disabled{% endif %}>
+                Llamar siguiente
+            </button>
+        </form>
+    </section>
+
+    <section class="turno-actual">
+
+        {% if turno_actual %}
+            <h3>Turno en curso</h3>
+
+            <div class="turno-numero">
+                {{ turno_actual.ticket.turno }}
+            </div>
+
+            <div class="turno-info">
+                <p>
+                    <strong>Trámite:</strong>
+                    {{ turno_actual.tramite.name }}
+                </p>
+
+                <p>
+                    <strong>Estado:</strong>
+                    {{ turno_actual.estado | capitalize }}
+                </p>
+            </div>
+
+            <div class="turno-historial">
+                <h4>Historial del ticket</h4>
+                <ul>
+                    {% for t in turno_actual.ticket.ticket_tramites %}
+                        <li class="{% if t.id_ticket_tramite == turno_actual.id_ticket_tramite %}activo{% endif %}">
+                            {{ t.tramite.name }}
+                            {% if t.estado != "espera" %}
+                                <span class="estado">({{ t.estado }})</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="acciones">
+                <form method="POST" action="{{ url_for('ventanilla.rellamar') }}">
+                    <button class="btn">
+                        Volver a llamar
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ url_for('ventanilla.reasignar') }}">
+                    <button class="btn">
+                        Reasignar
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ url_for('ventanilla.finalizar') }}">
+                    <button class="btn btn-success">
+                        Finalizar trámite
+                    </button>
+                </form>
+            </div>
+
+        {% else %}
+            <div class="sin-turno">
+                No hay turno activo
+            </div>
+        {% endif %}
+
+    </section>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+
+<script>
+
+
+const socket = io({
+    transports: ["websocket"],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000
+});
+
+socket.on("connect", () => {
+    console.log("WebSocket conectado");
+});
+
+socket.on("disconnect", () => {
+    console.warn("WebSocket desconectado");
+});
+
+socket.on("connect_error", (err) => {
+    console.error("Error WebSocket:", err);
+});
+
+socket.on("cola_actualizada", (data) => {
+    console.log("Cola actualizada", data);
+    actualizarCola();
+});
+
+function actualizarCola() {
+    fetch("/ventanilla/cola")
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Error al obtener la cola");
+            }
+            return response.json();
+        })
+        .then(data => {
+            const lista = document.querySelector(".cola-lista");
+            const contador = document.querySelector(".cola-contador");
+
+            lista.innerHTML = "";
+
+            if (!data.cola || data.cola.length === 0) {
+                lista.innerHTML = "<li class='vacio'>Sin turnos</li>";
+                contador.textContent = "0 personas";
+                return;
+            }
+
+            data.cola.forEach(tt => {
+                const li = document.createElement("li");
+
+                li.innerHTML = `
+                    <strong>${tt.ticket}</strong>
+                    <span class="tramite">${tt.tramite}</span>
+                    ${tt.prioridad ? "<span class='badge badge-prioridad'>Prioridad</span>" : ""}
+                `;
+
+                lista.appendChild(li);
+            });
+
+            contador.textContent = `${data.total} personas`;
+        })
+        .catch(err => {
+            console.error("Error actualizando cola:", err);
+        });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    actualizarCola();
+});
+
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const flashMessages = document.querySelectorAll(".flash-message");
+    
+    flashMessages.forEach((message, index) => {
+        message.style.animationDelay = `${index * 0.1}s`;
+        
+        setTimeout(() => {
+            message.style.animation = "slideOut 0.3s ease forwards";
+            setTimeout(() => {
+                message.remove();
+                const container = document.querySelector(".flash-messages");
+                if (container && container.children.length === 0) {
+                    container.remove();
+                }
+            }, 300);
+        }, 5000);
+        
+        message.addEventListener("click", () => {
+            message.style.animation = "slideOut 0.3s ease forwards";
+            setTimeout(() => message.remove(), 300);
+        });
+    });
+});
+</script>
+
 {% endblock %}

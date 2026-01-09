@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from app.auth.decorators import login_required, role_required
+from flask_login import login_required
+from app.auth.decorators import role_required
 from app.services.user_service import UserService
 from app.services.area_service import AreaService
 from app.services.tramite_service import TramiteService

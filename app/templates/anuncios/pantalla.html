@@ -5,10 +5,8 @@
 {% block content %}
 <div class="container">
 
-    <!-- ───── SECCIÓN TURNOS (60%) ───── -->
     <div class="turnos-section">
 
-        <!-- TURNOS EN LLAMADO (ESTÁTICO POR AHORA) -->
         <div class="turnos-llamado">
             <h2>Turnos en Llamado</h2>
 
@@ -29,24 +27,19 @@
             </div>
         </div>
 
-        <!-- TURNOS EN ESPERA (WEBSOCKET) -->
         <div class="turnos-espera">
             <h3>En Espera</h3>
 
             <div class="espera-lista" id="esperaLista">
-                <!-- Contenido dinámico -->
                 <p class="texto-secundario">Cargando turnos...</p>
             </div>
         </div>
 
     </div>
 
-    <!-- ───── SECCIÓN PUBLICIDAD (40%) ───── -->
     <div class="publicidad-section">
         <div class="publicidad-contenido">
             <h2>Publicidad</h2>
-            <!-- Ejemplo -->
-            <!-- <img src="{{ url_for('static', filename='img/publicidad1.jpg') }}"> -->
         </div>
     </div>
 
@@ -55,18 +48,15 @@
 
 {% block scripts %}
 
-<!-- Socket.IO -->
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/socket.io-4.8.1.min.js') }}"></script>
 
 <script>
 const socket = io();
 
-/* ───── CONEXIÓN ───── */
 socket.on("connect", () => {
     console.log("Pantalla conectada a WebSocket");
 });
 
-/* ───── ACTUALIZAR TURNOS EN ESPERA ───── */
 socket.on("turnos_en_espera", (turnos) => {
     const lista = document.getElementById("esperaLista");
     if (!lista) return;
@@ -96,7 +86,6 @@ socket.on("turnos_en_espera", (turnos) => {
     activarCarrusel(lista);
 });
 
-/* ───── CARRUSEL ───── */
 function activarCarrusel(lista) {
     const items = lista.querySelectorAll('.turno-card-pequeno');
     if (items.length === 0) return;

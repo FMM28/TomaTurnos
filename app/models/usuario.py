@@ -44,3 +44,7 @@ class Usuario(UserMixin,BaseModel):
 
     def get_id(self):
         return str(self.id_usuario)
+    
+    @property
+    def id(self):
+        return self.id_usuario

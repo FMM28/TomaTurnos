@@ -1,4 +1,5 @@
-from flask_socketio import emit
+from flask_socketio import emit, join_room
+from flask_login import current_user
 from app.extensions import socketio
 from app.services.turno_service import TurnoService
 
@@ -11,3 +12,11 @@ def on_connect():
 @socketio.on("disconnect")
 def on_disconnect():
     print("Pantalla desconectada")
+
+@socketio.on("user_connect")
+def on_user_connect():
+    if not current_user.is_authenticated:
+        return False
+
+    join_room(f"usuario_{current_user.id_usuario}")
+    emit("connected", {"ok": True})

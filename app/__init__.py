@@ -1,6 +1,7 @@
 from flask import Flask
 from .config import Config
 from .extensions import db,migrate, bcrypt, login_manager, socketio
+from app.auth.login_manager import load_user
 from .routes import register_blueprints
 import app.sockets
 from app import models

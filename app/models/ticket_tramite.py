@@ -23,7 +23,8 @@ class TicketTramite(BaseModel):
         default="espera"
     )
 
-    prioridad = db.Column(db.Integer)
+    prioridad = db.Column(db.Integer, default=0)
+    fecha_creacion = db.Column(db.DateTime, nullable=False)
 
     ticket = db.relationship("Ticket", back_populates="ticket_tramites")
     tramite = db.relationship("Tramite", back_populates="ticket_tramites")

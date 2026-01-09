@@ -108,6 +108,7 @@ def kiosco_checkout():
 
             turnos = TurnoService.get_turnos_en_espera()
             socketio.emit("turnos_en_espera", turnos)
+            socketio.emit("cola_actualizada")
 
             session.pop("kiosk_ticket", None)
 
