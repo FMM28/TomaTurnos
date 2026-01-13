@@ -18,7 +18,5 @@ class Suplente(BaseModel):
         nullable=False
     )
 
-    activo = db.Column(db.Boolean, default=False, nullable=False)
-
     usuario = db.relationship("Usuario", foreign_keys=[id_usuario], back_populates="suplentes_asignados")
     suplente_usuario = db.relationship("Usuario",foreign_keys=[id_suplente_usuario],back_populates="suplencias")

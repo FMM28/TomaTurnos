@@ -286,90 +286,90 @@ def delete_ventanilla(id_ventanilla):
     return redirect(url_for('admin.ventanillas'))
 
 
-@admin_bp.route('/ventanillas/asignar-usuario/<int:id_ventanilla>', methods=['GET'])
+@admin_bp.route('/ventanillas/<int:id_ventanilla>/tramites')
 @login_required
-def asignar_usuario_ventanilla(id_ventanilla):
+@role_required("admin")
+def ventanilla_tramites(id_ventanilla):
     ventanilla = VentanillaService.get_ventanilla_by_id(id_ventanilla)
-    
     if not ventanilla:
         flash('Ventanilla no encontrada', 'danger')
         return redirect(url_for('admin.ventanillas'))
-    
-    todos_usuarios = UserService.get_usuarios_by_role('ventanilla')
-    
-    usuarios_sin_ventanilla = []
-    usuarios_con_ventanilla = []
-    
-    for usuario in todos_usuarios:
-        if ventanilla.id_usuario and usuario.id_usuario == ventanilla.id_usuario:
-            continue
-            
-        ventanilla_usuario = VentanillaService.get_ventanilla_by_usuario(usuario.id_usuario)
-        
-        if ventanilla_usuario:
-            usuarios_con_ventanilla.append(usuario)
+
+    tramites_ventanilla = TramiteService.get_tramites_by_ventanilla(
+        id_ventanilla
+    )
+
+    tramites_area = TramiteService.get_tramites_by_area_excluyendo(
+        ventanilla.id_area,
+        {t.id_tramite for t in tramites_ventanilla}
+    )
+
+    tramites_sin_ventanilla = []
+    tramites_con_otra_ventanilla = []
+
+    for tramite in tramites_area:
+        if not tramite.id_ventanilla:
+            tramites_sin_ventanilla.append(tramite)
         else:
-            usuarios_sin_ventanilla.append(usuario)
-    
+            tramites_con_otra_ventanilla.append(tramite)
+
     return render_template(
-        'admin/asignar_usuario_ventanilla.html',
+        'admin/asignar_tramite_ventanilla.html',
         ventanilla=ventanilla,
-        usuarios_sin_ventanilla=usuarios_sin_ventanilla,
-        usuarios_con_ventanilla=usuarios_con_ventanilla
+        tramites_ventanilla=tramites_ventanilla,
+        tramites_sin_ventanilla=tramites_sin_ventanilla,
+        tramites_con_otra_ventanilla=tramites_con_otra_ventanilla
     )
 
 
-@admin_bp.route('/ventanillas/asignar-usuario/<int:id_ventanilla>/<int:id_usuario>', methods=['POST'])
+@admin_bp.route('/ventanillas/<int:id_ventanilla>/tramites/<int:id_tramite>', methods=['POST'])
 @login_required
-def asignar_usuario_ventanilla_post(id_ventanilla, id_usuario):
+@role_required("admin")
+def asignar_tramite_ventanilla(id_ventanilla, id_tramite):
+    redirect_to = request.form.get('next')
+
     ventanilla = VentanillaService.get_ventanilla_by_id(id_ventanilla)
-    
-    if not ventanilla:
-        flash('Ventanilla no encontrada', 'danger')
-        return redirect(url_for('admin.ventanillas'))
-    
-    ventanilla_anterior = VentanillaService.get_ventanilla_by_usuario(id_usuario)
-    
-    if ventanilla_anterior:
-        _, error = VentanillaService.desasignar_usuario(ventanilla_anterior.id_ventanilla)
-        if error:
-            flash(f'Error al desasignar de ventanilla anterior: {error}', 'danger')
-            return redirect(url_for('admin.asignar_usuario_ventanilla', id_ventanilla=id_ventanilla))
-    
-    _, error = VentanillaService.asignar_usuario(id_ventanilla, id_usuario)
-    
+    tramite = TramiteService.get_tramite_by_id(id_tramite)
+
+    if not ventanilla or not tramite:
+        flash('Ventanilla o trámite no encontrados', 'error')
+        return redirect(redirect_to)
+
+    _, error = TramiteService.asignar_tramite_a_ventanilla(
+        id_tramite,
+        id_ventanilla
+    )
+
     if error:
-        flash(f'Error al asignar usuario: {error}', 'danger')
+        flash(error, 'danger')
     else:
-        if ventanilla_anterior:
-            flash(f'Usuario reasignado correctamente de "{ventanilla_anterior.name}" a "{ventanilla.name}"', 'success')
-        else:
-            flash('Usuario asignado correctamente', 'success')
+        flash('Trámite asignado correctamente a la ventanilla', 'success')
     
-    return redirect(url_for('admin.asignar_usuario_ventanilla', id_ventanilla=id_ventanilla))
+    return redirect(redirect_to)
 
 
-@admin_bp.route('/ventanillas/desasignar-usuario/<int:id_ventanilla>', methods=['POST'])
+@admin_bp.route('/ventanillas/<int:id_ventanilla>/tramites/<int:id_tramite>/delete', methods=['POST'])
 @login_required
-def desasignar_usuario_ventanilla(id_ventanilla):
-    ventanilla = VentanillaService.get_ventanilla_by_id(id_ventanilla)
-    
-    if not ventanilla:
-        flash('Ventanilla no encontrada', 'danger')
-        return redirect(url_for('admin.ventanillas'))
-    
-    if not ventanilla.id_usuario:
-        flash('Esta ventanilla no tiene usuario asignado', 'warning')
-        return redirect(url_for('admin.asignar_usuario_ventanilla', id_ventanilla=id_ventanilla))
-    
-    _, error = VentanillaService.desasignar_usuario(id_ventanilla)
-    
+@role_required("admin")
+def desasignar_tramite_ventanilla(id_ventanilla, id_tramite):
+    redirect_to = request.form.get('next')
+
+    tramite = TramiteService.get_tramite_by_id(id_tramite)
+
+    if not tramite:
+        flash('Trámite no encontrado', 'error')
+        return redirect(redirect_to)
+
+    _, error = TramiteService.desasignar_tramite_de_ventanilla(
+        id_tramite
+    )
+
     if error:
-        flash(f'Error al desasignar usuario: {error}', 'danger')
+        flash(error, 'danger')
     else:
-        flash('Usuario desasignado correctamente', 'success')
-    
-    return redirect(url_for('admin.asignar_usuario_ventanilla', id_ventanilla=id_ventanilla))
+        flash('Trámite desasignado correctamente de la ventanilla', 'success')
+
+    return redirect(redirect_to)
 
 
 @admin_bp.route('/tramites/asignar-usuario/<int:id_tramite>', methods=['GET'])
@@ -489,22 +489,19 @@ def suplentes_usuario(id_usuario):
 
     suplentes = SuplenteService.get_suplentes_by_usuario(id_usuario)
 
-    suplentes_activos = [s for s in suplentes if s.activo]
-    suplentes_inactivos = [s for s in suplentes if not s.activo]
-
-    suplentes_ids = {s.id_suplente_usuario for s in suplentes}
-
-    todos_usuarios = UserService.get_usuarios_by_role('ventanilla')
-    usuarios_no_asignados = [
-        u for u in todos_usuarios
-        if u.id_usuario != id_usuario and u.id_usuario not in suplentes_ids
+    suplentes_ids = [
+        s.id_suplente_usuario for s in suplentes
     ]
+
+    usuarios_no_asignados = SuplenteService.get_usuarios_disponibles(
+        id_usuario=id_usuario,
+        excluir_ids=suplentes_ids
+    )
 
     return render_template(
         'admin/suplentes.html',
         usuario=usuario,
-        suplentes_activos=suplentes_activos,
-        suplentes_inactivos=suplentes_inactivos,
+        suplentes=suplentes,
         usuarios_no_asignados=usuarios_no_asignados
     )
 
@@ -514,8 +511,7 @@ def suplentes_usuario(id_usuario):
 def asignar_suplente(id_usuario, id_suplente_usuario):
     _, error = SuplenteService.create_suplente(
         id_usuario=id_usuario,
-        id_suplente_usuario=id_suplente_usuario,
-        activo=False
+        id_suplente_usuario=id_suplente_usuario
     )
 
     if error:
@@ -524,34 +520,6 @@ def asignar_suplente(id_usuario, id_suplente_usuario):
         flash('Suplente asignado correctamente', 'success')
 
     return redirect(url_for('admin.suplentes_usuario', id_usuario=id_usuario))
-
-
-@admin_bp.route('/suplentes/<int:id_suplente>/activar', methods=['POST'])
-@login_required
-def activar_suplente(id_suplente):
-    ok, error = SuplenteService.activate_suplente(id_suplente)
-
-    if error:
-        flash(error, 'danger')
-    else:
-        flash('Suplente activado', 'success')
-
-    suplente = SuplenteService.get_suplente_by_id(id_suplente)
-    return redirect(url_for('admin.suplentes_usuario', id_usuario=suplente.id_usuario))
-
-
-@admin_bp.route('/suplentes/<int:id_suplente>/desactivar', methods=['POST'])
-@login_required
-def desactivar_suplente(id_suplente):
-    ok, error = SuplenteService.deactivate_suplente(id_suplente)
-
-    if error:
-        flash(error, 'danger')
-    else:
-        flash('Suplente desactivado', 'success')
-
-    suplente = SuplenteService.get_suplente_by_id(id_suplente)
-    return redirect(url_for('admin.suplentes_usuario', id_usuario=suplente.id_usuario))
 
 
 @admin_bp.route('/suplentes/<int:id_suplente>/eliminar', methods=['POST'])

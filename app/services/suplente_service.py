@@ -1,4 +1,5 @@
 from app.models import Suplente
+from app.models import Usuario
 from app.extensions import db
 from typing import List, Optional, Tuple
 from sqlalchemy.exc import SQLAlchemyError
@@ -30,13 +31,28 @@ class SuplenteService:
             return None
         
     @staticmethod
-    def create_suplente(id_usuario: int, id_suplente_usuario: int, activo: bool = False) -> Tuple[Optional[Suplente], Optional[str]]:
+    def get_usuarios_disponibles(
+        id_usuario: int,
+        excluir_ids: list[int] | None = None
+    ) -> list[Usuario]:
+        query = Usuario.query.filter(
+            Usuario.role == 'ventanilla',
+            Usuario.id_usuario != id_usuario
+        )
+
+        if excluir_ids:
+            query = query.filter(~Usuario.id_usuario.in_(excluir_ids))
+
+        return query.order_by(Usuario.username).all()
+
+        
+    @staticmethod
+    def create_suplente(id_usuario: int, id_suplente_usuario: int) -> Tuple[Optional[Suplente], Optional[str]]:
         """Crea un nuevo suplente"""
         try:
             nuevo_suplente = Suplente(
                 id_usuario=id_usuario,
-                id_suplente_usuario=id_suplente_usuario,
-                activo=activo
+                id_suplente_usuario=id_suplente_usuario
             )
             db.session.add(nuevo_suplente)
             db.session.commit()
@@ -47,37 +63,6 @@ class SuplenteService:
             print(error_msg)
             return None, error_msg
         
-    @staticmethod
-    def deactivate_suplente(suplente_id: int) -> Tuple[bool, Optional[str]]:
-        """Desactiva un suplente por su ID"""
-        try:
-            suplente = Suplente.query.get(suplente_id)
-            if not suplente:
-                return False, "Suplente no encontrado"
-            suplente.activo = False
-            db.session.commit()
-            return True, None
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            error_msg = f"Error al desactivar suplente {suplente_id}: {e}"
-            print(error_msg)
-            return False, error_msg
-        
-    @staticmethod
-    def activate_suplente(suplente_id: int) -> Tuple[bool, Optional[str]]:
-        """Activa un suplente por su ID"""
-        try:
-            suplente = Suplente.query.get(suplente_id)
-            if not suplente:
-                return False, "Suplente no encontrado"
-            suplente.activo = True
-            db.session.commit()
-            return True, None
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            error_msg = f"Error al activar suplente {suplente_id}: {e}"
-            print(error_msg)
-            return False, error_msg
         
     @staticmethod
     def delete_suplente(suplente_id: int) -> Optional[str]:

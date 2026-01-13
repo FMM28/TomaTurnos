@@ -1,5 +1,4 @@
 from app.models.ventanilla import Ventanilla
-from app.models.usuario import Usuario
 from app.extensions import db
 from typing import List, Optional, Tuple
 from sqlalchemy.exc import SQLAlchemyError
@@ -35,15 +34,6 @@ class VentanillaService:
             return []
     
     @staticmethod
-    def get_ventanilla_by_usuario(id_usuario: int) -> Optional[Ventanilla]:
-        """Obtiene la ventanilla asignada a un usuario"""
-        try:
-            return Ventanilla.query.filter_by(id_usuario=id_usuario).first()
-        except SQLAlchemyError as e:
-            print(f"Error al obtener ventanilla del usuario {id_usuario}: {e}")
-            return None
-    
-    @staticmethod
     def ventanilla_exists_by_name(name: str, exclude_id: Optional[int] = None) -> bool:
         """Verifica si existe una ventanilla con el nombre dado"""
         try:
@@ -55,20 +45,6 @@ class VentanillaService:
             return query.first() is not None
         except SQLAlchemyError as e:
             print(f"Error al verificar existencia de ventanilla: {e}")
-            return False
-    
-    @staticmethod
-    def usuario_ya_tiene_ventanilla(id_usuario: int, exclude_ventanilla_id: Optional[int] = None) -> bool:
-        """Verifica si un usuario ya tiene una ventanilla asignada"""
-        try:
-            query = Ventanilla.query.filter(Ventanilla.id_usuario == id_usuario)
-            
-            if exclude_ventanilla_id is not None:
-                query = query.filter(Ventanilla.id_ventanilla != exclude_ventanilla_id)
-            
-            return query.first() is not None
-        except SQLAlchemyError as e:
-            print(f"Error al verificar ventanilla del usuario: {e}")
             return False
     
     @staticmethod
@@ -120,47 +96,6 @@ class VentanillaService:
         except SQLAlchemyError as e:
             db.session.rollback()
             error_msg = f"Error al actualizar ventanilla: {str(e)}"
-            print(error_msg)
-            return None, error_msg
-    
-    @staticmethod
-    def asignar_usuario(id_ventanilla: int, id_usuario: int) -> Tuple[Optional[Ventanilla], Optional[str]]:
-        """Asigna un usuario a una ventanilla"""
-        try:
-            ventanilla = Ventanilla.query.get(id_ventanilla)
-            if not ventanilla:
-                return None, "Ventanilla no encontrada"
-            
-            usuario = Usuario.query.get(id_usuario)
-            if not usuario:
-                return None, "Usuario no encontrado"
-            
-            if VentanillaService.usuario_ya_tiene_ventanilla(id_usuario, exclude_ventanilla_id=id_ventanilla):
-                return None, "El usuario ya tiene una ventanilla asignada"
-            
-            ventanilla.id_usuario = id_usuario
-            db.session.commit()
-            return ventanilla, None
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            error_msg = f"Error al asignar usuario a ventanilla: {str(e)}"
-            print(error_msg)
-            return None, error_msg
-    
-    @staticmethod
-    def desasignar_usuario(id_ventanilla: int) -> Tuple[Optional[Ventanilla], Optional[str]]:
-        """Remueve el usuario asignado de una ventanilla"""
-        try:
-            ventanilla = Ventanilla.query.get(id_ventanilla)
-            if not ventanilla:
-                return None, "Ventanilla no encontrada"
-            
-            ventanilla.id_usuario = None
-            db.session.commit()
-            return ventanilla, None
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            error_msg = f"Error al desasignar usuario de ventanilla: {str(e)}"
             print(error_msg)
             return None, error_msg
     

@@ -32,102 +32,61 @@ Suplentes de {{ usuario.nombre }} {{ usuario.ap_paterno }}
     {% endwith %}
 
     <div class="users-section">
-        <h3 class="section-title">Suplentes activos</h3>
+        <h3 class="section-title">Suplentes asignados</h3>
 
-        {% if suplentes_activos %}
-            {% for suplente in suplentes_activos %}
+        {% if suplentes %}
+            {% for suplente in suplentes %}
             <div class="user-card active">
                 <div class="user-info">
                     <span class="user-name">
                         {{ suplente.suplente_usuario.nombre }}
                         {{ suplente.suplente_usuario.ap_paterno }}
                     </span>
-                    <span class="badge badge-success">Activo</span>
                 </div>
 
                 <form method="POST"
-                      action="{{ url_for('admin.desactivar_suplente',
-                                         id_suplente=suplente.id_suplente) }}">
-                    <button class="btn-unassign">
-                        Desactivar
+                      action="{{ url_for('admin.eliminar_suplente',
+                                         id_suplente=suplente.id_suplente) }}"
+                      onsubmit="return confirm('¿Desea desasignar este suplente?');">
+                    <button class="btn-delete">
+                        Desasignar
                     </button>
                 </form>
             </div>
             {% endfor %}
         {% else %}
-            <p class="empty-state">No hay suplentes activos</p>
+            <p class="empty-state">No hay suplentes asignados</p>
         {% endif %}
     </div>
 
     <div class="users-section">
-        <h3 class="section-title">Suplentes asignados (inactivos)</h3>
+        <h3 class="section-title">
+            Usuarios disponibles para suplencia
+            <span class="badge">{{ usuarios_no_asignados | length }}</span>
+        </h3>
 
-        {% if suplentes_inactivos %}
-            {% for suplente in suplentes_inactivos %}
+        {% if usuarios_no_asignados %}
+            {% for user in usuarios_no_asignados %}
             <div class="user-card">
                 <div class="user-info">
                     <span class="user-name">
-                        {{ suplente.suplente_usuario.nombre }}
-                        {{ suplente.suplente_usuario.ap_paterno }}
+                        {{ user.nombre }} {{ user.ap_paterno }}
                     </span>
-                    <span class="badge badge-secondary">Inactivo</span>
                 </div>
 
-                <div class="actions-cell">
-                    <form method="POST"
-                          action="{{ url_for('admin.activar_suplente',
-                                             id_suplente=suplente.id_suplente) }}">
-                        <button class="btn-assign">
-                            Activar
-                        </button>
-                    </form>
-
-                    <form method="POST"
-                          action="{{ url_for('admin.eliminar_suplente',
-                                             id_suplente=suplente.id_suplente) }}"
-                          onsubmit="return confirm('¿Desea desasignar este suplente?');">
-                        <button class="btn-delete">
-                            Desasignar
-                        </button>
-                    </form>
-                </div>
+                <form method="POST"
+                      action="{{ url_for('admin.asignar_suplente',
+                                         id_usuario=usuario.id_usuario,
+                                         id_suplente_usuario=user.id_usuario) }}">
+                    <button class="btn-assign">
+                        Asignar
+                    </button>
+                </form>
             </div>
             {% endfor %}
         {% else %}
-            <p class="empty-state">No hay suplentes asignados inactivos</p>
+            <p class="empty-state">No hay usuarios disponibles</p>
         {% endif %}
-    </div>
-
-    <div class="users-section">
-        <details class="area-collapse">
-            <summary class="area-title">
-                Asignar nuevo suplente
-                <span class="badge">{{ usuarios_no_asignados | length }}</span>
-            </summary>
-
-            {% if usuarios_no_asignados %}
-                {% for user in usuarios_no_asignados %}
-                <div class="user-card">
-                    <div class="user-info">
-                        <span class="user-name">
-                            {{ user.nombre }} {{ user.ap_paterno }}
-                        </span>
-                    </div>
-
-                    <form method="POST"
-                          action="{{ url_for('admin.asignar_suplente',
-                                             id_usuario=usuario.id_usuario,
-                                             id_suplente_usuario=user.id_usuario) }}">
-                        <button class="btn-assign">
-                            Asignar
-                        </button>
-                    </form>
-                </div>
-                {% endfor %}
-            {% else %}
-                <p class="empty-state">No hay usuarios disponibles</p>
-            {% endif %}
-        </details>
     </div>
 
 </div>

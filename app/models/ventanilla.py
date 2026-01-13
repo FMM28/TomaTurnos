@@ -13,13 +13,6 @@ class Ventanilla(BaseModel):
         nullable=True
     )
 
-    id_usuario = db.Column(
-        db.Integer,
-        db.ForeignKey("usuario.id_usuario"),
-        nullable=True,
-        unique=True
-    )
-
     area = db.relationship("Area", back_populates="ventanillas")
     atenciones = db.relationship("Atencion", back_populates="ventanilla")
-    usuario = db.relationship("Usuario", back_populates="ventanilla", uselist=False)
+    tramites = db.relationship("Tramite", back_populates="ventanilla")

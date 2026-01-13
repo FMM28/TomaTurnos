@@ -51,6 +51,29 @@ class TramiteService:
         except SQLAlchemyError as e:
             print(f"Error al verificar existencia de trámite: {e}")
             return False
+        
+    @staticmethod
+    def get_tramites_by_ventanilla(ventanilla_id: int) -> List[Tramite]:
+        """Obtiene todos los trámites asignados a una ventanilla específica"""
+        try:
+            return Tramite.query.filter_by(id_ventanilla=ventanilla_id).order_by(Tramite.id_tramite).all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener trámites de la ventanilla {ventanilla_id}: {e}")
+            return []
+        
+    @staticmethod
+    def get_tramites_by_area_excluyendo(area_id: int, excluir_ids: set[int]) -> List[Tramite]:
+        """Obtiene todos los trámites de un área específica excluyendo ciertos IDs"""
+        try:
+            query = Tramite.query.filter(Tramite.id_area == area_id)
+            
+            if excluir_ids:
+                query = query.filter(~Tramite.id_tramite.in_(excluir_ids))
+            
+            return query.order_by(Tramite.id_tramite).all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener trámites del área {area_id} excluyendo IDs {excluir_ids}: {e}")
+            return []
     
     @staticmethod
     def create_tramite(area_id: int, name: str) -> Tuple[Optional[Tramite], Optional[str]]:
@@ -64,7 +87,12 @@ class TramiteService:
             if TramiteService.tramite_exists_by_name(name):
                 return None, "Ya existe un trámite con ese nombre"
             
-            tramite = Tramite(id_area=area_id, name=name)
+            tramite = Tramite(
+                id_area=area_id,
+                name=name,
+                id_ventanilla=None
+            )
+
             db.session.add(tramite)
             db.session.commit()
             return tramite, None
@@ -96,6 +124,40 @@ class TramiteService:
         except SQLAlchemyError as e:
             db.session.rollback()
             error_msg = f"Error al actualizar el trámite: {str(e)}"
+            print(error_msg)
+            return None, error_msg
+        
+    @staticmethod
+    def asignar_tramite_a_ventanilla(tramite_id: int, ventanilla_id: int) -> Tuple[Optional[Tramite], Optional[str]]:
+        """Asigna un trámite a una ventanilla"""
+        try:
+            tramite = Tramite.query.get(tramite_id)
+            if not tramite:
+                return None, "Trámite no encontrado"
+            
+            tramite.id_ventanilla = ventanilla_id
+            db.session.commit()
+            return tramite, None
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            error_msg = f"Error al asignar el trámite a la ventanilla: {str(e)}"
+            print(error_msg)
+            return None, error_msg
+        
+    @staticmethod
+    def desasignar_tramite_de_ventanilla(tramite_id: int) -> Tuple[Optional[Tramite], Optional[str]]:
+        """Desasigna un trámite de su ventanilla"""
+        try:
+            tramite = Tramite.query.get(tramite_id)
+            if not tramite:
+                return None, "Trámite no encontrado"
+            
+            tramite.id_ventanilla = None
+            db.session.commit()
+            return tramite, None
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            error_msg = f"Error al desasignar el trámite de la ventanilla: {str(e)}"
             print(error_msg)
             return None, error_msg
     
