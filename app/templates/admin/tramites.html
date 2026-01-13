@@ -15,6 +15,7 @@
 {% block table_columns %}
     <th>ID</th>
     <th>Nombre</th>
+    <th>Ventanilla</th>
     <th>Acciones</th>
 {% endblock %}
 
@@ -23,13 +24,51 @@
         {% for tramite in tramites %}
         <tr>
             <td>{{ tramite.id_tramite }}</td>
-            <td><strong>{{ tramite.name }}</strong></td>
+
+            <td>
+                <strong>{{ tramite.name }}</strong>
+            </td>
+
+            <td>
+                {% if tramite.ventanilla %}
+                    <span class="badge badge-assigned">
+                        {{ tramite.ventanilla.name }}
+                    </span>
+                {% else %}
+                    <span class="badge badge-available">
+                        Sin ventanilla
+                    </span>
+                {% endif %}
+            </td>
+
             <td>
                 <div class="actions-cell">
-                    <a href="{{ url_for('admin.asignar_usuario_tramite', id_tramite=tramite.id_tramite) }}" class="btn-user">Usuarios</a>
-                    <a href="{{ url_for('admin.edit_tramite', id_tramite=tramite.id_tramite) }}" class="btn-edit">Editar</a>
-                    <form method="POST" action="{{ url_for('admin.delete_tramite', id_tramite=tramite.id_tramite) }}" class="delete-form" onsubmit="return confirm('¿Está seguro de eliminar este trámite?');">
-                        <button type="submit" class="btn-delete">Eliminar</button>
+
+                    <a href="{{ url_for('admin.tramite_ventanilla', id_tramite=tramite.id_tramite) }}"
+                       class="btn-view">
+                        Ventanilla
+                    </a>
+
+                    <a href="{{ url_for('admin.asignar_usuario_tramite',
+                                        id_tramite=tramite.id_tramite) }}"
+                       class="btn-user">
+                        Usuarios
+                    </a>
+
+                    <a href="{{ url_for('admin.edit_tramite',
+                                        id_tramite=tramite.id_tramite) }}"
+                       class="btn-edit">
+                        Editar
+                    </a>
+
+                    <form method="POST"
+                          action="{{ url_for('admin.delete_tramite',
+                                             id_tramite=tramite.id_tramite) }}"
+                          class="delete-form"
+                          onsubmit="return confirm('¿Está seguro de eliminar este trámite?');">
+                        <button type="submit" class="btn-delete">
+                            Eliminar
+                        </button>
                     </form>
                 </div>
             </td>

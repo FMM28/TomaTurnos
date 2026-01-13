@@ -419,6 +419,7 @@ def asignar_usuario_tramite_post(id_tramite, id_usuario):
 
     return redirect(redirect_to)
 
+
 @admin_bp.route('/tramites/desasignar-usuario/<int:id_tramite>/<int:id_usuario>', methods=['POST'])
 @login_required
 def desasignar_usuario_tramite(id_tramite, id_usuario):
@@ -443,6 +444,20 @@ def desasignar_usuario_tramite(id_tramite, id_usuario):
         flash('Usuario desasignado correctamente del trámite', 'success')
 
     return redirect(redirect_to)
+
+
+@admin_bp.route('/tramites/<int:id_tramite>/ventanilla')
+@login_required
+@role_required("admin")
+def tramite_ventanilla(id_tramite):
+    tramite = TramiteService.get_tramite_by_id(id_tramite)
+    if not tramite:
+        flash('Trámite no encontrado', 'danger')
+        return redirect(url_for('admin.areas'))
+
+    ventanillas = VentanillaService.get_ventanillas_by_area(tramite.id_area)
+
+    return render_template('admin/form_tramite_ventanilla.html', tramite=tramite, ventanillas=ventanillas)
 
 
 @admin_bp.route('/users/<int:id_usuario>/tramites')

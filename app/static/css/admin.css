@@ -183,6 +183,7 @@ body {
     font-size: 2rem;
     font-weight: 600;
     color: #1a1a1a;
+    white-space: nowrap;
 }
 
 .page-subtitle {
@@ -233,6 +234,7 @@ body {
     font-weight: 500;
     font-size: 1rem;
     transition: background-color 0.2s ease;
+    white-space: nowrap;
 }
 
 .btn-secondary:hover {
@@ -324,6 +326,8 @@ body {
     border-radius: 12px;
     font-size: 0.875rem;
     font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
 }
 
 .badge-success { background-color: #d4edda; color: #155724; }
