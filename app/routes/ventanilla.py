@@ -3,6 +3,7 @@ from flask_login import current_user, login_required
 from app.auth.decorators import role_required
 from app.services.ventanilla_service import VentanillaService
 from app.services.ticket_tramite_service import TicketTramiteService
+from app.services.atencion_service import AtencionService
 
 ventanilla_bp = Blueprint("ventanilla", __name__, url_prefix="/ventanilla")
 
@@ -11,7 +12,7 @@ ventanilla_bp = Blueprint("ventanilla", __name__, url_prefix="/ventanilla")
 @role_required("ventanilla")
 def dashboard():
     turnos_en_espera = TicketTramiteService.get_cola_para_usuario(current_user.id_usuario)
-    turno_actual = None
+    turno_actual = AtencionService.get_atencion_activa_por_usuario(current_user.id_usuario)
 
     return render_template(
         "ventanilla/dashboard.html",
@@ -26,15 +27,33 @@ def dashboard():
 @login_required
 @role_required("ventanilla")
 def llamar_siguiente():
+    sigiente = TicketTramiteService.get_siguiente_para_usuario(current_user.id_usuario)
+    if not sigiente:
+        flash("No hay turnos esperando", "warning")
+        return redirect(url_for("ventanilla.dashboard"))
+    _, error = AtencionService.iniciar_atencion(
+        ticket_tramite=sigiente,
+        id_usuario=current_user.id_usuario
+    )
+    if error:
+        flash(f"Error al llamar el turno: {error}", "error")
+        return redirect(url_for("ventanilla.dashboard"))
     flash("Turno llamado", "success")
-    return redirect(url_for("ventanilla.dashboard"))
+    return redirect(url_for("ventanilla.dashboard",turno_actual=sigiente))
 
 
 @ventanilla_bp.post("/rellamar")
 @login_required
 @role_required("ventanilla")
 def rellamar():
-    flash("Turno vuelto a llamar")
+    atencion = AtencionService.get_atencion_activa_por_ventanilla(
+        id_ventanilla=VentanillaService.get_ventanilla_by_usuario(current_user.id).id_ventanilla
+    )
+    if not atencion:
+        flash("No hay turno activo para volver a llamar", "warning")
+        return redirect(url_for("ventanilla.dashboard"))
+    AtencionService.rellamar(atencion)
+    flash("Turno vuelto a llamar", "success")
     return redirect(url_for("ventanilla.dashboard"))
 
 
@@ -68,7 +87,8 @@ def cola():
             {
                 "ticket": tt.ticket.turno,
                 "tramite": tt.tramite.name,
-                "id_ticket_tramite": tt.id_ticket_tramite
+                "id_ticket_tramite": tt.id_ticket_tramite,
+                "estado": tt.estado
             }
             for tt in cola
         ]

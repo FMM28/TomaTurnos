@@ -33,7 +33,7 @@ class TicketTramiteService:
                 id_ticket=id_ticket,
                 id_tramite=id_tramite,
                 prioridad=prioridad,
-                estado="pendiente",
+                estado="espera",
                 fecha_creacion=datetime.now()
             )
             db.session.add(tt)
@@ -52,7 +52,10 @@ class TicketTramiteService:
         """Crea múltiples trámites para un mismo ticket"""
         try:
             registros = []
+            TicketTramiteService.create(id_ticket, tramites[0], prioridad)
             for id_tramite in tramites:
+                if id_tramite == tramites[0]:
+                    continue
                 tt = TicketTramite(
                     id_ticket=id_ticket,
                     id_tramite=id_tramite,
@@ -84,7 +87,7 @@ class TicketTramiteService:
                 TicketTramite.query
                 .join(Ticket)
                 .filter(
-                    TicketTramite.estado == "pendiente",
+                    TicketTramite.estado.in_(["pendiente", "espera"]),
                     TicketTramite.id_tramite.in_(subquery),
                     Ticket.estado == "activo"
                 )
@@ -104,7 +107,22 @@ class TicketTramiteService:
         Obtiene el siguiente TicketTramite que puede atender el usuario
         """
         cola = TicketTramiteService.get_cola_para_usuario(usuario_id)
+        cola = [tt for tt in cola if tt.estado == "espera"]
         return cola[0] if cola else None
+
+    @staticmethod
+    def marcar_espera(ticket_tramite_id: int) -> Tuple[bool, Optional[str]]:
+        try:
+            tt = TicketTramite.query.get(ticket_tramite_id)
+            if not tt:
+                return False, "TicketTramite no encontrado"
+
+            tt.estado = "espera"
+            db.session.commit()
+            return True, None
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return False, str(e)
 
     @staticmethod
     def marcar_atendiendo(ticket_tramite_id: int) -> Tuple[bool, Optional[str]]:

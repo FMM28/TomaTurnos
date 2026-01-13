@@ -46,6 +46,7 @@
                 <li>
                     <strong>{{ tt.ticket.turno }}</strong>
                     <span class="tramite">{{ tt.tramite.name }}</span>
+                    <span class="badge badge-estado">{{ tt.estado }}</span>
                 </li>
             {% else %}
                 <li class="vacio">Sin turnos</li>
@@ -66,13 +67,13 @@
             <h3>Turno en curso</h3>
 
             <div class="turno-numero">
-                {{ turno_actual.ticket.turno }}
+                {{ turno_actual.ticket_tramite.ticket.turno }}
             </div>
 
             <div class="turno-info">
                 <p>
                     <strong>Trámite:</strong>
-                    {{ turno_actual.tramite.name }}
+                    {{ turno_actual.ticket_tramite.tramite.name }}
                 </p>
 
                 <p>
@@ -84,11 +85,16 @@
             <div class="turno-historial">
                 <h4>Historial del ticket</h4>
                 <ul>
-                    {% for t in turno_actual.ticket.ticket_tramites %}
-                        <li class="{% if t.id_ticket_tramite == turno_actual.id_ticket_tramite %}activo{% endif %}">
-                            {{ t.tramite.name }}
+                    {% for t in turno_actual.ticket_tramite.atenciones %}
+                        <li >
+                            {{ t.ticket_tramite.tramite.name }}
                             {% if t.estado != "espera" %}
                                 <span class="estado">({{ t.estado }})</span>
+                                <span>
+                                    {% if t.descripcion_estado %}
+                                    {{ t.descripcion_estado }}
+                                    {% endif %}
+                                </span>
                             {% endif %}
                         </li>
                     {% endfor %}
@@ -188,7 +194,7 @@ function actualizarCola() {
                 li.innerHTML = `
                     <strong>${tt.ticket}</strong>
                     <span class="tramite">${tt.tramite}</span>
-                    ${tt.prioridad ? "<span class='badge badge-prioridad'>Prioridad</span>" : ""}
+                    <span class='badge badge-estado'>${tt.estado}</span>
                 `;
 
                 lista.appendChild(li);

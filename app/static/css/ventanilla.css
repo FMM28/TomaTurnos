@@ -265,6 +265,16 @@ body {
     width: 100%;
 }
 
+.badge-estado {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+    text-transform: capitalize;
+}
+
 /* Turno Actual */
 .turno-actual {
     background: #ffffff;
