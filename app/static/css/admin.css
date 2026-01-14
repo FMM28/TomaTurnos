@@ -50,9 +50,19 @@ body {
     height: auto;
 }
 
-.sidebar-header span {
-    font-weight: 600;
+.sidebar-usuario {
+    font-weight: bold;
     font-size: 1.1rem;
+}
+
+.sidebar-rol {
+    font-size: 0.9rem;
+    color: #bbb;
+}
+
+.sidebar-header-info {
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar-menu {

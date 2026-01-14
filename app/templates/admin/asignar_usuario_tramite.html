@@ -5,10 +5,12 @@
 {% block content %}
 <div class="users-page">
     <div class="page-header">
-        <h1 class="page-title">Asignar Usuarios al Trámite</h1>
-        <p class="page-subtitle">
-            Trámite: <strong>{{ tramite.name }}</strong>
-        </p>
+        <div>
+            <h1 class="page-title">Asignar Usuarios al Trámite</h1>
+            <p class="page-subtitle">
+                Trámite: <strong>{{ tramite.name }}</strong>
+            </p>
+        </div>
         <div class="header-actions">
             <a href="{{ url_for('admin.tramites', id_area=tramite.id_area) }}"
                class="btn-secondary">
