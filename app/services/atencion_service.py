@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
 from app.extensions import db
 from app.models import Atencion, TicketTramite, Ventanilla
+from app.services.ventanilla_service import VentanillaService
 
 
 class AtencionService:
@@ -11,23 +12,17 @@ class AtencionService:
     """
 
     @staticmethod
-    def iniciar_atencion(
-        ticket_tramite: TicketTramite,
-        id_usuario: int
-    ) -> Tuple[Optional[Atencion], Optional[str]]:
+    def iniciar_atencion(ticket_tramite: TicketTramite,id_usuario: int) -> Tuple[Optional[Atencion], Optional[str]]:
         """
         Marca un TicketTramite como atendiendo y crea la atención
         """
 
         try:
-            ventanilla = Ventanilla.query.filter_by(
-                id_usuario=id_usuario
-            ).first()
+            ventanilla = VentanillaService.get_ventanilla_by_tramite(ticket_tramite.id_tramite)
 
             if not ventanilla:
-                return None, "El usuario no tiene ventanilla asignada"
+                return None, "El trámite no tiene ventanilla asignada"
 
-            # Crear atención
             atencion = Atencion(
                 id_ticket_tramite=ticket_tramite.id_ticket_tramite,
                 id_ventanilla=ventanilla.id_ventanilla,
@@ -48,9 +43,7 @@ class AtencionService:
             return None, str(e)
 
     @staticmethod
-    def get_atencion_activa_por_usuario(
-        id_usuario: int
-    ) -> Optional[Atencion]:
+    def get_atencion_activa_por_usuario(id_usuario: int) -> Optional[Atencion]:
         """
         Retorna la atención activa del usuario (si existe)
         """
@@ -64,24 +57,13 @@ class AtencionService:
             .order_by(Atencion.hora_inicio.desc())
             .first()
         )
-
+    
     @staticmethod
-    def get_atencion_activa_por_ventanilla(
-        id_ventanilla: int
-    ) -> Optional[Atencion]:
+    def get_atencion_by_id(id_atencion: int) -> Optional[Atencion]:
         """
-        Retorna la atención activa de una ventanilla
+        Retorna una atención por su ID
         """
-
-        return (
-            Atencion.query
-            .filter(
-                Atencion.id_ventanilla == id_ventanilla,
-                Atencion.estado.in_(["llamado", "en_curso"])
-            )
-            .order_by(Atencion.hora_inicio.desc())
-            .first()
-        )
+        return Atencion.query.get(id_atencion)
 
     @staticmethod
     def get_turnos_en_llamado(
@@ -102,7 +84,7 @@ class AtencionService:
     @staticmethod
     def rellamar(atencion: Atencion) -> None:
         """
-        Solo actualiza timestamp para reflejar nuevo llamado
+        Actualiza timestamp para reflejar nuevo llamado
         """
         atencion.hora_inicio = datetime.now()
         db.session.commit()

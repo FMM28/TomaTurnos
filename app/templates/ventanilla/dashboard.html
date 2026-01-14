@@ -9,7 +9,6 @@
         <strong>
             {{ usuario.nombre }} {{ usuario.ap_paterno }} {{ usuario.ap_materno or "" }}
         </strong>
-        <span>{{ ventanilla.name }}</span>
     </div>
 
     <a href="{{ url_for('auth.logout') }}" class="btn btn-logout">
@@ -22,10 +21,13 @@
         <div class="flash-messages">
         {% for category, message in messages %}
             <div class="flash-message {{ category }}">
-            <span class="flash-icon">
-                {% if category == 'success' %}✓{% elif category == 'error' %}✕{% elif category == 'warning' %}⚠{% else %}ℹ{% endif %}
-            </span>
-            <span class="flash-text">{{ message }}</span>
+                <span class="flash-icon">
+                    {% if category == 'success' %}✓
+                    {% elif category == 'error' %}✕
+                    {% elif category == 'warning' %}⚠
+                    {% else %}ℹ{% endif %}
+                </span>
+                <span class="flash-text">{{ message }}</span>
             </div>
         {% endfor %}
         </div>
@@ -34,6 +36,7 @@
 
 <div class="ventanilla-main">
 
+    <!-- ================= COLA ================= -->
     <section class="cola">
         <h3>En espera</h3>
 
@@ -54,14 +57,18 @@
         </ul>
 
         <form method="POST" action="{{ url_for('ventanilla.llamar_siguiente') }}">
-            <button class="btn btn-primary"
-                    {% if turno_actual or turnos_en_espera|length == 0 %}disabled{% endif %}>
+            <button
+                id="btn-llamar"
+                class="btn btn-primary"
+                {% if turno_actual or turnos_en_espera|length == 0 %}disabled{% endif %}
+            >
                 Llamar siguiente
             </button>
         </form>
     </section>
 
-    <section class="turno-actual">
+    <!-- ================= TURNO ACTUAL ================= -->
+    <section class="turno-actual" {% if turno_actual %}id="turno-actual"{% endif %}>
 
         {% if turno_actual %}
             <h3>Turno en curso</h3>
@@ -86,15 +93,13 @@
                 <h4>Historial del ticket</h4>
                 <ul>
                     {% for t in turno_actual.ticket_tramite.atenciones %}
-                        <li >
+                        <li>
                             {{ t.ticket_tramite.tramite.name }}
                             {% if t.estado != "espera" %}
                                 <span class="estado">({{ t.estado }})</span>
-                                <span>
-                                    {% if t.descripcion_estado %}
-                                    {{ t.descripcion_estado }}
-                                    {% endif %}
-                                </span>
+                                {% if t.descripcion_estado %}
+                                    <span>{{ t.descripcion_estado }}</span>
+                                {% endif %}
                             {% endif %}
                         </li>
                     {% endfor %}
@@ -103,21 +108,15 @@
 
             <div class="acciones">
                 <form method="POST" action="{{ url_for('ventanilla.rellamar') }}">
-                    <button class="btn">
-                        Volver a llamar
-                    </button>
+                    <button class="btn">Volver a llamar</button>
                 </form>
 
                 <form method="POST" action="{{ url_for('ventanilla.reasignar') }}">
-                    <button class="btn">
-                        Reasignar
-                    </button>
+                    <button class="btn">Reasignar</button>
                 </form>
 
                 <form method="POST" action="{{ url_for('ventanilla.finalizar') }}">
-                    <button class="btn btn-success">
-                        Finalizar trámite
-                    </button>
+                    <button class="btn btn-success">Finalizar trámite</button>
                 </form>
             </div>
 
@@ -133,12 +132,12 @@
 
 {% endblock %}
 
-
 {% block scripts %}
 
 <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
 
 <script>
+/* ================== SOCKET ================== */
 const socket = io({
     transports: ["websocket"],
     reconnection: true,
@@ -146,75 +145,54 @@ const socket = io({
     reconnectionDelay: 1000
 });
 
-socket.on("connect", () => {
-    console.log("WebSocket conectado");
-});
-
-socket.on("disconnect", () => {
-    console.warn("WebSocket desconectado");
-});
-
-socket.on("connect_error", (err) => {
-    console.error("Error WebSocket:", err);
-});
-
-socket.on("cola_actualizada", (data) => {
-    console.log("Cola actualizada", data);
+socket.on("cola_actualizada", () => {
     actualizarCola();
 });
 
+/* ================== COLA ================== */
 function actualizarCola() {
     fetch("/ventanilla/cola")
-        .then(response => {
-            if (!response.ok) {
-                throw new Error("Error al obtener la cola");
-            }
-            return response.json();
-        })
+        .then(r => r.json())
         .then(data => {
             const lista = document.querySelector(".cola-lista");
             const contador = document.querySelector(".cola-contador");
-            const btnLlamar = document.querySelector(".cola form button");
+            const btn = document.getElementById("btn-llamar");
 
             lista.innerHTML = "";
 
             if (!data.cola || data.cola.length === 0) {
                 lista.innerHTML = "<li class='vacio'>Sin turnos</li>";
                 contador.textContent = "0 personas";
-                
-                if (btnLlamar) {
-                    btnLlamar.disabled = true;
-                }
+                if (btn) btn.disabled = true;
                 return;
             }
 
             data.cola.forEach(tt => {
                 const li = document.createElement("li");
-
                 li.innerHTML = `
                     <strong>${tt.ticket}</strong>
                     <span class="tramite">${tt.tramite}</span>
-                    <span class='badge badge-estado'>${tt.estado}</span>
+                    <span class="badge badge-estado">${tt.estado}</span>
                 `;
-
                 lista.appendChild(li);
             });
 
             contador.textContent = `${data.total} personas`;
-
-            if (btnLlamar) {
-                btnLlamar.disabled = false;
-            }
         })
-        .catch(err => {
-            console.error("Error actualizando cola:", err);
-        });
+        .catch(err => console.error("Error actualizando cola:", err));
 }
 
+/* ================== BLOQUEO POR TURNO ACTIVO ================== */
 document.addEventListener("DOMContentLoaded", () => {
+    const turnoActivo = document.getElementById("turno-actual");
+    const btn = document.getElementById("btn-llamar");
+
+    if (turnoActivo && btn) {
+        btn.disabled = true;
+    }
+
     actualizarCola();
 });
-
 </script>
 
 <script src="{{ url_for('static', filename='js/flash_messages.js') }}"></script>

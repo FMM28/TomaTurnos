@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import current_user, login_required
+from flask_socketio import emit
 from app.auth.decorators import role_required
 from app.services.ventanilla_service import VentanillaService
 from app.services.ticket_tramite_service import TicketTramiteService
@@ -19,7 +20,6 @@ def dashboard():
         turnos_en_espera=turnos_en_espera,
         turno_actual=turno_actual,
         usuario=current_user,
-        ventanilla=VentanillaService.get_ventanilla_by_usuario(current_user.id),
     )
 
 
@@ -31,7 +31,7 @@ def llamar_siguiente():
     if not sigiente:
         flash("No hay turnos esperando", "warning")
         return redirect(url_for("ventanilla.dashboard"))
-    _, error = AtencionService.iniciar_atencion(
+    atencion, error = AtencionService.iniciar_atencion(
         ticket_tramite=sigiente,
         id_usuario=current_user.id_usuario
     )
@@ -39,20 +39,21 @@ def llamar_siguiente():
         flash(f"Error al llamar el turno: {error}", "error")
         return redirect(url_for("ventanilla.dashboard"))
     flash("Turno llamado", "success")
-    return redirect(url_for("ventanilla.dashboard",turno_actual=sigiente))
+    return redirect(url_for("ventanilla.dashboard",turno_actual=atencion))
 
 
 @ventanilla_bp.post("/rellamar")
 @login_required
 @role_required("ventanilla")
 def rellamar():
-    atencion = AtencionService.get_atencion_activa_por_ventanilla(
-        id_ventanilla=VentanillaService.get_ventanilla_by_usuario(current_user.id).id_ventanilla
-    )
+    atencion = AtencionService.get_atencion_activa_por_usuario(current_user.id_usuario)
+
     if not atencion:
         flash("No hay turno activo para volver a llamar", "warning")
         return redirect(url_for("ventanilla.dashboard"))
+
     AtencionService.rellamar(atencion)
+
     flash("Turno vuelto a llamar", "success")
     return redirect(url_for("ventanilla.dashboard"))
 
