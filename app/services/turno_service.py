@@ -1,6 +1,6 @@
 from typing import List
 from sqlalchemy import func
-from app.models import Ticket
+from app.models import Ticket,TicketTramite
 from app.extensions import db
 from flask import current_app
 
@@ -20,16 +20,27 @@ class TurnoService:
     @staticmethod
     def get_turnos_en_espera() -> List[dict]:
         turnos = (
-            Ticket.query
-            .filter(Ticket.estado == "activo")
-            .order_by(Ticket.fecha_hora.asc())
+            TicketTramite.query
+            .filter(TicketTramite.estado == "espera")
+            .order_by(TicketTramite.fecha_creacion.asc())
+            .all()
+        )
+
+        return [t.ticket.turno for t in turnos]
+    
+    @staticmethod
+    def get_turnos_en_llamado() -> List[dict]:
+        turnos = (
+            TicketTramite.query
+            .filter(TicketTramite.estado == "llamado")
+            .order_by(TicketTramite.fecha_creacion.asc())
             .all()
         )
 
         return [
             {
-                "turno": t.turno,
-                "fecha_hora": t.fecha_hora.strftime("%H:%M")
+                "turno": t.ticket.turno,
+                "ventanilla": t.tramite.ventanilla.name
             }
             for t in turnos
         ]

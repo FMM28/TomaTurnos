@@ -8,6 +8,8 @@ def on_connect():
     print("Pantalla conectada")
     turnos = TurnoService.get_turnos_en_espera()
     emit("turnos_en_espera", turnos)
+    turnos_llamado = TurnoService.get_turnos_en_llamado()
+    emit("turnos_en_llamado", turnos_llamado)
 
 @socketio.on("disconnect")
 def on_disconnect():

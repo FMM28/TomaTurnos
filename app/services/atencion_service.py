@@ -31,7 +31,7 @@ class AtencionService:
                 hora_inicio=datetime.now()
             )
 
-            ticket_tramite.estado = "atendiendo"
+            ticket_tramite.estado = "llamado"
 
             db.session.add(atencion)
             db.session.commit()

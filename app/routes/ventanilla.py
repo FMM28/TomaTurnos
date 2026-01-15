@@ -1,10 +1,12 @@
 from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import current_user, login_required
 from flask_socketio import emit
+from app.extensions import socketio
 from app.auth.decorators import role_required
 from app.services.ventanilla_service import VentanillaService
 from app.services.ticket_tramite_service import TicketTramiteService
 from app.services.atencion_service import AtencionService
+from app.services.turno_service import TurnoService
 
 ventanilla_bp = Blueprint("ventanilla", __name__, url_prefix="/ventanilla")
 
@@ -35,9 +37,19 @@ def llamar_siguiente():
         ticket_tramite=sigiente,
         id_usuario=current_user.id_usuario
     )
+
+    socketio.emit("turnos_en_espera", TurnoService.get_turnos_en_espera())
+    socketio.emit("turnos_en_llamado", TurnoService.get_turnos_en_llamado())
+    socketio.sleep(0.1)
+    socketio.emit("turno_llamado", {
+        "turno": sigiente.ticket.turno,
+        "ventanilla": VentanillaService.get_ventanilla_by_tramite(sigiente.id_tramite).name
+    })
+
     if error:
         flash(f"Error al llamar el turno: {error}", "error")
         return redirect(url_for("ventanilla.dashboard"))
+    
     flash("Turno llamado", "success")
     return redirect(url_for("ventanilla.dashboard",turno_actual=atencion))
 
