@@ -18,4 +18,4 @@ class Config:
 
     MAX_TURNO = int(os.getenv("MAX_TURNO", 999))
 
-    PRINT_MODE = "mock" 
+    PRINT_MODE = os.getenv("PRINT_MODE", "mock") 
