@@ -36,7 +36,6 @@
 
 <div class="ventanilla-main">
 
-    <!-- ================= COLA ================= -->
     <section class="cola">
         <h3>En espera</h3>
 
@@ -67,7 +66,6 @@
         </form>
     </section>
 
-    <!-- ================= TURNO ACTUAL ================= -->
     <section class="turno-actual" {% if turno_actual %}id="turno-actual"{% endif %}>
 
         {% if turno_actual %}
@@ -137,7 +135,6 @@
 <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
 
 <script>
-/* ================== SOCKET ================== */
 const socket = io({
     transports: ["websocket"],
     reconnection: true,
@@ -149,7 +146,6 @@ socket.on("cola_actualizada", () => {
     actualizarCola();
 });
 
-/* ================== COLA ================== */
 function actualizarCola() {
     fetch("/ventanilla/cola")
         .then(r => r.json())
@@ -157,13 +153,16 @@ function actualizarCola() {
             const lista = document.querySelector(".cola-lista");
             const contador = document.querySelector(".cola-contador");
             const btn = document.getElementById("btn-llamar");
+            const turnoActivo = document.getElementById("turno-actual");
 
             lista.innerHTML = "";
 
             if (!data.cola || data.cola.length === 0) {
                 lista.innerHTML = "<li class='vacio'>Sin turnos</li>";
                 contador.textContent = "0 personas";
-                if (btn) btn.disabled = true;
+                if (btn) {
+                    btn.disabled = turnoActivo || data.cola.length === 0;
+                }
                 return;
             }
 
@@ -178,11 +177,27 @@ function actualizarCola() {
             });
 
             contador.textContent = `${data.total} personas`;
+
+            if (btn) {
+                btn.disabled = turnoActivo || data.cola.length === 0;
+            }
         })
         .catch(err => console.error("Error actualizando cola:", err));
 }
 
-/* ================== BLOQUEO POR TURNO ACTIVO ================== */
+
+function revalidarBotonLlamar() {
+    const turnoActivo = document.getElementById("turno-actual");
+    const btn = document.getElementById("btn-llamar");
+    
+    if (!btn) return;
+    
+    const colaItems = document.querySelectorAll(".cola-lista li:not(.vacio)");
+    const hayElementosEnCola = colaItems.length > 0;
+
+    btn.disabled = turnoActivo || !hayElementosEnCola;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const turnoActivo = document.getElementById("turno-actual");
     const btn = document.getElementById("btn-llamar");

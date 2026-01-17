@@ -87,7 +87,9 @@ def reasignar():
 @login_required
 @role_required("ventanilla")
 def finalizar():
-    flash("Turno finalizado")
+    atencion = AtencionService.get_atencion_activa_por_usuario(current_user.id_usuario)
+    AtencionService.finalizar_atencion(atencion)
+    flash("Turno finalizado","success")
     return redirect(url_for("ventanilla.dashboard"))
 
 
