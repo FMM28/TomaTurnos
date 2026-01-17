@@ -7,6 +7,7 @@ from app.services.ventanilla_service import VentanillaService
 from app.services.ticket_tramite_service import TicketTramiteService
 from app.services.atencion_service import AtencionService
 from app.services.turno_service import TurnoService
+from app.services.speak_service import AudioService
 
 ventanilla_bp = Blueprint("ventanilla", __name__, url_prefix="/ventanilla")
 
@@ -45,6 +46,9 @@ def llamar_siguiente():
         "turno": sigiente.ticket.turno,
         "ventanilla": VentanillaService.get_ventanilla_by_tramite(sigiente.id_tramite).name
     })
+    
+    AudioService.anunciar_turno(sigiente.ticket.turno, sigiente.tramite.ventanilla.name)
+
 
     if error:
         flash(f"Error al llamar el turno: {error}", "error")
@@ -65,6 +69,7 @@ def rellamar():
         return redirect(url_for("ventanilla.dashboard"))
 
     AtencionService.rellamar(atencion)
+    AudioService.anunciar_turno(atencion.ticket_tramite.ticket.turno,atencion.ventanilla.name)
 
     flash("Turno vuelto a llamar", "success")
     return redirect(url_for("ventanilla.dashboard"))

@@ -5,6 +5,7 @@ from app.auth.login_manager import load_user
 from .routes import register_blueprints
 import app.sockets
 from app import models
+from app.services.speak_service import AudioService
 
 def create_app():
     app = Flask(__name__)
@@ -18,5 +19,7 @@ def create_app():
     register_blueprints(app)
 
     socketio.init_app(app, cors_allowed_origins="*", async_mode='eventlet')
+    
+    AudioService.start()
 
     return app

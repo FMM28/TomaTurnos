@@ -18,6 +18,8 @@ from app.extensions import bcrypt
 u = Usuario(
     username="admin",
     password=bcrypt.generate_password_hash("admin123").decode("utf-8"),
+    nombre="Nombre",
+    ap_paterno="Ap Paterno",
     role="admin"
 )
 
