@@ -1,9 +1,17 @@
+import threading
 from typing import Optional, List, Tuple
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
-from app.extensions import db
-from app.models import Atencion, TicketTramite, Ventanilla
+from flask import current_app
+from app.extensions import db, socketio
+from app.models import Atencion, TicketTramite
 from app.services.ventanilla_service import VentanillaService
+from app.services.turno_service import TurnoService
+
+
+TIEMPO_LLAMADO = 10
+
+_llamado_timers: dict[int, threading.Timer] = {}
 
 
 class AtencionService:
@@ -12,10 +20,7 @@ class AtencionService:
     """
 
     @staticmethod
-    def iniciar_atencion(ticket_tramite: TicketTramite,id_usuario: int) -> Tuple[Optional[Atencion], Optional[str]]:
-        """
-        Marca un TicketTramite como atendiendo y crea la atención
-        """
+    def iniciar_atencion(ticket_tramite: TicketTramite, id_usuario: int) -> Tuple[Optional[Atencion], Optional[str]]:
 
         try:
             ventanilla = VentanillaService.get_ventanilla_by_tramite(ticket_tramite.id_tramite)
@@ -35,6 +40,17 @@ class AtencionService:
 
             db.session.add(atencion)
             db.session.commit()
+            
+            app = current_app._get_current_object()
+
+            timer = threading.Timer(
+                TIEMPO_LLAMADO,
+                AtencionService.set_atendiendo,
+                args=(app,atencion.id_atencion,)
+            )
+
+            _llamado_timers[atencion.id_atencion] = timer
+            timer.start()
 
             return atencion, None
 
@@ -43,69 +59,76 @@ class AtencionService:
             return None, str(e)
 
     @staticmethod
-    def get_atencion_activa_por_usuario(id_usuario: int) -> Optional[Atencion]:
-        """
-        Retorna la atención activa del usuario (si existe)
-        """
+    def set_atendiendo(app, id_atencion: int) -> None:
+        with app.app_context():
+            try:
+                atencion = Atencion.query.get(id_atencion)
 
-        return (
-            Atencion.query
-            .filter(
-                Atencion.id_usuario == id_usuario,
-                Atencion.estado.in_(["llamado", "en_curso"])
-            )
-            .order_by(Atencion.hora_inicio.desc())
-            .first()
-        )
-    
-    @staticmethod
-    def get_atencion_by_id(id_atencion: int) -> Optional[Atencion]:
-        """
-        Retorna una atención por su ID
-        """
-        return Atencion.query.get(id_atencion)
+                if not atencion:
+                    return
 
-    @staticmethod
-    def get_turnos_en_llamado(
-        limit: int = 5
-    ) -> List[Atencion]:
-        """
-        Retorna los últimos turnos llamados (para pantalla de anuncios)
-        """
+                if atencion.estado != "llamado":
+                    return
 
-        return (
-            Atencion.query
-            .filter(Atencion.estado == "llamado")
-            .order_by(Atencion.hora_inicio.desc())
-            .limit(limit)
-            .all()
-        )
+                atencion.estado = "atendiendo"
+                atencion.ticket_tramite.estado = "atendiendo"
+
+                db.session.commit()
+
+                _llamado_timers.pop(id_atencion, None)
+
+                socketio.emit("turnos_en_llamado", TurnoService.get_turnos_en_llamado())
+
+            except SQLAlchemyError:
+                db.session.rollback()
 
     @staticmethod
     def rellamar(atencion: Atencion) -> None:
-        """
-        Actualiza timestamp para reflejar nuevo llamado
-        """
+        app = current_app._get_current_object()
+        
+        timer = _llamado_timers.pop(atencion.id_atencion, None)
+        if timer:
+            timer.cancel()
+
+        atencion.estado = "llamado"
         atencion.hora_inicio = datetime.now()
+        atencion.ticket_tramite.estado = "llamado"
+
         db.session.commit()
+
+        socketio.emit("turnos_en_llamado", TurnoService.get_turnos_en_llamado())
+
+        nuevo_timer = threading.Timer(
+            TIEMPO_LLAMADO,
+            AtencionService.set_atendiendo,
+            args=(app,atencion.id_atencion,)
+        )
+
+        _llamado_timers[atencion.id_atencion] = nuevo_timer
+        nuevo_timer.start()
 
     @staticmethod
     def finalizar_atencion(
         atencion: Atencion,
         descripcion: Optional[str] = None
     ) -> None:
-        """
-        Marca la atención como finalizada
-        """
+
+        timer = _llamado_timers.pop(atencion.id_atencion, None)
+        if timer:
+            timer.cancel()
 
         atencion.estado = "finalizado"
         atencion.hora_fin = datetime.now()
         atencion.descripcion_estado = descripcion
 
-        # Marcar ticket_tramite como atendido
         atencion.ticket_tramite.estado = "atendido"
 
         db.session.commit()
+
+        socketio.emit(
+            "turnos_en_llamado",
+            TurnoService.get_turnos_en_llamado()
+        )
 
     @staticmethod
     def volver_a_espera(
@@ -123,3 +146,32 @@ class AtencionService:
         atencion.ticket_tramite.estado = "espera"
 
         db.session.commit()
+
+    @staticmethod
+    def get_atencion_activa_por_usuario(
+        id_usuario: int
+    ) -> Optional[Atencion]:
+
+        return (
+            Atencion.query
+            .filter(
+                Atencion.id_usuario == id_usuario,
+                Atencion.estado.in_(["llamado", "atendiendo"])
+            )
+            .order_by(Atencion.hora_inicio.desc())
+            .first()
+        )
+
+    @staticmethod
+    def get_atencion_by_id(id_atencion: int) -> Optional[Atencion]:
+        return Atencion.query.get(id_atencion)
+
+    @staticmethod
+    def get_turnos_en_llamado(limit: int = 14) -> List[Atencion]:
+        return (
+            Atencion.query
+            .filter(Atencion.estado == "llamado")
+            .order_by(Atencion.hora_inicio.desc())
+            .limit(limit)
+            .all()
+        )
