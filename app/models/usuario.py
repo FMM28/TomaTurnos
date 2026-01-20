@@ -2,7 +2,7 @@ from app.extensions import db, bcrypt
 from .base import BaseModel
 from flask_login import UserMixin
 
-class Usuario(UserMixin,BaseModel):
+class Usuario(UserMixin, BaseModel):
     __tablename__ = "usuario"
 
     id_usuario = db.Column(db.Integer, primary_key=True)
@@ -12,9 +12,20 @@ class Usuario(UserMixin,BaseModel):
     ap_paterno = db.Column(db.String(45), nullable=False)
     ap_materno = db.Column(db.String(45), nullable=True)
     role = db.Column(db.String(45), nullable=False)
+    deleted_at = db.Column(db.DateTime, nullable=True)
 
-    asignaciones = db.relationship("Asignacion", back_populates="usuario")
-    atenciones = db.relationship("Atencion", back_populates="usuario")
+    asignaciones = db.relationship(
+        "Asignacion",
+        back_populates="usuario",
+        passive_deletes=True
+    )
+
+    atenciones = db.relationship(
+        "Atencion",
+        back_populates="usuario",
+        passive_deletes=True
+    )
+
     suplentes_asignados = db.relationship(
         "Suplente",
         foreign_keys="Suplente.id_usuario",
@@ -22,6 +33,7 @@ class Usuario(UserMixin,BaseModel):
         cascade="all, delete-orphan",
         passive_deletes=True
     )
+
     suplencias = db.relationship(
         "Suplente",
         foreign_keys="Suplente.id_suplente_usuario",

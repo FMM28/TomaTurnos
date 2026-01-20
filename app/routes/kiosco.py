@@ -17,7 +17,7 @@ def selector_area():
 
 @kiosco_bp.route("/area/<int:id_area>")
 def selector_tramite(id_area):
-    area = AreaService.get_area_by_id_or_404(id_area)
+    area = AreaService.get_area_by_id(id_area)
     areas = AreaService.get_all_areas()
     tramites = TramiteService.get_tramites_by_area(id_area)
     ticket = session.get("kiosk_ticket", {"tramites": []})

@@ -1,4 +1,4 @@
-from app.models import (TicketTramite, Tramite, Ticket, Asignacion)
+from app.models import (TicketTramite, Tramite, Ticket, Asignacion, Suplente)
 from app.extensions import db
 from typing import List, Optional, Tuple
 from sqlalchemy.exc import SQLAlchemyError
@@ -78,9 +78,21 @@ class TicketTramiteService:
         Devuelve la cola de trámites pendientes que el usuario puede atender
         """
         try:
-            subquery = (
+            usuarios_ids = (
+                db.session.query(Suplente.id_usuario)
+                .filter(Suplente.id_suplente_usuario == usuario_id)
+                .subquery()
+            )
+
+            tramites_subquery = (
                 db.session.query(Asignacion.id_tramite)
-                .filter(Asignacion.id_usuario == usuario_id)
+                .filter(
+                    db.or_(
+                        Asignacion.id_usuario == usuario_id,
+                        Asignacion.id_usuario.in_(usuarios_ids)
+                    )
+                )
+                .subquery()
             )
 
             return (
@@ -88,7 +100,7 @@ class TicketTramiteService:
                 .join(Ticket)
                 .filter(
                     TicketTramite.estado.in_(["pendiente", "espera"]),
-                    TicketTramite.id_tramite.in_(subquery),
+                    TicketTramite.id_tramite.in_(tramites_subquery),
                     Ticket.estado == "activo"
                 )
                 .order_by(
@@ -97,6 +109,7 @@ class TicketTramiteService:
                 )
                 .all()
             )
+
         except SQLAlchemyError as e:
             print(f"Error al obtener cola del usuario {usuario_id}: {e}")
             return []

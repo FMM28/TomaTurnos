@@ -6,6 +6,7 @@ class Area(BaseModel):
 
     id_area = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(45), unique=True, nullable=False)
+    deleted_at = db.Column(db.DateTime, nullable=True)
 
     tramites = db.relationship("Tramite", back_populates="area")
     ventanillas = db.relationship("Ventanilla", back_populates="area")

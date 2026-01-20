@@ -37,7 +37,8 @@ class SuplenteService:
     ) -> list[Usuario]:
         query = Usuario.query.filter(
             Usuario.role == 'ventanilla',
-            Usuario.id_usuario != id_usuario
+            Usuario.id_usuario != id_usuario,
+            Usuario.deleted_at.is_(None)
         )
 
         if excluir_ids:

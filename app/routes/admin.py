@@ -53,7 +53,7 @@ def create_user():
 @login_required
 @role_required("admin")
 def edit_user(id):
-    user = UserService.get_user_by_id_or_404(id)
+    user = UserService.get_user_by_id(id)
 
     if request.method == "POST":
         user_updated, error = UserService.update_user(
@@ -119,7 +119,7 @@ def create_area():
 @login_required
 @role_required("admin")
 def edit_area(id_area):
-    area = AreaService.get_area_by_id_or_404(id_area)
+    area = AreaService.get_area_by_id(id_area)
     
     if request.method == "POST":
         nombre = request.form.get("nombre", "")
@@ -153,7 +153,7 @@ def delete_area(id_area):
 @login_required
 @role_required("admin")
 def tramites(id_area):
-    area = AreaService.get_area_by_id_or_404(id_area)
+    area = AreaService.get_area_by_id(id_area)
     tramites = TramiteService.get_tramites_by_area(id_area)
     return render_template("admin/tramites.html", area=area, tramites=tramites)
 
@@ -162,7 +162,7 @@ def tramites(id_area):
 @login_required
 @role_required("admin")
 def create_tramite(id_area):
-    area = AreaService.get_area_by_id_or_404(id_area)
+    area = AreaService.get_area_by_id(id_area)
     
     if request.method == "POST":
         nombre = request.form.get("nombre", "")
@@ -182,7 +182,7 @@ def create_tramite(id_area):
 @login_required
 @role_required("admin")
 def edit_tramite(id_tramite):
-    tramite = TramiteService.get_tramite_by_id_or_404(id_tramite)
+    tramite = TramiteService.get_tramite_by_id(id_tramite)
     area = tramite.area
     
     if request.method == "POST":
@@ -375,7 +375,7 @@ def desasignar_tramite_ventanilla(id_ventanilla, id_tramite):
 @admin_bp.route('/tramites/asignar-usuario/<int:id_tramite>', methods=['GET'])
 @login_required
 def asignar_usuario_tramite(id_tramite):
-    tramite = TramiteService.get_tramite_by_id_or_404(id_tramite)
+    tramite = TramiteService.get_tramite_by_id(id_tramite)
 
     todos_usuarios = UserService.get_usuarios_by_role('ventanilla')
 
@@ -462,7 +462,7 @@ def tramite_ventanilla(id_tramite):
 
 @admin_bp.route('/users/<int:id_usuario>/tramites')
 def tramites_usuario(id_usuario):
-    usuario = UserService.get_user_by_id_or_404(id_usuario)
+    usuario = UserService.get_user_by_id(id_usuario)
 
     asignaciones = AsignacionService.get_asignaciones_by_usuario(id_usuario)
 
@@ -500,7 +500,7 @@ def tramites_usuario(id_usuario):
 @admin_bp.route('/users/<int:id_usuario>/suplentes')
 @login_required
 def suplentes_usuario(id_usuario):
-    usuario = UserService.get_user_by_id_or_404(id_usuario)
+    usuario = UserService.get_user_by_id(id_usuario)
 
     suplentes = SuplenteService.get_suplentes_by_usuario(id_usuario)
 
