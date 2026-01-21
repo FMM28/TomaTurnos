@@ -11,7 +11,7 @@ class AudioService:
     _running = False
     
     VOICE_INDEX = 0
-    RATE = 1
+    RATE = 0
     VOLUME = 100
 
     @classmethod

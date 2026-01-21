@@ -7,15 +7,17 @@
         <h1 class="areas-title">Seleccione un área</h1>
         <p class="areas-subtitle">Toque el área para comenzar</p>
     </header>
-
-    <div class="areas-grid">
-        {% for area in areas %}
-        <a href="{{ url_for('kiosco.selector_tramite', id_area=area.id_area) }}"
-           class="area-card">
-            <span class="area-card-text">{{ area.name }}</span>
-        </a>
-        {% endfor %}
+    <div class="areas-overlay">
+        <div class="areas-grid">
+            {% for area in areas %}
+            <a href="{{ url_for('kiosco.selector_tramite', id_area=area.id_area) }}"
+            class="area-card">
+                <span class="area-card-text">{{ area.name }}</span>
+            </a>
+            {% endfor %}
+        </div>
     </div>
+    
 </div>
 
 {% endblock %}
