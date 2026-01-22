@@ -129,8 +129,8 @@ def kiosco_print_ticket(id_ticket):
 
 
     ticket_data = {
-        "turno": ticket.turno,
-        "tramites": [t.name for t in tramites],
+        "turno": str(ticket.turno).zfill(3),
+        "tramites": [f"{(t.area.name).upper()}-{t.name}" for t in tramites],
         "fecha_hora": ticket.fecha_hora.strftime("%d/%m/%Y %H:%M:%S")
     }
 
