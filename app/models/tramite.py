@@ -20,6 +20,8 @@ class Tramite(BaseModel):
         nullable=True
     )
     
+    requerimientos = db.Column(db.String(255), nullable = True)
+    
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     area = db.relationship(

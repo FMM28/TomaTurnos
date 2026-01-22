@@ -166,8 +166,9 @@ def create_tramite(id_area):
     
     if request.method == "POST":
         nombre = request.form.get("nombre", "")
+        requerimientos = request.form.get("requerimientos", None)
         
-        tramite, error = TramiteService.create_tramite(id_area, nombre)
+        tramite, error = TramiteService.create_tramite(id_area, nombre, requerimientos)
         
         if error:
             flash(error, "error")
@@ -187,8 +188,9 @@ def edit_tramite(id_tramite):
     
     if request.method == "POST":
         nombre = request.form.get("nombre", "")
+        requerimientos = request.form.get("requerimientos", None)
         
-        tramite_updated, error = TramiteService.update_tramite(id_tramite, nombre)
+        tramite_updated, error = TramiteService.update_tramite(id_tramite, nombre, requerimientos)
         
         if error:
             flash(error, "error")

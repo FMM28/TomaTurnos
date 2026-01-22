@@ -6,6 +6,7 @@
 {% set cancel_url = url_for('admin.tramites', id_area=area.id_area) %}
 
 {% block form_fields %}
+
     <div class="form-group">
         <label for="nombre" class="form-label">Nombre del Trámite *</label>
         <input 
@@ -17,4 +18,15 @@
             required
             maxlength="255">
     </div>
+
+    <div class="form-group">
+        <label for="requerimientos" class="form-label">Requerimientos</label>
+        <textarea
+            id="requerimientos"
+            name="requerimientos"
+            class="form-textarea"
+            rows="4"
+            maxlength="255">{{ tramite.requerimientos | default('', true) if tramite else '' }}</textarea>
+    </div>
+
 {% endblock %}

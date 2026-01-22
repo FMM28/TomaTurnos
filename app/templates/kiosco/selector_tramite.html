@@ -17,6 +17,35 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="requerimientosModal">
+    <div class="modal-content">
+        <h3 class="modal-title">Requerimientos del trámite</h3>
+
+        <p class="modal-text">
+            Para realizar este trámite debe contar con:
+        </p>
+
+        <ul class="modal-list" id="requerimientosList"></ul>
+
+        <p class="modal-text">
+            ¿Cuenta con todos los requerimientos?
+        </p>
+
+        <div class="modal-actions">
+            <button type="button"
+                    class="modal-btn modal-btn-cancel"
+                    onclick="closeRequerimientosModal()">
+                No
+            </button>
+            <button type="button"
+                    class="modal-btn checkout-btn-confirm"
+                    onclick="confirmAddTramite()">
+                Sí, agregar
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="tramites-layout">
 
     <aside class="tramites-sidebar">
@@ -76,10 +105,16 @@
             <form method="post"
                   action="{{ url_for('kiosco.kiosco_add_tramite', id_area=area.id_area) }}"
                   class="tramite-form">
+
                 <input type="hidden" name="id_tramite" value="{{ tramite.id_tramite }}">
-                <button type="submit" class="tramite-card">
+
+                <button type="button"
+                        class="tramite-card {% if tramite.requerimientos %}has-requirements{% endif %}"
+                        data-requerimientos="{{ tramite.requerimientos or '' }}"
+                        onclick="handleTramiteClick(this)">
                     {{ tramite.name }}
                 </button>
+
             </form>
             {% endfor %}
         </div>

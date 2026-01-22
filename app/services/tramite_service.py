@@ -103,7 +103,7 @@ class TramiteService:
             return False
 
     @staticmethod
-    def create_tramite(area_id: int, name: str) -> Tuple[Optional[Tramite], Optional[str]]:
+    def create_tramite(area_id: int, name: str, requerimientos: str = None) -> Tuple[Optional[Tramite], Optional[str]]:
         try:
             name = name.strip()
 
@@ -116,7 +116,8 @@ class TramiteService:
             tramite = Tramite(
                 id_area=area_id,
                 name=name,
-                id_ventanilla=None
+                id_ventanilla=None,
+                requerimientos=requerimientos
             )
 
             db.session.add(tramite)
@@ -128,7 +129,7 @@ class TramiteService:
             return None, f"Error al crear el trámite: {e}"
 
     @staticmethod
-    def update_tramite(tramite_id: int, name: str) -> Tuple[Optional[Tramite], Optional[str]]:
+    def update_tramite(tramite_id: int, name: str, requerimientos: str = None) -> Tuple[Optional[Tramite], Optional[str]]:
         try:
             tramite = Tramite.query.filter(
                 Tramite.id_tramite == tramite_id,
@@ -147,6 +148,8 @@ class TramiteService:
                 return None, "Ya existe un trámite con ese nombre"
 
             tramite.name = name
+            tramite.requerimientos = requerimientos
+            
             db.session.commit()
             return tramite, None
 
