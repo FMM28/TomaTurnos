@@ -129,6 +129,29 @@ class AtencionService:
             "turnos_en_llamado",
             TurnoService.get_turnos_en_llamado()
         )
+        
+    @staticmethod
+    def cancelar_atencion(
+        atencion: Atencion,
+        descripcion: Optional[str] = None
+    ) -> None:
+
+        timer = _llamado_timers.pop(atencion.id_atencion, None)
+        if timer:
+            timer.cancel()
+
+        atencion.estado = "cancelado"
+        atencion.hora_fin = datetime.now()
+        atencion.descripcion_estado = descripcion
+
+        atencion.ticket_tramite.estado = "cancelado"
+
+        db.session.commit()
+
+        socketio.emit(
+            "turnos_en_llamado",
+            TurnoService.get_turnos_en_llamado()
+        )
 
     @staticmethod
     def volver_a_espera(
@@ -175,3 +198,14 @@ class AtencionService:
             .limit(limit)
             .all()
         )
+
+    @staticmethod
+    def tiempo_desde_ultimo_llamado(atencion:Atencion) -> int:
+        """
+        Calcula el tiempo transcurrido desde el último llamado
+        """
+
+        ahora = datetime.now()
+        tiempo_transcurrido = (ahora - atencion.hora_inicio).total_seconds()
+        
+        return tiempo_transcurrido

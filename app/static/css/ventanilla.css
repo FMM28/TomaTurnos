@@ -86,6 +86,15 @@ body {
     background: #229954;
 }
 
+.btn-danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c0392b;
+}
+
 .btn-logout {
     background: transparent;
     color: #e74c3c;
@@ -122,6 +131,42 @@ body {
     font-size: 1rem;
     animation: slideIn 0.3s ease;
 }
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-overlay.activo {
+    display: flex;
+}
+
+.modal {
+    background: #fff;
+    padding: 20px;
+    width: 400px;
+    max-width: 90%;
+    border-radius: 8px;
+}
+
+.modal textarea {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.modal-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+}
+
 
 @keyframes slideIn {
     from {
@@ -377,12 +422,12 @@ body {
 }
 
 .acciones form {
-    flex: 1;
-    min-width: 150px;
+    width: auto;
 }
 
 .acciones .btn {
-    width: 100%;
+    width: 12rem;
+    height: 3rem;
 }
 
 .sin-turno {
@@ -394,6 +439,60 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Estilos para el modal */
+.modal h3 {
+    margin: 0 0 1.5rem 0;
+    color: #333333;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #333333;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.modal textarea {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    transition: border-color 0.3s ease;
+}
+
+.modal textarea:focus {
+    outline: none;
+    border-color: #2c3e50;
+}
+
+.modal select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.modal select:focus {
+    outline: none;
+    border-color: #2c3e50;
+}
+
+#motivo-otro-container {
+    margin-top: 1rem;
 }
 
 /* Responsive */
@@ -466,5 +565,21 @@ body {
 
     .cola {
         padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal {
+        width: 95%;
+        padding: 1.5rem;
+    }
+    
+    .modal-acciones {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .modal-acciones .btn {
+        width: 100%;
     }
 }

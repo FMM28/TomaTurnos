@@ -25,7 +25,7 @@ class Atencion(BaseModel):
     )
 
     estado = db.Column(db.String(20))
-    descripcion_estado = db.Column(db.String(45))
+    descripcion_estado = db.Column(db.String(100))
     hora_inicio = db.Column(db.DateTime)
     hora_fin = db.Column(db.DateTime)
 

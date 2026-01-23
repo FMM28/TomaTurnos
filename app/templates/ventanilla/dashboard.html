@@ -4,6 +4,70 @@
 
 {% block content %}
 
+<div class="modal-overlay" id="modal-finalizar">
+    <div class="modal">
+        <h3>Finalizar trámite</h3>
+
+        <form method="POST" action="{{ url_for('ventanilla.finalizar') }}">
+            <label for="descripcion">Observaciones:</label>
+
+            <textarea
+                name="descripcion"
+                id="descripcion"
+                rows="4"
+                maxlength="100"
+                placeholder="Escribe aquí las observaciones del trámite..."
+            ></textarea>
+
+            <div class="modal-acciones">
+                <button type="button" class="btn" id="btn-cancelar-modal">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-success">
+                    Confirmar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-cancelar">
+    <div class="modal">
+        <h3>Cancelar trámite</h3>
+
+        <form method="POST" action="{{ url_for('ventanilla.cancelar') }}">
+            <label for="motivo_cancelacion">Motivo de cancelación:</label>
+
+            <select name="motivo_cancelacion" id="motivo_cancelacion" required>
+                <option value="" disabled selected>Selecciona un motivo</option>
+                <option value="trabajador_no_acudio">El trabajador no acudió al llamado</option>
+                <option value="error_registro">Error de registro</option>
+                <option value="otro">Otro</option>
+            </select>
+
+            <div id="motivo-otro-container" style="display:none;">
+                <label for="motivo_otro">Especifica el motivo:</label>
+                <textarea
+                    name="motivo_otro"
+                    id="motivo_otro"
+                    rows="3"
+                    maxlength="100"
+                    placeholder="Describe el motivo de cancelación..."
+                ></textarea>
+            </div>
+
+            <div class="modal-acciones">
+                <button type="button" class="btn" id="btn-cancelar-modal-cancelar">
+                    Volver
+                </button>
+                <button type="submit" class="btn btn-danger">
+                    Confirmar cancelación
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <header class="ventanilla-header">
     <div class="usuario-info">
         <strong>
@@ -67,63 +131,51 @@
     </section>
 
     <section class="turno-actual" {% if turno_actual %}id="turno-actual"{% endif %}>
-
         {% if turno_actual %}
-            <h3>Turno en curso</h3>
+        <h3>Turno en curso</h3>
 
-            <div class="turno-numero">
-                {{ turno_actual.ticket_tramite.ticket.turno }}
-            </div>
+        <div class="turno-numero">
+            {{ turno_actual.ticket_tramite.ticket.turno }}
+        </div>
 
-            <div class="turno-info">
-                <p>
-                    <strong>Trámite:</strong>
-                    {{ turno_actual.ticket_tramite.tramite.name }}
-                </p>
+        <div class="turno-info">
+            <p><strong>Trámite:</strong> {{ turno_actual.ticket_tramite.tramite.name }}</p>
+            <p><strong>Estado:</strong> {{ turno_actual.estado | capitalize }}</p>
+        </div>
 
-                <p>
-                    <strong>Estado:</strong>
-                    {{ turno_actual.estado | capitalize }}
-                </p>
-            </div>
+        <div class="turno-historial">
+            <h4>Historial del ticket</h4>
+            <ul>
+                {% for t in turno_actual.ticket_tramite.atenciones %}
+                <li>
+                    {{ t.ticket_tramite.tramite.name }}
+                    {% if t.estado != "espera" %}
+                    <span class="estado">({{ t.estado }})</span>
+                    {% if t.descripcion_estado %}
+                    <span>{{ t.descripcion_estado }}</span>
+                    {% endif %}
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
 
-            <div class="turno-historial">
-                <h4>Historial del ticket</h4>
-                <ul>
-                    {% for t in turno_actual.ticket_tramite.atenciones %}
-                        <li>
-                            {{ t.ticket_tramite.tramite.name }}
-                            {% if t.estado != "espera" %}
-                                <span class="estado">({{ t.estado }})</span>
-                                {% if t.descripcion_estado %}
-                                    <span>{{ t.descripcion_estado }}</span>
-                                {% endif %}
-                            {% endif %}
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+        <div class="acciones">
+            <form method="POST" action="{{ url_for('ventanilla.rellamar') }}">
+                <button class="btn">Volver a llamar</button>
+            </form>
 
-            <div class="acciones">
-                <form method="POST" action="{{ url_for('ventanilla.rellamar') }}" id="form-rellamar">
-                    <button id="btn-rellamar" class="btn">Volver a llamar</button>
-                </form>
+            <form method="POST" action="{{ url_for('ventanilla.reasignar') }}">
+                <button class="btn">Reasignar</button>
+            </form>
 
-                <form method="POST" action="{{ url_for('ventanilla.reasignar') }}">
-                    <button class="btn">Reasignar</button>
-                </form>
-
-                <form method="POST" action="{{ url_for('ventanilla.finalizar') }}">
-                    <button class="btn btn-success">Finalizar trámite</button>
-                </form>
-            </div>
+            <button class="btn btn-danger" id="btn-cancelar-tramite">Cancelar trámite</button>
+            <button class="btn btn-success" id="btn-finalizar">Finalizar trámite</button>
+        </div>
 
         {% else %}
-            <div class="sin-turno">
-                No hay turno activo
-            </div>
+        <div class="sin-turno">No hay turno activo</div>
         {% endif %}
-
     </section>
 
 </div>
@@ -210,25 +262,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const btnRellamar = document.getElementById("btn-rellamar");
-    const formRellamar = document.getElementById("form-rellamar");
-
-    if (!btnRellamar || !formRellamar) return;
-
-    formRellamar.addEventListener("submit", () => {
-        btnRellamar.disabled = true;
-        btnRellamar.textContent = "Espere para volver a llamar";
-
-        setTimeout(() => {
-            btnRellamar.disabled = false;
-            btnRellamar.textContent = "Volver a llamar";
-        }, 5000);
-    });
-});
-</script>
-
+<script src="{{ url_for('static', filename='js/modal_ventanilla.js') }}"></script>
 <script src="{{ url_for('static', filename='js/flash_messages.js') }}"></script>
 
 {% endblock %}
