@@ -17,19 +17,6 @@
                 <h2>Turnos en Llamado</h2>
 
                 <div class="llamado-grid" id="llamadoGrid">
-                    {% for turno in turnos_llamado %}
-                    <div class="turno-card">
-                        <div class="turno-numero">{{ turno.numero }}</div>
-                        <div class="turno-info">
-                            <span class="turno-ventanilla">{{ turno.ventanilla }}</span>
-                            <span class="turno-servicio">{{ turno.servicio }}</span>
-                        </div>
-                    </div>
-                    {% else %}
-                    <div class="sin-turnos">
-                        <p>No hay turnos en llamado</p>
-                    </div>
-                    {% endfor %}
                 </div>
             </div>
 
@@ -113,7 +100,7 @@ socket.on("turnos_en_llamado", (turnos) => {
         card.className = "turno-card";
 
         card.innerHTML = `
-            <div class="turno-numero">${t.turno}</div>
+            <div class="turno-numero">Turno ${t.turno}</div>
             <div class="turno-info">
                 <span class="turno-ventanilla">${t.ventanilla}</span>
             </div>
