@@ -105,8 +105,8 @@
             </div>
 
             <div class="acciones">
-                <form method="POST" action="{{ url_for('ventanilla.rellamar') }}">
-                    <button class="btn">Volver a llamar</button>
+                <form method="POST" action="{{ url_for('ventanilla.rellamar') }}" id="form-rellamar">
+                    <button id="btn-rellamar" class="btn">Volver a llamar</button>
                 </form>
 
                 <form method="POST" action="{{ url_for('ventanilla.reasignar') }}">
@@ -207,6 +207,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     actualizarCola();
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const btnRellamar = document.getElementById("btn-rellamar");
+    const formRellamar = document.getElementById("form-rellamar");
+
+    if (!btnRellamar || !formRellamar) return;
+
+    formRellamar.addEventListener("submit", () => {
+        btnRellamar.disabled = true;
+        btnRellamar.textContent = "Espere para volver a llamar";
+
+        setTimeout(() => {
+            btnRellamar.disabled = false;
+            btnRellamar.textContent = "Volver a llamar";
+        }, 5000);
+    });
 });
 </script>
 
