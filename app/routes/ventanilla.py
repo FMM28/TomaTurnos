@@ -7,6 +7,8 @@ from app.services.ticket_tramite_service import TicketTramiteService
 from app.services.atencion_service import AtencionService
 from app.services.turno_service import TurnoService
 from app.services.speak_service import AudioService
+from app.services.area_service import AreaService
+from app.services.tramite_service import TramiteService
 
 ventanilla_bp = Blueprint("ventanilla", __name__, url_prefix="/ventanilla")
 
@@ -77,14 +79,6 @@ def rellamar():
     return redirect(url_for("ventanilla.dashboard"))
 
 
-@ventanilla_bp.post("/reasignar")
-@login_required
-@role_required("ventanilla")
-def reasignar():
-    flash("Turno reasignado")
-    return redirect(url_for("ventanilla.dashboard"))
-
-
 @ventanilla_bp.post("/finalizar")
 @login_required
 @role_required("ventanilla")
@@ -94,6 +88,8 @@ def finalizar():
     descripcion = request.form.get("descripcion")
 
     AtencionService.finalizar_atencion(atencion, descripcion)
+    TicketTramiteService.get_siguiente_espera(atencion.ticket_tramite)
+    socketio.emit("cola_actualizada")
 
     flash("Turno finalizado", "success")
     return redirect(url_for("ventanilla.dashboard"))
@@ -118,6 +114,8 @@ def cancelar():
         descripcion = None
 
     AtencionService.cancelar_atencion(atencion, descripcion)
+    TicketTramiteService.get_siguiente_espera(atencion.ticket_tramite)
+    socketio.emit("cola_actualizada")
 
     flash("Trámite cancelado correctamente", "warning")
     return redirect(url_for("ventanilla.dashboard"))
@@ -143,3 +141,69 @@ def cola():
             for tt in cola
         ]
     }
+
+
+@ventanilla_bp.get("/reasignar")
+@login_required
+@role_required("ventanilla")
+def reasignar_ticket_view():
+    atencion = AtencionService.get_atencion_activa_por_usuario(current_user.id_usuario)
+
+    ticket = TicketTramiteService.get_by_id(atencion.id_ticket_tramite)
+
+    id_area = request.args.get("id_area", type=int)
+
+    if id_area:
+        area = AreaService.get_area_by_id(id_area)
+    else:
+        area = ticket.tramite.area
+
+    tramites = TramiteService.get_tramites_by_area(area.id_area)
+    areas = AreaService.get_all_areas()
+
+    return render_template(
+        "ventanilla/reasignar.html",
+        ticket=ticket,
+        area=area,
+        tramites=tramites,
+        areas=areas
+    )
+    
+
+@ventanilla_bp.post("/reasignar")
+@login_required
+@role_required("ventanilla")
+def reasignar_ticket_post():
+    atencion = AtencionService.get_atencion_activa_por_usuario(
+        current_user.id_usuario
+    )
+
+    id_tramite_nuevo = request.form.get("id_tramite_nuevo", type=int)
+    tipo = request.form.get("tipo_reasignacion")
+
+    if not id_tramite_nuevo or not tipo:
+        flash("Información incompleta para la reasignación", "warning")
+        return redirect(url_for("ventanilla.reasignar_ticket_view"))
+
+    if tipo == "error":
+        AtencionService.reasignar(
+            atencion,
+            "El trabajador seleccionó el trámite incorrecto"
+        )
+        TicketTramiteService.reasignar(
+            atencion.id_ticket_tramite,
+            id_tramite_nuevo
+        )
+
+    elif tipo == "previo":
+        AtencionService.reasignar(
+            atencion,
+            "Faltó realizar otro trámite previo"
+        )
+        TicketTramiteService.insertar_tramite_prioritario(
+            atencion.id_ticket_tramite,
+            id_tramite_nuevo
+        )
+
+    flash("Ticket reasignado correctamente", "success")
+    return redirect(url_for("ventanilla.dashboard"))

@@ -154,19 +154,14 @@ class AtencionService:
         )
 
     @staticmethod
-    def volver_a_espera(
+    def reasignar(
         atencion: Atencion,
         descripcion: Optional[str] = None
     ) -> None:
-        """
-        Regresa el trámite a la cola
-        """
-
-        atencion.estado = "cancelado"
+        
+        atencion.estado = "reasignado"
         atencion.hora_fin = datetime.now()
         atencion.descripcion_estado = descripcion
-
-        atencion.ticket_tramite.estado = "espera"
 
         db.session.commit()
 

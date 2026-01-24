@@ -1,0 +1,189 @@
+{% extends "ventanilla/base.html" %}
+
+{% block title %}Reasignar Ticket{% endblock %}
+
+{% block content %}
+
+<div class="modal-overlay" id="reasignarModal">
+    <div class="modal-content">
+
+        <h3 class="modal-title">Reasignar trámite</h3>
+
+        <p class="modal-text">
+            Trámite seleccionado:
+            <strong id="modalTramiteNombre"></strong>
+        </p>
+
+        <form method="POST"
+              action="{{ url_for('ventanilla.reasignar_ticket_post') }}"
+              id="reasignarForm">
+
+            <input type="hidden"
+                   name="id_tramite_nuevo"
+                   id="modalIdTramite">
+
+            <div class="radio-group">
+
+                <label class="radio-option">
+                    <input type="radio"
+                           name="tipo_reasignacion"
+                           value="error"
+                           required>
+                    <span>Error de trámite</span>
+                </label>
+
+                <label class="radio-option">
+                    <input type="radio"
+                           name="tipo_reasignacion"
+                           value="previo"
+                           required>
+                    <span>Requiere trámite previo</span>
+                </label>
+
+            </div>
+
+            <div class="modal-actions">
+                <button type="button"
+                        class="modal-btn modal-btn-cancel"
+                        onclick="closeReasignarModal()">
+                    Cancelar
+                </button>
+
+                <button type="submit"
+                        class="modal-btn modal-btn-confirm"
+                        id="btnConfirmar">
+                    Confirmar reasignación
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+<div class="tramites-layout">
+
+    <aside class="tramites-sidebar">
+
+        <section class="sidebar-section">
+            <h2 class="sidebar-title">Áreas</h2>
+
+            <div class="sidebar-areas">
+                {% for area_idx in areas %}
+                <a href="{{ url_for(
+                        'ventanilla.reasignar_ticket_view',
+                        id_area=area_idx.id_area
+                    ) }}"
+                   class="sidebar-area-btn
+                   {% if area_idx.id_area == area.id_area %}active{% endif %}">
+                    {{ area_idx.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+
+    </aside>
+
+    <main class="tramites-main">
+
+        <header class="tramites-header">
+            <h1 class="tramites-title">
+                Reasignar ticket {{ ticket.folio }}
+            </h1>
+
+            <p class="tramites-subtitle">
+                Área actual:
+                <strong>{{ area.name }}</strong>
+            </p>
+        </header>
+
+        {% if tramites %}
+        <div class="tramites-grid">
+            {% for tramite in tramites %}
+            <button type="button"
+                    class="tramite-card"
+                    onclick="openReasignarModal(
+                        '{{ tramite.id_tramite }}',
+                        '{{ tramite.name }}'
+                    )">
+                {{ tramite.name }}
+            </button>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="tramites-empty">
+            No hay trámites disponibles para esta área.
+        </p>
+        {% endif %}
+
+    </main>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let formSubmitting = false;
+
+function openReasignarModal(idTramite, nombre) {
+    formSubmitting = false;
+    
+    document.getElementById("modalIdTramite").value = idTramite;
+    document.getElementById("modalTramiteNombre").innerText = nombre;
+    
+    const btnConfirmar = document.getElementById("btnConfirmar");
+    btnConfirmar.disabled = false;
+    btnConfirmar.textContent = "Confirmar reasignación";
+    
+    document.getElementById("reasignarModal").classList.add("active");
+}
+
+function closeReasignarModal() {
+    document.getElementById("reasignarModal").classList.remove("active");
+    
+    document
+        .querySelectorAll('input[name="tipo_reasignacion"]')
+        .forEach(radio => radio.checked = false);
+    
+    formSubmitting = false;
+    
+    const btnConfirmar = document.getElementById("btnConfirmar");
+    btnConfirmar.disabled = false;
+    btnConfirmar.textContent = "Confirmar reasignación";
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.getElementById("reasignarForm");
+    const btnConfirmar = document.getElementById("btnConfirmar");
+    
+    form.addEventListener("submit", function(e) {
+        if (formSubmitting) {
+            e.preventDefault();
+            return false;
+        }
+        
+        const tipoSeleccionado = document.querySelector('input[name="tipo_reasignacion"]:checked');
+        if (!tipoSeleccionado) {
+            e.preventDefault();
+            alert("Por favor selecciona un tipo de reasignación");
+            return false;
+        }
+        
+        formSubmitting = true;
+        
+        btnConfirmar.disabled = true;
+        btnConfirmar.textContent = "Procesando...";
+        
+        return true;
+    });
+});
+
+document.getElementById("reasignarModal").addEventListener("click", function(e) {
+    if (e.target === this) {
+        closeReasignarModal();
+    }
+});
+
+</script>
+{% endblock %}

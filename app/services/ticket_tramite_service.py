@@ -105,7 +105,8 @@ class TicketTramiteService:
                 )
                 .order_by(
                     TicketTramite.prioridad.desc(),
-                    TicketTramite.fecha_creacion.asc()
+                    TicketTramite.fecha_creacion.asc(),
+                    TicketTramite.id_ticket_tramite.asc()
                 )
                 .all()
             )
@@ -122,20 +123,34 @@ class TicketTramiteService:
         cola = TicketTramiteService.get_cola_para_usuario(usuario_id)
         cola = [tt for tt in cola if tt.estado == "espera"]
         return cola[0] if cola else None
-
+    
     @staticmethod
-    def marcar_espera(ticket_tramite_id: int) -> Tuple[bool, Optional[str]]:
+    def get_siguiente_espera(ticket_tramite: TicketTramite):
         try:
-            tt = TicketTramite.query.get(ticket_tramite_id)
-            if not tt:
-                return False, "TicketTramite no encontrado"
+            siguiente = (
+                TicketTramite.query
+                .filter(
+                    TicketTramite.id_ticket == ticket_tramite.id_ticket,
+                    TicketTramite.estado == "pendiente"
+                )
+                .order_by(
+                    TicketTramite.prioridad.desc(),
+                    TicketTramite.fecha_creacion.asc(),
+                    TicketTramite.id_ticket_tramite.asc()
+                )
+                .first()
+            )
 
-            tt.estado = "espera"
+            if siguiente:
+                siguiente.estado = "espera"
+            
             db.session.commit()
             return True, None
+
         except SQLAlchemyError as e:
             db.session.rollback()
-            return False, str(e)
+            print(f"Error al obtener siguiente trámite del ticket: {e}")
+            return None
 
     @staticmethod
     def marcar_atendiendo(ticket_tramite_id: int) -> Tuple[bool, Optional[str]]:
@@ -175,7 +190,7 @@ class TicketTramiteService:
             if not tt:
                 return False, "TicketTramite no encontrado"
 
-            tt.estado = "pendiente"
+            tt.estado = "espera"
             tt.id_tramite = nuevo_tramite_id
             tt.prioridad += prioridad_extra
             db.session.commit()
@@ -196,12 +211,11 @@ class TicketTramiteService:
                 return None, "TicketTramite original no encontrado"
 
             tt_actual.estado = "pendiente"
-            tt_actual.motivo_retorno = "flujo_previo"
 
             nuevo_tt = TicketTramite(
                 id_ticket=tt_actual.id_ticket,
                 id_tramite=nuevo_id_tramite,
-                estado="pendiente",
+                estado="espera",
                 prioridad=tt_actual.prioridad + prioridad_extra,
                 fecha_creacion=datetime.now()
             )
