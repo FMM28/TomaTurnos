@@ -4,8 +4,10 @@ from PIL import Image, ImageDraw, ImageFont
 import tempfile
 import os
 import time
+import textwrap
 
 ANCHO_80MM = 576
+ANCHO_LINEA = 48
 
 class PrinterFallbackToMock(Exception):
     """Señal interna para reiniciar impresión en modo MOCK"""
@@ -27,7 +29,7 @@ class ImpresionService:
         self._initialized = True
 
     def _is_mock_mode(self):
-        return current_app.config.get("PRINT_MODE", "usb") != "usb"
+        return current_app.config.get("PRINT_MODE", "usb") == "mock"
 
     def _init_printer(self):
         """Inicializa impresora según configuración"""
@@ -51,6 +53,10 @@ class ImpresionService:
                     0x5011,
                     timeout=0
                 )
+                
+                self.printer.profile.profile_data['media']['width']['pixels'] = ANCHO_80MM
+                self.printer.profile.profile_data['media']['width']['mm'] = 80
+                
                 print("[IMPRESIÓN] Impresora USB conectada")
                 return
             except Exception as e:
@@ -113,12 +119,11 @@ class ImpresionService:
 
         return img
 
-    def _print_bitmap(self, p, img, chunk_height=128):
+    def _print_bitmap(self, p, img, chunk_height=140):
         if isinstance(p, MockPrinter):
             print("[IMPRESIÓN] Bitmap enviado a MOCK")
             return
 
-        # USB inválido → fallback
         if not hasattr(p, "device") or not p.device:
             print("[IMPRESIÓN] USB no disponible, solicitando fallback a MOCK")
             raise PrinterFallbackToMock()
@@ -156,7 +161,6 @@ class ImpresionService:
     def print_ticket(self, ticket: dict):
         """
         Imprime ticket.
-        Si USB falla → reintenta automáticamente en MOCK.
         """
 
         try:
@@ -187,14 +191,18 @@ class ImpresionService:
             line_spacing=5
         )
         self._print_bitmap(p, img)
+        
+        try:
+            p.set(align='center', bold=False)
+        except Exception:
+            pass
 
         p.text(
             "\nConserve su turno\n"
             "Recuerde que sera el mismo para todos los\n"
             "tramites/servicios seleccionados.\n\n"
+            "SU NUMERO DE TURNO ES:"
         )
-
-        p.text("SU NUMERO DE TURNO ES:\n")
 
         img_turno = self._render_text_bitmap(
             [ticket["turno"]],
@@ -215,15 +223,33 @@ class ImpresionService:
             line_spacing=6
         )
         self._print_bitmap(p, img_adv)
+        
+        try:
+            p.set(align='center', bold=True)
+        except Exception:
+            pass
 
         p.text("\nTRAMITES / SERVICIOS\n")
         p.text("-" * 48 + "\n")
+        
+        try:
+            p.set(bold=False)
+        except Exception:
+            pass
 
         for t in ticket.get("tramites", []):
-            p.text(f"{t}\n")
+            lineas = textwrap.wrap(t, width=ANCHO_LINEA)
+            for linea in lineas:
+                p.text(linea + "\n")
 
-        p.text("\nPor favor espere su turno\n")
-        p.text(ticket.get("fecha_hora", "") + "\n\n")
+        p.text("\nPor favor espere su turno\n\n")
+        
+        try:
+            p.set(align="right")
+        except Exception:
+            pass
+        
+        p.text(ticket.get("fecha_hora", "") + "\n")
 
         p.cut()
         time.sleep(0.3)
