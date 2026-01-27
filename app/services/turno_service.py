@@ -12,10 +12,7 @@ class TurnoService:
 
         ultimo = db.session.query(Ticket).order_by(Ticket.turno.desc()).first()
 
-        if not ultimo or ultimo.turno >= max_turno:
-            return 1
-
-        return ultimo.turno + 1
+        return 1 if not ultimo or ultimo.turno >= max_turno else ultimo.turno + 1
     
     @staticmethod
     def get_turnos_en_espera() -> List[dict]:

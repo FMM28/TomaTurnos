@@ -438,9 +438,7 @@ def desasignar_usuario_tramite(id_tramite, id_usuario):
         flash('El usuario no está asignado a este trámite', 'warning')
         return redirect(redirect_to)
 
-    error = AsignacionService.delete_asignacion(asignacion.id_asignacion)
-
-    if error:
+    if error := AsignacionService.delete_asignacion(asignacion.id_asignacion):
         flash(error, 'danger')
     else:
         flash('Usuario desasignado correctamente del trámite', 'success')
@@ -483,12 +481,10 @@ def tramites_usuario(id_usuario):
     for area in areas:
         tramites_area = TramiteService.get_tramites_by_area(area.id_area)
 
-        tramites_no_asignados = [
+        if tramites_no_asignados := [
             tramite for tramite in tramites_area
             if tramite.id_tramite not in tramites_asignados_ids
-        ]
-
-        if tramites_no_asignados:
+        ]:
             tramites_por_area[area] = tramites_no_asignados
 
     return render_template(
@@ -544,9 +540,7 @@ def asignar_suplente(id_usuario, id_suplente_usuario):
 def eliminar_suplente(id_suplente):
     suplente = SuplenteService.get_suplente_by_id(id_suplente)
 
-    error = SuplenteService.delete_suplente(id_suplente)
-
-    if error:
+    if error := SuplenteService.delete_suplente(id_suplente):
         flash(error, 'danger')
     else:
         flash('Suplente desasignado', 'success')

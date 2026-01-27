@@ -5,6 +5,7 @@ import tempfile
 import os
 import time
 import textwrap
+from contextlib import suppress
 
 ANCHO_80MM = 576
 ANCHO_LINEA = 48
@@ -40,10 +41,8 @@ class ImpresionService:
             return
 
         if self.printer:
-            try:
+            with suppress(Exception):
                 self.printer.close()
-            except Exception:
-                pass
             self.printer = None
 
         for attempt in range(3):
@@ -67,12 +66,9 @@ class ImpresionService:
 
     def _close_printer(self):
         if self.printer:
-            try:
+            with suppress(Exception):
                 self.printer.close()
-            except Exception:
-                pass
-            finally:
-                self.printer = None
+            self.printer = None
 
     def _load_font(self, size, bold=False, italic=False):
         fonts = []
@@ -119,6 +115,26 @@ class ImpresionService:
 
         return img
 
+    def _save_temp_file(self, chunk):
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+        chunk.save(tmp.name)
+        tmp.close()
+        return tmp.name
+
+    def _save_and_print_chunk(self, p, chunk):
+        tmp_name = self._save_temp_file(chunk)
+        try:
+            with suppress(Exception):
+                p._raw(b'\x1b\x40')
+            time.sleep(0.05)
+
+            p.image(tmp_name)
+            time.sleep(0.2)
+
+        finally:
+            if os.path.exists(tmp_name):
+                os.unlink(tmp_name)
+
     def _print_bitmap(self, p, img, chunk_height=140):
         if isinstance(p, MockPrinter):
             print("[IMPRESIÓN] Bitmap enviado a MOCK")
@@ -136,23 +152,7 @@ class ImpresionService:
             chunk_end = min(y + chunk_height, height)
             chunk = img.crop((0, y, width, chunk_end))
 
-            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
-            try:
-                chunk.save(tmp.name)
-                tmp.close()
-
-                try:
-                    p._raw(b'\x1b\x40')
-                    time.sleep(0.05)
-                except Exception:
-                    pass
-
-                p.image(tmp.name)
-                time.sleep(0.2)
-
-            finally:
-                if os.path.exists(tmp.name):
-                    os.unlink(tmp.name)
+            self._save_and_print_chunk(p, chunk)
 
             y = chunk_end
 
@@ -160,7 +160,7 @@ class ImpresionService:
 
     def print_ticket(self, ticket: dict):
         """
-        Imprime ticket.
+        Imprime ticket con fallback automático a MOCK si USB falla.
         """
 
         try:
@@ -169,33 +169,54 @@ class ImpresionService:
 
         except PrinterFallbackToMock:
             print("[IMPRESIÓN] Reintentando impresión en modo MOCK")
+            self._close_printer()
             self.printer = MockPrinter()
             self._print_ticket_internal(ticket)
+
+        except Exception as e:
+            print(f"[IMPRESIÓN] Error inesperado: {e}")
+            raise
 
         finally:
             self._close_printer()
 
-    def _print_ticket_internal(self, ticket: dict):
-        p = self.printer
-
+    def _check_usb_device(self, p):
+        """Verifica si el dispositivo USB está disponible, lanza fallback si no"""
+        if isinstance(p, MockPrinter):
+            return
+        
         try:
+            # Intentar acceder al dispositivo - esto puede lanzar excepciones
+            if not hasattr(p, "device") or not p.device:
+                print("[IMPRESIÓN] USB no disponible en verificación")
+                raise PrinterFallbackToMock()
+        except Exception as e:
+            # Cualquier error al acceder al USB activa el fallback
+            print(f"[IMPRESIÓN] Error al verificar USB: {e}")
+            raise PrinterFallbackToMock()
+
+    def _print_ticket_internal(self, ticket: dict):
+        # Usar self.printer para asegurar que usamos el objeto actualizado después del fallback
+        p = self.printer
+        
+        # Verificar disponibilidad de USB antes de empezar
+        self._check_usb_device(p)
+
+        with suppress(Exception):
             p._raw(b'\x1b\x40')
-        except Exception:
-            pass
 
         time.sleep(0.2)
 
-        img = self._render_text_bitmap(
+        self._print_centered_bitmap_text(
+            p,
             ["BIENVENIDO"],
-            self._load_font(60, bold=True),
+            font_size=60,
+            bold=True,
             line_spacing=5
         )
-        self._print_bitmap(p, img)
-        
-        try:
+
+        with suppress(Exception):
             p.set(align='center', bold=False)
-        except Exception:
-            pass
 
         p.text(
             "\nConserve su turno\n"
@@ -204,12 +225,13 @@ class ImpresionService:
             "SU NUMERO DE TURNO ES:"
         )
 
-        img_turno = self._render_text_bitmap(
+        self._print_centered_bitmap_text(
+            p,
             [ticket["turno"]],
-            self._load_font(110, bold=True),
+            font_size=110,
+            bold=True,
             line_spacing=10
         )
-        self._print_bitmap(p, img_turno)
 
         advertencia = [
             "Si tarda mas de 3 minutos en acudir a la",
@@ -217,25 +239,22 @@ class ImpresionService:
             "del tramite/servicio para el que fue llamado",
         ]
 
-        img_adv = self._render_text_bitmap(
+        self._print_centered_bitmap_text(
+            p,
             advertencia,
-            self._load_font(28, italic=True),
+            font_size=28,
+            italic=True,
             line_spacing=6
         )
-        self._print_bitmap(p, img_adv)
         
-        try:
+        with suppress(Exception):
             p.set(align='center', bold=True)
-        except Exception:
-            pass
 
         p.text("\nTRAMITES / SERVICIOS\n")
         p.text("-" * 48 + "\n")
         
-        try:
+        with suppress(Exception):
             p.set(bold=False)
-        except Exception:
-            pass
 
         for t in ticket.get("tramites", []):
             lineas = textwrap.wrap(t, width=ANCHO_LINEA)
@@ -244,15 +263,25 @@ class ImpresionService:
 
         p.text("\nPor favor espere su turno\n\n")
         
-        try:
+        with suppress(Exception):
             p.set(align="right")
-        except Exception:
-            pass
         
         p.text(ticket.get("fecha_hora", "") + "\n")
 
         p.cut()
         time.sleep(0.3)
+
+    def _safe_print_bitmap(self, p, img):
+        with suppress(Exception):
+            self._print_bitmap(p, img)
+
+    def _print_centered_bitmap_text(self, p, lines, font_size, bold=False, italic=False, line_spacing=8):
+        img = self._render_text_bitmap(
+            lines,
+            self._load_font(font_size, bold=bold, italic=italic),
+            line_spacing=line_spacing
+        )
+        self._safe_print_bitmap(p, img)
 
 class MockPrinter:
     def image(self, path):

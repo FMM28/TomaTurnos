@@ -51,13 +51,12 @@ class VentanillaService:
     def get_ventanilla_by_tramite(id_tramite: int) -> Optional[Ventanilla]:
         """Obtiene la ventanilla asociada a un trámite específico"""
         try:
-            ventanilla = (
+            return (
                 db.session.query(Ventanilla)
                 .join(Ventanilla.tramites)
                 .filter_by(id_tramite=id_tramite)
                 .first()
             )
-            return ventanilla
         except SQLAlchemyError as e:
             print(f"Error al obtener ventanilla por trámite {id_tramite}: {e}")
             return None
@@ -76,7 +75,7 @@ class VentanillaService:
             
             ventanilla = Ventanilla(
                 name=name,
-                id_area=id_area if id_area else None
+                id_area=id_area or None
             )
             db.session.add(ventanilla)
             db.session.commit()
@@ -104,7 +103,7 @@ class VentanillaService:
                 return None, "Ya existe una ventanilla con ese nombre"
             
             ventanilla.name = name
-            ventanilla.id_area = id_area if id_area else None
+            ventanilla.id_area = id_area or None
             
             db.session.commit()
             return ventanilla, None

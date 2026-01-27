@@ -153,10 +153,7 @@ def reasignar_ticket_view():
 
     id_area = request.args.get("id_area", type=int)
 
-    if id_area:
-        area = AreaService.get_area_by_id(id_area)
-    else:
-        area = ticket.tramite.area
+    area = AreaService.get_area_by_id(id_area) if id_area else ticket.tramite.area
 
     tramites = TramiteService.get_tramites_by_area(area.id_area)
     areas = AreaService.get_all_areas()

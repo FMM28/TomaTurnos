@@ -127,7 +127,7 @@ class TicketTramiteService:
     @staticmethod
     def get_siguiente_espera(ticket_tramite: TicketTramite):
         try:
-            siguiente = (
+            if siguiente := (
                 TicketTramite.query
                 .filter(
                     TicketTramite.id_ticket == ticket_tramite.id_ticket,
@@ -139,9 +139,7 @@ class TicketTramiteService:
                     TicketTramite.id_ticket_tramite.asc()
                 )
                 .first()
-            )
-
-            if siguiente:
+            ):
                 siguiente.estado = "espera"
             
             db.session.commit()

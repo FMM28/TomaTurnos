@@ -86,8 +86,7 @@ class AtencionService:
     def rellamar(atencion: Atencion) -> None:
         app = current_app._get_current_object()
         
-        timer = _llamado_timers.pop(atencion.id_atencion, None)
-        if timer:
+        if (timer := _llamado_timers.pop(atencion.id_atencion, None)):
             timer.cancel()
 
         atencion.estado = "llamado"
@@ -113,8 +112,7 @@ class AtencionService:
         descripcion: Optional[str] = None
     ) -> None:
 
-        timer = _llamado_timers.pop(atencion.id_atencion, None)
-        if timer:
+        if (timer := _llamado_timers.pop(atencion.id_atencion, None)):
             timer.cancel()
 
         atencion.estado = "finalizado"
@@ -136,8 +134,7 @@ class AtencionService:
         descripcion: Optional[str] = None
     ) -> None:
 
-        timer = _llamado_timers.pop(atencion.id_atencion, None)
-        if timer:
+        if (timer := _llamado_timers.pop(atencion.id_atencion, None)):
             timer.cancel()
 
         atencion.estado = "cancelado"
@@ -201,6 +198,4 @@ class AtencionService:
         """
 
         ahora = datetime.now()
-        tiempo_transcurrido = (ahora - atencion.hora_inicio).total_seconds()
-        
-        return tiempo_transcurrido
+        return (ahora - atencion.hora_inicio).total_seconds()
