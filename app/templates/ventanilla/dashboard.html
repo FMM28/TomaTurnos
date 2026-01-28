@@ -178,6 +178,28 @@
         {% endif %}
     </section>
 
+<section class="historial">
+    <h3>Historial de atenciones</h3>
+
+    {% if historial_atencion.turnos %}
+        <ul class="historial-lista">
+            {% for h in historial_atencion.turnos %}
+            <li class="item estado-{{ h.estado }}">
+                <div class="top">
+                    <span class="turno">Turno {{ h.turno }}</span>
+                    <span class="hora">{{ h.hora_inicio or "—" }} - {{ h.hora_fin }}</span>
+                </div>
+                <div class="tramite">{{ h.tramite }}</div>
+                <div class="estado">{{ h.estado | capitalize }}</div>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="vacio">Sin atenciones hoy</p>
+    {% endif %}
+</section>
+
+
 </div>
 
 {% endblock %}

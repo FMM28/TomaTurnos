@@ -1,6 +1,6 @@
 import threading
 from typing import Optional, List, Tuple
-from datetime import datetime
+from datetime import datetime,time
 from sqlalchemy.exc import SQLAlchemyError
 from flask import current_app
 from app.extensions import db, socketio
@@ -199,3 +199,20 @@ class AtencionService:
 
         ahora = datetime.now()
         return (ahora - atencion.hora_inicio).total_seconds()
+
+    @staticmethod
+    def get_atenciones_by_user(id_user: int) -> List[Atencion]:
+        hoy = datetime.now().date()
+
+        inicio_dia = datetime.combine(hoy, time.min)
+        fin_dia = datetime.combine(hoy, time.max)
+
+        return (
+            Atencion.query
+            .filter(Atencion.id_usuario == id_user)
+            .filter(Atencion.hora_fin >= inicio_dia)
+            .filter(Atencion.hora_fin <= fin_dia)
+            .filter(Atencion.estado.in_(["finalizado", "reasignado", "cancelado"]))
+            .order_by(Atencion.hora_inicio.desc())
+            .all()
+        )

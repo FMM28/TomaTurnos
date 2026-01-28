@@ -18,12 +18,26 @@ ventanilla_bp = Blueprint("ventanilla", __name__, url_prefix="/ventanilla")
 def dashboard():
     turnos_en_espera = TicketTramiteService.get_cola_para_usuario(current_user.id_usuario)
     turno_actual = AtencionService.get_atencion_activa_por_usuario(current_user.id_usuario)
+    historial = AtencionService.get_atenciones_by_user(current_user.id_usuario)
+    historial_atencion = {
+        "turnos": [
+            {
+                "turno": atencion.ticket_tramite.ticket.turno,
+                "tramite": atencion.ticket_tramite.tramite.name,
+                "hora_inicio": atencion.hora_inicio.strftime("%H:%M"),
+                "hora_fin": atencion.hora_fin.strftime("%H:%M") if atencion.hora_fin else None,
+                "estado": atencion.estado
+            }
+            for atencion in historial
+        ]
+    }
 
     return render_template(
         "ventanilla/dashboard.html",
         turnos_en_espera=turnos_en_espera,
         turno_actual=turno_actual,
         usuario=current_user,
+        historial_atencion = historial_atencion
     )
 
 

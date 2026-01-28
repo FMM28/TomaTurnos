@@ -13,6 +13,9 @@
             Trámite seleccionado:
             <strong id="modalTramiteNombre"></strong>
         </p>
+        <p class="modal-text">
+            Seleccione el motivo de la reasignación:
+        </p>
 
         <form method="POST"
               action="{{ url_for('ventanilla.reasignar_ticket_post') }}"
@@ -64,6 +67,9 @@
 <div class="tramites-layout">
 
     <aside class="tramites-sidebar">
+        <div class="back">
+            <a href="{{ url_for('ventanilla.dashboard') }}" class="btn-back"> ← Regresar</a>
+        </div>
 
         <section class="sidebar-section">
             <h2 class="sidebar-title">Áreas</h2>
