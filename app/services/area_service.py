@@ -1,5 +1,6 @@
 from app.models import Area
 from app.extensions import db
+from datetime import timezone
 from typing import List, Optional, Tuple
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
@@ -41,7 +42,6 @@ class AreaService:
         try:
             query = Area.query.filter(
                 Area.name == name,
-                Area.deleted_at.is_(None)
             )
 
             if exclude_id is not None:
@@ -53,19 +53,33 @@ class AreaService:
             return False
 
     @staticmethod
+    def get_area_by_name(name: str) -> Optional[Area]:
+        """Obtiene un área por nombre, opcionalmente incluyendo eliminadas"""
+        try:
+            query = Area.query.filter(Area.name == name)
+                
+            return query.first()
+        except SQLAlchemyError as e:
+            print(f"Error al buscar área: {e}")
+            return None
+
+    @staticmethod
     def create_area(name: str) -> Tuple[Optional[Area], Optional[str]]:
-        """Crea una nueva área"""
+        """Crea una nueva área o restaura una eliminada"""
         try:
             name = name.strip()
 
             if not name:
                 return None, "El nombre del área es requerido"
 
-            if AreaService.area_exists_by_name(name):
-                return None, "Ya existe un área con ese nombre"
-
-            area = Area(name=name)
-            db.session.add(area)
+            if area := AreaService.get_area_by_name(name):
+                if area.deleted_at is None:
+                    return None, "Ya existe un área activa con ese nombre"
+                area.deleted_at = None
+            else:
+                area = Area(name=name)
+                db.session.add(area)
+                
             db.session.commit()
             return area, None
 
@@ -117,7 +131,7 @@ class AreaService:
             for tramite in tramites:
                 TramiteService.delete_tramite(tramite.id_tramite)
 
-            area.deleted_at = datetime.utcnow()
+            area.deleted_at = datetime.now()
             db.session.commit()
             return True, None
 
