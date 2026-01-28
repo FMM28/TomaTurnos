@@ -141,14 +141,16 @@ class TicketTramiteService:
                 .first()
             ):
                 siguiente.estado = "espera"
-            
+            else:
+                ticket_tramite.ticket.estado = "finalizado"
+
             db.session.commit()
             return True, None
 
         except SQLAlchemyError as e:
             db.session.rollback()
             print(f"Error al obtener siguiente trámite del ticket: {e}")
-            return None
+            return None, str(e)
 
     @staticmethod
     def marcar_atendiendo(ticket_tramite_id: int) -> Tuple[bool, Optional[str]]:
