@@ -1,0 +1,74 @@
+{% extends "admin/base_table.html" %}
+
+{% set page_title = "Gestión de Anuncios" %}
+
+{% block table_title %}Anuncios{% endblock %}
+
+{% block table_actions %}
+    <a href="{{ url_for('admin.create_anuncio') }}" class="btn-create">+ Nuevo Anuncio</a>
+{% endblock %}
+
+{% block table_columns %}
+    <th>ID</th>
+    <th>Tipo</th>
+    <th>Archivo</th>
+    <th>Duración (s)</th>
+    <th>Estado</th>
+    <th>Acciones</th>
+{% endblock %}
+
+{% block table_body %}
+    {% if anuncios %}
+        {% for anuncio in anuncios %}
+        <tr>
+            <td>{{ anuncio.id_anuncio }}</td>
+            <td>
+                <strong>{{ anuncio.tipo|capitalize }}</strong>
+            </td>
+            <td>
+                {{ anuncio.titulo }}
+            </td>
+            <td>{{ anuncio.duracion }}</td>
+            <td>
+                {% if anuncio.activo %}
+                    <span class="badge badge-success">Activo</span>
+                {% else %}
+                    <span class="badge badge-secondary">Inactivo</span>
+                {% endif %}
+            </td>
+            <td>
+                <div class="actions-cell">
+                    <a href="{{ url_for('admin.edit_anuncio', id_anuncio=anuncio.id_anuncio) }}" class="btn-edit">
+                        Editar
+                    </a>
+
+                    {% if anuncio.activo %}
+                    <form method="POST"
+                          action="{{ url_for('admin.deactivate_anuncio', id_anuncio=anuncio.id_anuncio) }}"
+                          class="inline-form">
+                        <button type="submit" class="btn-view">
+                            Desactivar
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    <form method="POST"
+                          action="{{ url_for('admin.delete_anuncio', id_anuncio=anuncio.id_anuncio) }}"
+                          class="delete-form"
+                          onsubmit="return confirm('¿Eliminar este anuncio?');">
+                        <button type="submit" class="btn-delete">
+                            Eliminar
+                        </button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    {% else %}
+        <tr>
+            <td colspan="6" class="empty-state">
+                No hay anuncios registrados
+            </td>
+        </tr>
+    {% endif %}
+{% endblock %}

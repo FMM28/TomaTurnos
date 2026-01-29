@@ -1,0 +1,174 @@
+{% extends "admin/base_admin.html" %}
+
+{% set page_title = 'Editar Anuncio' if anuncio else 'Nuevo Anuncio' %}
+{% set submit_text = 'Actualizar' if anuncio else 'Crear' %}
+{% set cancel_url = url_for('admin.anuncios') %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="page-header">
+        <h1 class="page-title">{{ page_title }}</h1>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="form-card">
+        <form method="POST" enctype="multipart/form-data">
+
+            <div class="form-group">
+                <label class="form-label">Título *</label>
+                <input type="text"
+                       class="form-input"
+                       name="titulo"
+                       id="titulo"
+                       required
+                       value="{{ anuncio.titulo if anuncio else '' }}">
+            </div>
+
+            <div class="form-group"
+                 data-modo="{{ 'edit' if anuncio else 'create' }}"
+                 data-duracion="{{ anuncio.duracion if anuncio else '' }}"
+                 data-tipo="{{ anuncio.tipo if anuncio else '' }}">
+
+                <label class="form-label">
+                    Archivo {% if not anuncio %}*{% endif %}
+                </label>
+
+                <input type="file"
+                    class="form-input"
+                    id="archivo"
+                    name="archivo"
+                    {% if not anuncio %}required{% endif %}
+                    accept="
+                        video/mp4,
+                        video/webm,
+                        video/ogg,
+                        video/quicktime,
+                        video/x-matroska,
+                        image/png,
+                        image/jpeg,
+                        image/webp
+                    ">
+                <small class="form-hint">
+                    Formatos de video soportados:
+                    <strong>MP4, WebM, OGG, MOV, MKV</strong>
+                    <br>
+                    Formatos de imagen:
+                    <strong>JPG, PNG, WEBP</strong>
+                    <br>
+                    Tamaño máximo: <strong>100 MB</strong>
+                </small>
+
+                <input type="hidden" name="tipo" id="tipo">
+                <input type="hidden" name="duracion" id="duracion">
+            </div>
+
+            <div id="preview-box" class="preview-box" style="display:none;">
+
+                <div class="preview-media">
+                    <video id="video-preview"
+                           controls
+                           muted
+                           playsinline
+                           style="max-width:100%; border-radius:6px;"></video>
+                </div>
+
+                <div class="preview-meta">
+                    <p><strong>Título:</strong> <span id="preview-titulo"></span></p>
+                    <p><strong>Duración:</strong> <span id="preview-duracion"></span> s</p>
+                </div>
+            </div>
+
+            {% if anuncio %}
+            <div class="form-group checkbox-group">
+                <label>
+                    <input type="checkbox"
+                           name="activo"
+                           value="1"
+                           {% if anuncio.activo %}checked{% endif %}>
+                    Anuncio activo
+                </label>
+            </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    {{ submit_text }}
+                </button>
+                <a href="{{ cancel_url }}" class="btn-secondary">
+                    Cancelar
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const fileInput = document.getElementById("archivo");
+    const tituloInput = document.getElementById("titulo");
+    const tipoInput = document.getElementById("tipo");
+    const duracionInput = document.getElementById("duracion");
+
+    const previewBox = document.getElementById("preview-box");
+    const videoPreview = document.getElementById("video-preview");
+    const previewTitulo = document.getElementById("preview-titulo");
+    const previewDuracion = document.getElementById("preview-duracion");
+
+    fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        if (file.type.startsWith("video/")) {
+            tipoInput.value = "video";
+        } else if (file.type.startsWith("image/")) {
+            tipoInput.value = "imagen";
+            duracionInput.value = 5;
+            return;
+        }
+
+        const nombreLimpio = file.name
+            .replace(/\.[^/.]+$/, "")
+            .replace(/[_\-]+/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        tituloInput.value = nombreLimpio;
+
+        const url = URL.createObjectURL(file);
+        videoPreview.src = url;
+
+        videoPreview.onloadedmetadata = () => {
+            const duracion = Math.ceil(videoPreview.duration || 5);
+            duracionInput.value = duracion;
+
+            previewTitulo.textContent = nombreLimpio;
+            previewDuracion.textContent = duracion;
+
+            previewBox.style.display = "block";
+        };
+
+        videoPreview.onerror = () => {
+            duracionInput.value = 5;
+            previewTitulo.textContent = nombreLimpio;
+            previewDuracion.textContent = "5";
+            previewBox.style.display = "block";
+        };
+    });
+
+});
+</script>
+
+{% endblock %}

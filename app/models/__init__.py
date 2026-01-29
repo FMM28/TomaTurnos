@@ -7,6 +7,7 @@ from .ticket import Ticket
 from .ticket_tramite import TicketTramite
 from .atencion import Atencion
 from .suplente import Suplente
+from .anuncio import Anuncio
 from app.extensions import login_manager
 
 @login_manager.user_loader

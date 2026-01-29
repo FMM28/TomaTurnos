@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from app.auth.decorators import role_required
+from app.services.anuncio_service import AnuncioService
 from app.services.user_service import UserService
 from app.services.area_service import AreaService
 from app.services.tramite_service import TramiteService
@@ -546,3 +547,87 @@ def eliminar_suplente(id_suplente):
         flash('Suplente desasignado', 'success')
 
     return redirect(url_for('admin.suplentes_usuario', id_usuario=suplente.id_usuario))
+
+
+@admin_bp.route("/anuncios")
+@login_required
+@role_required("admin")
+def anuncios():
+    return render_template(
+        "admin/anuncios.html",
+        anuncios=AnuncioService.get_all()
+    )
+
+
+@admin_bp.route("/anuncios/nuevo", methods=["GET", "POST"])
+@login_required
+@role_required("admin")
+def create_anuncio():
+    if request.method == "POST":
+
+        anuncio, error = AnuncioService.create(
+            archivo=request.files.get("archivo"),
+            titulo=request.form.get("titulo"),
+            tipo=request.form.get("tipo"),
+            duracion=request.form.get("duracion", type=int)
+        )
+
+        if error:
+            flash(error, "error")
+            return redirect(request.url)
+
+        flash("Anuncio creado correctamente", "success")
+        return redirect(url_for("admin.anuncios"))
+
+    return render_template("admin/form_anuncio.html", anuncio=None)
+
+
+@admin_bp.route("/anuncios/<int:id_anuncio>/editar", methods=["GET", "POST"])
+@login_required
+@role_required("admin")
+def edit_anuncio(id_anuncio):
+    anuncio = AnuncioService.get_by_id(id_anuncio)
+    if not anuncio:
+        flash("Anuncio no encontrado", "error")
+        return redirect(url_for("admin.anuncios"))
+
+    if request.method == "POST":
+        anuncio, error = AnuncioService.update(
+            id_anuncio=id_anuncio,
+            archivo=request.files.get("archivo"),
+            duracion=request.form.get("duracion", type=int),
+            activo=bool(request.form.get("activo"))
+        )
+
+        if error:
+            flash(error, "error")
+            return redirect(request.url)
+
+        flash("Anuncio actualizado correctamente", "success")
+        return redirect(url_for("admin.anuncios"))
+
+    return render_template("admin/form_anuncio.html", anuncio=anuncio)
+
+
+@admin_bp.route("/anuncios/<int:id_anuncio>/desactivar", methods=["POST"])
+@login_required
+@role_required("admin")
+def deactivate_anuncio(id_anuncio):
+    if AnuncioService.deactivate(id_anuncio):
+        flash("Anuncio desactivado", "success")
+    else:
+        flash("No se pudo desactivar el anuncio", "error")
+
+    return redirect(url_for("admin.anuncios"))
+
+
+@admin_bp.route("/anuncios/<int:id_anuncio>/eliminar", methods=["POST"])
+@login_required
+@role_required("admin")
+def delete_anuncio(id_anuncio):
+    if AnuncioService.delete(id_anuncio):
+        flash("Anuncio eliminado", "success")
+    else:
+        flash("No se pudo eliminar el anuncio", "error")
+
+    return redirect(url_for("admin.anuncios"))

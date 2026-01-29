@@ -501,6 +501,13 @@ body {
     margin-top: 2rem;
 }
 
+.form-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
 /* Asignar usuario a ventanilla*/
 
 .current-assignment {
