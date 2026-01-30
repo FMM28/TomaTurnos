@@ -19,8 +19,8 @@ def login():
                 return redirect(url_for("admin.dashboard"))
             elif user.role == "ventanilla":
                 return redirect(url_for("ventanilla.dashboard"))
-            elif user.role == "kiosco":
-                return redirect(url_for("kiosco.selector_area"))
+            elif user.role == "admin_area":
+                return redirect(url_for("admin_area.dashboard"))
 
         flash("Usuario o contraseña incorrectos", "danger")
 

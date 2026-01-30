@@ -148,6 +148,22 @@ class AnuncioService:
     @staticmethod
     def get_all():
         return Anuncio.query.order_by(Anuncio.id_anuncio.desc()).all()
+    
+    @staticmethod
+    def get_by_id(id_anuncio):
+        return Anuncio.query.get(id_anuncio)
+    
+    @staticmethod
+    def toggle_active(id_anuncio):
+        anuncio = Anuncio.query.get(id_anuncio)
+        if not anuncio:
+            return None, "No encontrado"
+
+        anuncio.activo = not anuncio.activo
+        db.session.commit()
+
+        AudioService.mark_anuncios_dirty()
+        return anuncio, None
 
     @staticmethod
     def delete(id_anuncio):

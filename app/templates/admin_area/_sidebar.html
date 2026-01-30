@@ -1,0 +1,24 @@
+<aside class="admin-sidebar">
+
+    <div class="sidebar-header">
+        <div class="sidebar-header-info">
+            <span class="sidebar-usuario">{{ current_user.nombre }} {{ current_user.ap_paterno }}</span>
+            <span class="sidebar-rol">Administrador de Área {{ current_user.area.name }}</span>
+        </div>
+    </div>
+
+    <nav class="sidebar-menu">
+
+        <a href="{{ url_for('admin_area.dashboard') }}" class="menu-item">
+            <img class="icon" src="{{ url_for('static', filename='icons/home.svg') }}" alt="">
+            <span class="label">Inicio</span>
+        </a>
+
+        <a href="{{ url_for('auth.logout') }}" class="menu-item logout">
+            <img class="icon" src="{{ url_for('static', filename='icons/logout.svg') }}" alt="">
+            <span class="label">Salir</span>
+        </a>
+
+    </nav>
+
+</aside>

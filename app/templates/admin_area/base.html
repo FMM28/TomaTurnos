@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Área{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_area.css') }}">
+</head>
+<body>
+
+<div class="admin-layout">
+    
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    
+    {% include "admin_area/_sidebar.html" %}
+
+    <main class="admin-content">
+        
+        <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Abrir menú">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        
+        {% block content %}{% endblock %}
+    </main>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/admin_menu.js') }}"></script>
+
+</body>
+</html>

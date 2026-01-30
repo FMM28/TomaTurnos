@@ -50,6 +50,13 @@
                             Desactivar
                         </button>
                     </form>
+                    {% else %}
+                    <form method="POST"
+                          action="{{ url_for('admin.activate_anuncio', id_anuncio=anuncio.id_anuncio) }}"
+                          class="inline-form">
+                        <button type="submit" class="btn-view">
+                            Activar
+                        </button>
                     {% endif %}
 
                     <form method="POST"

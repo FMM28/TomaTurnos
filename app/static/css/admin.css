@@ -40,14 +40,10 @@ body {
 .sidebar-header {
     padding: 20px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 12px;
     border-bottom: 1px solid #444;
-}
-
-.sidebar-header img {
-    width: 40px;
-    height: auto;
 }
 
 .sidebar-usuario {

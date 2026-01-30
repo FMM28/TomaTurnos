@@ -623,10 +623,24 @@ def edit_anuncio(id_anuncio):
 @login_required
 @role_required("admin")
 def deactivate_anuncio(id_anuncio):
-    if AnuncioService.deactivate(id_anuncio):
-        flash("Anuncio desactivado", "success")
+    anuncio, error = AnuncioService.toggle_active(id_anuncio)
+    if anuncio:
+        flash("Anuncio desactivado correctamente", "success")
     else:
-        flash("No se pudo desactivar el anuncio", "error")
+        flash(f"No se pudo desactivar el anuncio: {error}", "error")
+
+    return redirect(url_for("admin.anuncios"))
+
+
+@admin_bp.route("/anuncios/<int:id_anuncio>/activar", methods=["POST"])
+@login_required
+@role_required("admin")
+def activate_anuncio(id_anuncio):
+    anuncio, error = AnuncioService.toggle_active(id_anuncio)
+    if anuncio:
+        flash("Anuncio activado correctamente", "success")
+    else:
+        flash(f"No se pudo activar el anuncio: {error}", "error")
 
     return redirect(url_for("admin.anuncios"))
 
