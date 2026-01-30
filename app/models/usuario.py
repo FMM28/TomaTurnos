@@ -12,6 +12,7 @@ class Usuario(UserMixin, BaseModel):
     ap_paterno = db.Column(db.String(45), nullable=False)
     ap_materno = db.Column(db.String(45), nullable=True)
     role = db.Column(db.String(45), nullable=False)
+    area_id = db.Column(db.Integer, db.ForeignKey("area.id_area"), nullable=True)
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     asignaciones = db.relationship(
@@ -39,6 +40,12 @@ class Usuario(UserMixin, BaseModel):
         foreign_keys="Suplente.id_suplente_usuario",
         back_populates="suplente_usuario",
         cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+    
+    area = db.relationship(
+        "Area",
+        back_populates="usuarios",
         passive_deletes=True
     )
 

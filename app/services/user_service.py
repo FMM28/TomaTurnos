@@ -55,6 +55,7 @@ class UserService:
         nombre: str,
         ap_paterno: str,
         role: str,
+        area_id: Optional[int],
         password: str,
         ap_materno: Optional[str] = None
     ) -> Tuple[Optional[Usuario], Optional[str]]:
@@ -81,7 +82,8 @@ class UserService:
                 nombre=nombre,
                 ap_paterno=ap_paterno,
                 ap_materno=ap_materno,
-                role=role
+                role=role,
+                area_id=area_id or None
             )
             user.set_password(password)
 
@@ -101,6 +103,7 @@ class UserService:
         nombre: str,
         ap_paterno: str,
         role: str,
+        area_id: Optional[int],
         password: Optional[str] = None,
         ap_materno: Optional[str] = None
     ) -> Tuple[Optional[Usuario], Optional[str]]:
@@ -119,6 +122,7 @@ class UserService:
             user.ap_paterno = ap_paterno.strip()
             user.ap_materno = ap_materno.strip() if ap_materno else None
             user.role = role
+            user.area_id = area_id or None
 
             if password:
                 user.set_password(password)

@@ -10,3 +10,8 @@ class Area(BaseModel):
 
     tramites = db.relationship("Tramite", back_populates="area")
     ventanillas = db.relationship("Ventanilla", back_populates="area")
+    usuarios = db.relationship(
+        "Usuario",
+        back_populates="area",
+        passive_deletes=True
+    )

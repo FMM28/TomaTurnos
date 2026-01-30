@@ -38,7 +38,8 @@ def create_user():
             password=request.form["password"],
             nombre=request.form["nombre"],
             ap_paterno=request.form["ap_paterno"],
-            ap_materno=request.form.get("ap_materno")
+            ap_materno=request.form.get("ap_materno"),
+            area_id=request.form.get("area", type=int)
         )
         
         if error:
@@ -47,7 +48,11 @@ def create_user():
             flash("Usuario creado exitosamente", "success")
             return redirect(url_for("admin.users"))
             
-    return render_template("admin/form_user.html", user=None)
+    return render_template(
+        "admin/form_user.html",
+        user=None,
+        areas=AreaService.get_all_areas()
+    )
 
 
 @admin_bp.route("/users/<int:id>/edit", methods=["GET", "POST"])
@@ -64,7 +69,8 @@ def edit_user(id):
             password=request.form.get("password"),
             nombre=request.form["nombre"],
             ap_paterno=request.form["ap_paterno"],
-            ap_materno=request.form.get("ap_materno")
+            ap_materno=request.form.get("ap_materno"),
+            area_id=request.form.get("area", type=int)
         )
         
         if error:
@@ -73,7 +79,11 @@ def edit_user(id):
             flash("Usuario actualizado exitosamente", "success")
             return redirect(url_for("admin.users"))
 
-    return render_template("admin/form_user.html", user=user)
+    return render_template(
+        "admin/form_user.html",
+        user=user,
+        areas=AreaService.get_all_areas()
+    )
 
 
 @admin_bp.route("/users/<int:id>/delete", methods=["POST"])
