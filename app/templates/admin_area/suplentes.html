@@ -1,0 +1,93 @@
+{% extends "admin_area/base.html" %}
+
+{% block title %}
+Suplentes de {{ usuario.nombre }} {{ usuario.ap_paterno }}
+{% endblock %}
+
+{% block content %}
+<div class="users-page">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Gestión de suplentes</h1>
+            <p class="page-subtitle">
+                Usuario principal:
+                <strong>{{ usuario.nombre }} {{ usuario.ap_paterno }}</strong>
+            </p>
+        </div>
+
+        <a href="{{ url_for('admin_area.users') }}" class="btn-secondary">
+            ← Volver a usuarios
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="users-section">
+        <h3 class="section-title">Suplentes asignados</h3>
+
+        {% if suplentes %}
+            {% for suplente in suplentes %}
+            <div class="user-card active">
+                <div class="user-info">
+                    <span class="user-name">
+                        {{ suplente.suplente_usuario.nombre }}
+                        {{ suplente.suplente_usuario.ap_paterno }}
+                    </span>
+                </div>
+
+                <form method="POST"
+                      action="{{ url_for('admin_area.eliminar_suplente',
+                                         id_suplente=suplente.id_suplente) }}"
+                      onsubmit="return confirm('¿Desea desasignar este suplente?');">
+                    <button class="btn-delete">
+                        Desasignar
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="empty-state">No hay suplentes asignados</p>
+        {% endif %}
+    </div>
+
+    <div class="users-section">
+        <h3 class="section-title">
+            Usuarios disponibles para suplencia
+            <span class="badge">{{ usuarios_no_asignados | length }}</span>
+        </h3>
+
+        {% if usuarios_no_asignados %}
+            {% for user in usuarios_no_asignados %}
+            <div class="user-card">
+                <div class="user-info">
+                    <span class="user-name">
+                        {{ user.nombre }} {{ user.ap_paterno }}
+                    </span>
+                </div>
+
+                <form method="POST"
+                      action="{{ url_for('admin_area.asignar_suplente',
+                                         id_usuario=usuario.id_usuario,
+                                         id_suplente_usuario=user.id_usuario) }}">
+                    <button class="btn-assign">
+                        Asignar
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="empty-state">No hay usuarios disponibles</p>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

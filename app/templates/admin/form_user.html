@@ -128,17 +128,16 @@ document.addEventListener("DOMContentLoaded", () => {
             areaSelect.required = false;
             areaSelect.value = "";
 
-            hiddenArea.value = ""; // se envía como NULL / vacío
+            hiddenArea.value = "";
         } else {
             areaSelect.disabled = false;
             areaSelect.required = true;
-            hiddenArea.value = ""; // se ignora
+            hiddenArea.value = "";
         }
     }
 
     roleSelect.addEventListener("change", toggleArea);
 
-    // Ejecutar al cargar (modo edición)
     toggleArea();
 });
 </script>

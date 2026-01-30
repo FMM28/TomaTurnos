@@ -1,5 +1,6 @@
 from app.models import Usuario
 from app.extensions import db
+from datetime import timezone
 from typing import List, Optional, Tuple
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
@@ -48,6 +49,36 @@ class UserService:
         except SQLAlchemyError as e:
             print(f"Error al obtener usuarios con rol {role}: {e}")
             return []
+        
+    @staticmethod
+    def get_usuarios_by_area(area_id: int) -> List[Usuario]:
+        """Obtiene usuarios activos por area"""
+        try:
+            return (
+                Usuario.query
+                .filter_by(area_id=area_id)
+                .filter_by(role='ventanilla')
+                .filter(Usuario.deleted_at.is_(None))
+                .order_by(Usuario.username)
+                .all()
+            )
+        except SQLAlchemyError as e:
+            print(f"Error al obtener usuarios en el area {area_id}: {e}")
+            return []
+
+    @staticmethod
+    def username_exists(username: str, exclude_user_id: Optional[int] = None) -> bool:
+        """
+        Verifica si ya existe un usuario con el username dado.
+        """
+        query = Usuario.query.filter(
+            Usuario.username == username
+        )
+
+        if exclude_user_id:
+            query = query.filter(Usuario.id_usuario != exclude_user_id)
+
+        return db.session.query(query.exists()).scalar()
 
     @staticmethod
     def create_user(
@@ -76,6 +107,9 @@ class UserService:
                 return None, "La contraseña es requerida"
             if not role:
                 return None, "El rol es requerido"
+
+            if UserService.username_exists(username):
+                return None, f"Ya existe un usuario con el nombre de usuario '{username}'"
 
             user = Usuario(
                 username=username,
@@ -117,7 +151,12 @@ class UserService:
             if not user:
                 return None, "Usuario no encontrado"
 
-            user.username = username.strip()
+            username = username.strip()
+
+            if UserService.username_exists(username, exclude_user_id=user_id):
+                return None, f"Ya existe otro usuario con el nombre de usuario '{username}'"
+
+            user.username = username
             user.nombre = nombre.strip()
             user.ap_paterno = ap_paterno.strip()
             user.ap_materno = ap_materno.strip() if ap_materno else None
@@ -148,7 +187,7 @@ class UserService:
             if not user:
                 return False, "Usuario no encontrado o ya eliminado"
 
-            user.deleted_at = datetime.utcnow()
+            user.deleted_at = datetime.now()
 
             db.session.commit()
             return True, None

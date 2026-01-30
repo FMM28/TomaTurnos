@@ -1,0 +1,42 @@
+{% extends "admin_area/base_table.html" %}
+
+{% set page_title = "Usuarios" %}
+
+{% block table_title %}Lista de Usuarios{% endblock %}
+
+{% block table_actions %}
+    <a href="{{ url_for('admin_area.create_user') }}" class="btn-create">+ Nuevo Usuario</a>
+{% endblock %}
+
+{% block table_columns %}
+    <th>ID</th>
+    <th>Usuario</th>
+    <th>Nombre Completo</th>
+    <th>Acciones</th>
+{% endblock %}
+
+{% block table_body %}
+    {% if users %}
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id_usuario }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.nombre }} {{ user.ap_paterno }} {{ user.ap_materno or '' }}</td>
+            <td>
+                <div class="actions-cell">
+                    <a href="{{ url_for('admin_area.tramites_usuario', id_usuario=user.id_usuario) }}" class="btn-view">Trámites</a>
+                    <a href="{{ url_for('admin_area.suplentes_usuario', id_usuario=user.id_usuario) }}" class="btn-user">Suplentes</a>
+                    <a href="{{ url_for('admin_area.edit_user', id=user.id_usuario) }}" class="btn-edit">Editar</a>
+                    <form method="POST" action="{{ url_for('admin_area.delete_user', id=user.id_usuario) }}" class="delete-form" onsubmit="return confirm('¿Estás seguro de eliminar este usuario?');">
+                        <button type="submit" class="btn-delete">Eliminar</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    {% else %}
+        <tr>
+            <td colspan="5" class="empty-state">No hay usuarios registrados.</td>
+        </tr>
+    {% endif %}
+{% endblock %}

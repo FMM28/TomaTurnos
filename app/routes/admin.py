@@ -387,6 +387,7 @@ def desasignar_tramite_ventanilla(id_ventanilla, id_tramite):
 
 @admin_bp.route('/tramites/asignar-usuario/<int:id_tramite>', methods=['GET'])
 @login_required
+@role_required("admin")
 def asignar_usuario_tramite(id_tramite):
     tramite = TramiteService.get_tramite_by_id(id_tramite)
 
@@ -407,6 +408,7 @@ def asignar_usuario_tramite(id_tramite):
 
 @admin_bp.route('/tramites/asignar-usuario/<int:id_tramite>/<int:id_usuario>', methods=['POST'])
 @login_required
+@role_required("admin")
 def asignar_usuario_tramite_post(id_tramite, id_usuario):
     tramite = TramiteService.get_tramite_by_id(id_tramite)
     usuario = UserService.get_user_by_id(id_usuario)
@@ -415,7 +417,7 @@ def asignar_usuario_tramite_post(id_tramite, id_usuario):
 
     if not tramite or not usuario:
         flash('Trámite o usuario no encontrado', 'danger')
-        return redirect(redirect_to or url_for('admin.index'))
+        return redirect(redirect_to or url_for('admin.dashboard'))
 
     usuarios_ids_asignados = AsignacionService.get_usuarios_by_tramite(id_tramite)
 
@@ -435,6 +437,7 @@ def asignar_usuario_tramite_post(id_tramite, id_usuario):
 
 @admin_bp.route('/tramites/desasignar-usuario/<int:id_tramite>/<int:id_usuario>', methods=['POST'])
 @login_required
+@role_required("admin")
 def desasignar_usuario_tramite(id_tramite, id_usuario):
     redirect_to = request.form.get('next')
 
@@ -472,6 +475,8 @@ def tramite_ventanilla(id_tramite):
 
 
 @admin_bp.route('/users/<int:id_usuario>/tramites')
+@login_required
+@role_required("admin")
 def tramites_usuario(id_usuario):
     usuario = UserService.get_user_by_id(id_usuario)
 
@@ -508,6 +513,7 @@ def tramites_usuario(id_usuario):
 
 @admin_bp.route('/users/<int:id_usuario>/suplentes')
 @login_required
+@role_required("admin")
 def suplentes_usuario(id_usuario):
     usuario = UserService.get_user_by_id(id_usuario)
 
@@ -532,6 +538,7 @@ def suplentes_usuario(id_usuario):
 
 @admin_bp.route('/users/<int:id_usuario>/suplentes/asignar/<int:id_suplente_usuario>', methods=['POST'])
 @login_required
+@role_required("admin")
 def asignar_suplente(id_usuario, id_suplente_usuario):
     _, error = SuplenteService.create_suplente(
         id_usuario=id_usuario,
@@ -548,6 +555,7 @@ def asignar_suplente(id_usuario, id_suplente_usuario):
 
 @admin_bp.route('/suplentes/<int:id_suplente>/eliminar', methods=['POST'])
 @login_required
+@role_required("admin")
 def eliminar_suplente(id_suplente):
     suplente = SuplenteService.get_suplente_by_id(id_suplente)
 

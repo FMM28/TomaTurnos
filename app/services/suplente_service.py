@@ -46,6 +46,24 @@ class SuplenteService:
 
         return query.order_by(Usuario.username).all()
 
+    @staticmethod
+    def get_usuarios_disponibles_por_area(
+        area_id: int,
+        id_usuario: int,
+        excluir_ids: list[int] | None = None
+    ) -> list[Usuario]:
+
+        query = Usuario.query.filter(
+            Usuario.area_id == area_id,
+            Usuario.role == 'ventanilla',
+            Usuario.id_usuario != id_usuario,
+            Usuario.deleted_at.is_(None)
+        )
+
+        if excluir_ids:
+            query = query.filter(~Usuario.id_usuario.in_(excluir_ids))
+
+        return query.order_by(Usuario.username).all()
         
     @staticmethod
     def create_suplente(id_usuario: int, id_suplente_usuario: int) -> Tuple[Optional[Suplente], Optional[str]]:

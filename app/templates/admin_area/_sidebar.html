@@ -14,6 +14,11 @@
             <span class="label">Inicio</span>
         </a>
 
+        <a href="{{ url_for('admin_area.users') }}" class="menu-item">
+            <img class="icon" src="{{ url_for('static', filename='icons/usuario.svg') }}" alt="">
+            <span class="label">Usuarios</span>
+        </a>
+
         <a href="{{ url_for('auth.logout') }}" class="menu-item logout">
             <img class="icon" src="{{ url_for('static', filename='icons/logout.svg') }}" alt="">
             <span class="label">Salir</span>
