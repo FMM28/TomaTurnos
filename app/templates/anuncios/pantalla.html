@@ -20,11 +20,20 @@
                 </div>
             </div>
 
-            <div class="publicidad-section">
-                <div class="publicidad-contenido">
-                    <h2>Publicidad</h2>
+                <div id="ad-container" class="ad-container">
+                    <video
+                        id="ad-video"
+                        class="ad-video"
+                        muted
+                        playsinline
+                        style="display:none;">
+                    </video>
+
+                    <img
+                        id="ad-image"
+                        class="ad-video"
+                        style="display:none;">
                 </div>
-            </div>
 
         </div>
 
@@ -132,6 +141,34 @@ function activarCarrusel(lista) {
         lista.classList.add("carousel");
     }
 }
+</script>
+
+<script>
+const adVideo = document.getElementById("ad-video");
+const adImage = document.getElementById("ad-image");
+
+socket.on("anuncio_play", (a) => {
+    adVideo.pause();
+    adVideo.style.display = "none";
+    adImage.style.display = "none";
+
+    if (a.tipo === "video") {
+        adVideo.src = a.enlace;
+        adVideo.style.display = "block";
+        adVideo.play().catch(() => {
+            console.log("No se pudo reproducir el video automáticamente");
+        });
+    } else {
+        adImage.src = a.enlace;
+        adImage.style.display = "block";
+    }
+});
+
+socket.on("anuncio_clear", () => {
+    adVideo.pause();
+    adVideo.style.display = "none";
+    adImage.style.display = "none";
+});
 </script>
 
 {% endblock %}

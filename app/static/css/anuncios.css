@@ -25,7 +25,7 @@ body {
 /* Header con logo */
 .header-logo {
     width: 100%;
-    height: 18vh;
+    height: 17vh;
     background: #183B70;
     display: flex;
     justify-content: center;
@@ -56,7 +56,7 @@ body {
 
 /* Turnos en llamado */
 .turnos-llamado {
-    width: 35%;
+    width: 40%;
     padding: 20px;
     background: #fff;
     overflow-y: auto;
@@ -168,6 +168,7 @@ body {
     padding: 20px;
     border-top: 2px solid #e0e0e0;
     overflow: hidden;
+    height: 17vh;
 }
 
 .turnos-espera h3 {
@@ -177,19 +178,33 @@ body {
 
 /* Publicidad */
 .publicidad-section {
-    width: 65%;
+    width: 60%;
     background: #ffc341;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    height: 66vh;
 }
 
-.publicidad-contenido {
-    text-align: center;
-    font-size: 2rem;
-    font-weight: bold;
-    color: #5d4037;
+.ad-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: rgb(255, 255, 255);
+}
+
+.ad-video {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit:contain;
+    object-position: center;
+
+    border-radius: 0;
 }
 
 .espera-lista::-webkit-scrollbar {

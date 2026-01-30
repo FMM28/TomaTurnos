@@ -6,7 +6,7 @@ from app.auth.decorators import role_required
 from app.services.ticket_tramite_service import TicketTramiteService
 from app.services.atencion_service import AtencionService
 from app.services.turno_service import TurnoService
-from app.services.speak_service import AudioService
+from app.services.audio_service import AudioService
 from app.services.area_service import AreaService
 from app.services.tramite_service import TramiteService
 

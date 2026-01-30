@@ -1,6 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
-from app.services.ticket_service import TicketService
-from app.services.ticket_tramite_service import TicketTramiteService
+from flask import Blueprint, render_template
 
 anuncios_bp = Blueprint("anuncios", __name__, url_prefix="/anuncios")
 

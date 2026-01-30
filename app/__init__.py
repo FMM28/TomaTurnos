@@ -5,7 +5,8 @@ from app.auth.login_manager import load_user
 from .routes import register_blueprints
 import app.sockets
 from app import models
-from app.services.speak_service import AudioService
+from app.services.audio_service import AudioService
+import os
 
 def create_app():
     app = Flask(__name__)
@@ -18,8 +19,9 @@ def create_app():
 
     register_blueprints(app)
 
-    socketio.init_app(app, cors_allowed_origins="*", async_mode='eventlet')
+    socketio.init_app(app, cors_allowed_origins="*", async_mode='threading')
     
-    AudioService.start()
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        AudioService.start(app)
 
     return app

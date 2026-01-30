@@ -8,6 +8,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
-socketio = SocketIO(cors_allowed_origins="*", async_mode='eventlet')
+
+socketio = SocketIO(cors_allowed_origins="*", async_mode='threading')
 
 login_manager.login_view = "auth.login"
