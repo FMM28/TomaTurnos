@@ -24,6 +24,10 @@ class AudioService:
 
     BASE_VOLUME = 0.9
     DUCK_VOLUME = 0.2
+    
+    VOICE_INDEX = 0
+    RATE = 0
+    TTS_VOLUME = 100
 
     _emit_callback = None
 
@@ -62,10 +66,16 @@ class AudioService:
         
     @classmethod
     def _speak_tts(cls, texto):
+        pythoncom.CoInitialize()
         try:
-            pythoncom.CoInitialize()
             speaker = win32com.client.Dispatch("SAPI.SpVoice")
-            speaker.Volume = 100
+
+            voices = speaker.GetVoices()
+            if cls.VOICE_INDEX < voices.Count:
+                speaker.Voice = voices.Item(cls.VOICE_INDEX)
+
+            speaker.Rate = cls.RATE
+            speaker.Volume = cls.TTS_VOLUME
 
             with cls._sound_lock:
                 if cls._current_sound:
@@ -73,12 +83,14 @@ class AudioService:
 
             speaker.Speak(texto)
 
+        except Exception as e:
+            print(f"Error en TTS: {e}")
+
+        finally:
             with cls._sound_lock:
                 if cls._current_sound:
                     cls._current_sound.set_volume(cls.BASE_VOLUME)
-        except Exception as e:
-            print(f"Error en TTS: {e}")
-        finally:
+                    
             pythoncom.CoUninitialize()
 
     @classmethod
