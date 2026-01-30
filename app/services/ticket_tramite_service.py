@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from app.models import (TicketTramite, Tramite, Ticket, Asignacion, Suplente)
 from app.extensions import db
 from typing import List, Optional, Tuple
@@ -79,20 +80,18 @@ class TicketTramiteService:
         """
         try:
             usuarios_ids = (
-                db.session.query(Suplente.id_usuario)
-                .filter(Suplente.id_suplente_usuario == usuario_id)
-                .subquery()
+                select(Suplente.id_usuario)
+                .where(Suplente.id_suplente_usuario == usuario_id)
             )
 
             tramites_subquery = (
-                db.session.query(Asignacion.id_tramite)
-                .filter(
+                select(Asignacion.id_tramite)
+                .where(
                     db.or_(
                         Asignacion.id_usuario == usuario_id,
                         Asignacion.id_usuario.in_(usuarios_ids)
                     )
                 )
-                .subquery()
             )
 
             return (
