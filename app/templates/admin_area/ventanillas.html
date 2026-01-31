@@ -1,0 +1,43 @@
+{% extends "admin_area/base_table.html" %}
+
+{% set page_title = "Gestión de Ventanillas" %}
+
+{% block header_actions %}
+    <a href="{{ url_for('admin_area.tramites') }}" class="btn-secondary">← Volver a Trámites</a>
+{% endblock %}
+
+{% block table_title %}Lista de Ventanillas{% endblock %}
+
+{% block table_actions %}
+    <a href="{{ url_for('admin_area.create_ventanilla') }}" class="btn-create">+ Nueva Ventanilla</a>
+{% endblock %}
+
+{% block table_columns %}
+    <th>ID</th>
+    <th>Nombre</th>
+    <th>Acciones</th>
+{% endblock %}
+
+{% block table_body %}
+    {% if ventanillas %}
+        {% for ventanilla in ventanillas %}
+        <tr>
+            <td>{{ ventanilla.id_ventanilla }}</td>
+            <td><strong>{{ ventanilla.name }}</strong></td>
+            <td>
+                <div class="actions-cell">
+                    <a href="{{ url_for('admin_area.ventanilla_tramites', id_ventanilla=ventanilla.id_ventanilla) }}" class="btn-view">Trámites</a>
+                    <a href="{{ url_for('admin_area.edit_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" class="btn-edit">Editar</a>
+                    <form method="POST" action="{{ url_for('admin_area.delete_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" class="delete-form" onsubmit="return confirm('¿Está seguro de eliminar esta ventanilla?');">
+                        <button type="submit" class="btn-delete">Eliminar</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    {% else %}
+        <tr>
+            <td colspan="5" class="empty-state">No hay ventanillas registradas</td>
+        </tr>
+    {% endif %}
+{% endblock %}

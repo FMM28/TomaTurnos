@@ -1,0 +1,85 @@
+{% extends "admin_area/base.html" %}
+
+{% block title %}Asignar Usuario - {{ tramite.name }}{% endblock %}
+
+{% block content %}
+<div class="users-page">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Asignar Usuarios al Trámite</h1>
+            <p class="page-subtitle">
+                Trámite: <strong>{{ tramite.name }}</strong>
+            </p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin_area.tramites') }}"
+               class="btn-secondary">
+               ← Volver a Trámites
+            </a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="users-list">
+
+        <div class="users-section">
+            <h3 class="section-title">Usuarios Asignados</h3>
+
+            {% if usuarios_asignados %}
+                {% for usuario in usuarios_asignados %}
+                <div class="user-card assigned">
+                    <div class="user-info">
+                        <span class="user-name">{{ usuario.username }}</span>
+                        <span class="badge badge-assigned">Asignado</span>
+                    </div>
+
+                    <form method="POST"
+                          action="{{ url_for('admin_area.desasignar_usuario_tramite',
+                                             id_tramite=tramite.id_tramite,
+                                             id_usuario=usuario.id_usuario) }}"
+                          onsubmit="return confirm('¿Desea desasignar este usuario del trámite?');">
+                        <input type="hidden" name="next" value="{{ url_for('admin_area.asignar_usuario_tramite', id_tramite=tramite.id_tramite) }}">
+                        <button type="submit" class="btn-unassign">Desasignar</button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-state">No hay usuarios asignados a este trámite.</p>
+            {% endif %}
+        </div>
+
+        <div class="users-section">
+            <h3 class="section-title">Usuarios Disponibles</h3>
+
+            {% if usuarios_sin_asignar %}
+                {% for usuario in usuarios_sin_asignar %}
+                <div class="user-card">
+                    <div class="user-info">
+                        <span class="user-name">{{ usuario.nombre }} {{ usuario.ap_paterno }}{% if usuario.ap_materno %} {{ usuario.ap_materno }}{% endif %}</span>
+                        <span class="badge badge-available">Disponible</span>
+                    </div>
+
+                    <form method="POST"
+                        action="{{ url_for('admin_area.asignar_usuario_tramite_post', id_tramite=tramite.id_tramite, id_usuario=usuario.id_usuario) }}">
+                        <input type="hidden" name="next" value="{{ url_for('admin_area.asignar_usuario_tramite', id_tramite=tramite.id_tramite) }}">
+                        <button type="submit" class="btn-assign">Asignar</button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-state">No hay usuarios disponibles.</p>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

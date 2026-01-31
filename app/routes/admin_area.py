@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from app.auth.decorators import role_required, current_user
-from app.services.anuncio_service import AnuncioService
 from app.services.user_service import UserService
 from app.services.area_service import AreaService
 from app.services.tramite_service import TramiteService
@@ -238,3 +237,250 @@ def eliminar_suplente(id_suplente):
         flash('Suplente desasignado', 'success')
 
     return redirect(url_for('admin_area.suplentes_usuario', id_usuario=suplente.id_usuario))
+
+
+@admin_area_bp.route("/tramites")
+@login_required
+@role_required("admin_area")
+def tramites():
+    tramites = TramiteService.get_tramites_by_area(current_user.area_id)
+    return render_template("admin_area/tramites.html", tramites=tramites)
+
+
+@admin_area_bp.route("/tramites/create", methods=["GET", "POST"])
+@login_required
+@role_required("admin_area")
+def create_tramite():
+    area = AreaService.get_area_by_id(current_user.area_id)
+    
+    if request.method == "POST":
+        nombre = request.form.get("nombre", "")
+        requerimientos = request.form.get("requerimientos", None)
+        
+        tramite, error = TramiteService.create_tramite(current_user.area_id, nombre, requerimientos)
+        
+        if error:
+            flash(error, "error")
+        else:
+            flash("Trámite creado exitosamente", "success")
+            return redirect(url_for("admin_area.tramites"))
+    
+    return render_template("admin_area/form_tramite.html", tramite=None)
+
+
+@admin_area_bp.route("/tramites/<int:id_tramite>/edit", methods=["GET", "POST"])
+@login_required
+@role_required("admin_area")
+def edit_tramite(id_tramite):
+    tramite = TramiteService.get_tramite_by_id(id_tramite)
+
+    
+    if request.method == "POST":
+        nombre = request.form.get("nombre", "")
+        requerimientos = request.form.get("requerimientos", None)
+        
+        tramite_updated, error = TramiteService.update_tramite(id_tramite, nombre, requerimientos)
+        
+        if error:
+            flash(error, "error")
+        else:
+            flash("Trámite actualizado exitosamente", "success")
+            return redirect(url_for("admin_area.tramites"))
+    
+    return render_template("admin_area/form_tramite.html", tramite=tramite)
+
+
+@admin_area_bp.route("/tramites/<int:id_tramite>/delete", methods=["POST"])
+@login_required
+@role_required("admin_area")
+def delete_tramite(id_tramite):
+    success, error = TramiteService.delete_tramite(id_tramite)
+    
+    if error:
+        flash(error, "error")
+    else:
+        flash("Trámite eliminado exitosamente", "success")
+    
+    return redirect(url_for("admin_area.tramites"))
+
+
+@admin_area_bp.route('/ventanillas')
+@login_required
+@role_required("admin_area")
+def ventanillas():
+    ventanillas = VentanillaService.get_ventanillas_by_area(current_user.area_id)
+    return render_template('admin_area/ventanillas.html', ventanillas=ventanillas)
+
+
+@admin_area_bp.route('/ventanillas/create', methods=['GET', 'POST'])
+@login_required
+@role_required("admin_area")
+def create_ventanilla():
+    if request.method == 'POST':
+        name = request.form.get('name', '')
+        
+        ventanilla, error = VentanillaService.create_ventanilla(name, current_user.area_id)
+        
+        if error:
+            flash(error, 'error')
+        else:
+            flash('Ventanilla creada exitosamente', 'success')
+            return redirect(url_for('admin_area.ventanillas'))
+    
+    return render_template('admin_area/form_ventanilla.html',ventanilla=None)
+
+
+@admin_area_bp.route('/ventanillas/<int:id_ventanilla>/edit', methods=['GET', 'POST'])
+@login_required
+@role_required("admin_area")
+def edit_ventanilla(id_ventanilla):
+    ventanilla = VentanillaService.get_ventanilla_by_id(id_ventanilla)
+    
+    if not ventanilla:
+        flash('Ventanilla no encontrada', 'error')
+        return redirect(url_for('admin_area.ventanillas'))
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '')
+        ventanilla_updated, error = VentanillaService.update_ventanilla(id_ventanilla, name, current_user.area_id)
+        
+        if error:
+            flash(error, 'error')
+        else:
+            flash('Ventanilla actualizada exitosamente', 'success')
+            return redirect(url_for('admin_area.ventanillas'))
+    
+    areas = AreaService.get_all_areas()
+    return render_template('admin_area/form_ventanilla.html', ventanilla=ventanilla)
+
+
+@admin_area_bp.route('/ventanillas/<int:id_ventanilla>/delete', methods=['POST'])
+@login_required
+@role_required("admin_area")
+def delete_ventanilla(id_ventanilla):
+    success, error = VentanillaService.delete_ventanilla(id_ventanilla)
+    
+    if error:
+        flash(error, 'error')
+    else:
+        flash('Ventanilla eliminada exitosamente', 'success')
+    
+    return redirect(url_for('admin_area.ventanillas'))
+
+
+@admin_area_bp.route('/ventanillas/<int:id_ventanilla>/tramites')
+@login_required
+@role_required("admin_area")
+def ventanilla_tramites(id_ventanilla):
+    ventanilla = VentanillaService.get_ventanilla_by_id(id_ventanilla)
+    if not ventanilla:
+        flash('Ventanilla no encontrada', 'danger')
+        return redirect(url_for('admin_area.ventanillas'))
+
+    tramites_ventanilla = TramiteService.get_tramites_by_ventanilla(id_ventanilla)
+
+    tramites_area = TramiteService.get_tramites_by_area_excluyendo(
+        ventanilla.id_area,
+        {t.id_tramite for t in tramites_ventanilla}
+    )
+
+    tramites_sin_ventanilla = []
+    tramites_con_otra_ventanilla = []
+
+    for tramite in tramites_area:
+        if not tramite.id_ventanilla:
+            tramites_sin_ventanilla.append(tramite)
+        else:
+            tramites_con_otra_ventanilla.append(tramite)
+
+    return render_template(
+        'admin_area/asignar_tramite_ventanilla.html',
+        ventanilla=ventanilla,
+        tramites_ventanilla=tramites_ventanilla,
+        tramites_sin_ventanilla=tramites_sin_ventanilla,
+        tramites_con_otra_ventanilla=tramites_con_otra_ventanilla
+    )
+
+
+@admin_area_bp.route('/tramites/<int:id_tramite>/ventanilla')
+@login_required
+@role_required("admin_area")
+def tramite_ventanilla(id_tramite):
+    tramite = TramiteService.get_tramite_by_id(id_tramite)
+    if not tramite:
+        flash('Trámite no encontrado', 'danger')
+        return redirect(url_for('admin_area.areas'))
+
+    ventanillas = VentanillaService.get_ventanillas_by_area(tramite.id_area)
+
+    return render_template('admin_area/form_tramite_ventanilla.html', tramite=tramite, ventanillas=ventanillas)
+
+@admin_area_bp.route('/ventanillas/<int:id_ventanilla>/tramites/<int:id_tramite>', methods=['POST'])
+@login_required
+@role_required("admin_area")
+def asignar_tramite_ventanilla(id_ventanilla, id_tramite):
+    redirect_to = request.form.get('next')
+
+    ventanilla = VentanillaService.get_ventanilla_by_id(id_ventanilla)
+    tramite = TramiteService.get_tramite_by_id(id_tramite)
+
+    if not ventanilla or not tramite:
+        flash('Ventanilla o trámite no encontrados', 'error')
+        return redirect(redirect_to)
+
+    _, error = TramiteService.asignar_tramite_a_ventanilla(
+        id_tramite,
+        id_ventanilla
+    )
+
+    if error:
+        flash(error, 'danger')
+    else:
+        flash('Trámite asignado correctamente a la ventanilla', 'success')
+    
+    return redirect(redirect_to)
+
+
+@admin_area_bp.route('/ventanillas/<int:id_ventanilla>/tramites/<int:id_tramite>/delete', methods=['POST'])
+@login_required
+@role_required("admin_area")
+def desasignar_tramite_ventanilla(id_ventanilla, id_tramite):
+    redirect_to = request.form.get('next')
+
+    tramite = TramiteService.get_tramite_by_id(id_tramite)
+
+    if not tramite:
+        flash('Trámite no encontrado', 'error')
+        return redirect(redirect_to)
+
+    _, error = TramiteService.desasignar_tramite_de_ventanilla(
+        id_tramite
+    )
+
+    if error:
+        flash(error, 'danger')
+    else:
+        flash('Trámite desasignado correctamente de la ventanilla', 'success')
+
+    return redirect(redirect_to)
+
+
+@admin_area_bp.route('/tramites/asignar-usuario/<int:id_tramite>', methods=['GET'])
+@login_required
+@role_required("admin_area")
+def asignar_usuario_tramite(id_tramite):
+    tramite = TramiteService.get_tramite_by_id(id_tramite)
+
+    todos_usuarios = UserService.get_usuarios_by_area(current_user.area_id)
+
+    usuarios_ids_asignados = AsignacionService.get_usuarios_by_tramite(id_tramite)
+
+    usuarios_asignados = [u for u in todos_usuarios if u.id_usuario in usuarios_ids_asignados]
+    usuarios_sin_asignar = [u for u in todos_usuarios if u.id_usuario not in usuarios_ids_asignados]
+
+    return render_template(
+        'admin_area/asignar_usuario_tramite.html',
+        tramite=tramite,
+        usuarios_asignados=usuarios_asignados,
+        usuarios_sin_asignar=usuarios_sin_asignar
+    )

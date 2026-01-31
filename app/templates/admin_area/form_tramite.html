@@ -1,0 +1,31 @@
+{% extends "admin_area/base_form.html" %}
+
+{% set page_title = 'Editar Trámite' if tramite else 'Nuevo Trámite' %}
+{% set submit_text = 'Actualizar' if tramite else 'Crear' %}
+{% set cancel_url = url_for('admin_area.tramites') %}
+
+{% block form_fields %}
+
+    <div class="form-group">
+        <label for="nombre" class="form-label">Nombre del Trámite *</label>
+        <input 
+            type="text" 
+            class="form-input" 
+            id="nombre" 
+            name="nombre" 
+            value="{{ tramite.name if tramite else '' }}"
+            required
+            maxlength="255">
+    </div>
+
+    <div class="form-group">
+        <label for="requerimientos" class="form-label">Requerimientos</label>
+        <textarea
+            id="requerimientos"
+            name="requerimientos"
+            class="form-textarea"
+            rows="4"
+            maxlength="255">{{ tramite.requerimientos | default('', true) if tramite else '' }}</textarea>
+    </div>
+
+{% endblock %}

@@ -19,6 +19,11 @@
             <span class="label">Usuarios</span>
         </a>
 
+        <a href="{{ url_for('admin_area.tramites') }}" class="menu-item">
+            <img class="icon" src="{{ url_for('static', filename='icons/ventanilla.svg') }}" alt="">
+            <span class="label">{{ current_user.area.name }}</span>
+        </a>
+
         <a href="{{ url_for('auth.logout') }}" class="menu-item logout">
             <img class="icon" src="{{ url_for('static', filename='icons/logout.svg') }}" alt="">
             <span class="label">Salir</span>

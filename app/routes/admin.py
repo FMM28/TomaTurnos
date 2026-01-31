@@ -216,7 +216,9 @@ def edit_tramite(id_tramite):
 @login_required
 @role_required("admin")
 def delete_tramite(id_tramite):
-    id_area, error = TramiteService.delete_tramite(id_tramite)
+    tramite = TramiteService.get_tramite_by_id(id_tramite)
+    id_area = tramite.id_area
+    success, error = TramiteService.delete_tramite(id_tramite)
     
     if error:
         flash(error, "error")
@@ -239,8 +241,8 @@ def ventanillas():
 @role_required("admin")
 def create_ventanilla():
     if request.method == 'POST':
-        name = request.form.get('name', '').strip()
-        id_area = request.form.get('id_area', '').strip()
+        name = request.form.get('name', '')
+        id_area = request.form.get('id_area', '')
         id_area = int(id_area) if id_area else None
         
         ventanilla, error = VentanillaService.create_ventanilla(name, id_area)
@@ -266,8 +268,8 @@ def edit_ventanilla(id_ventanilla):
         return redirect(url_for('admin.ventanillas'))
     
     if request.method == 'POST':
-        name = request.form.get('name', '').strip()
-        id_area = request.form.get('id_area', '').strip()
+        name = request.form.get('name', '')
+        id_area = request.form.get('id_area', '')
         id_area = int(id_area) if id_area else None
         
         ventanilla_updated, error = VentanillaService.update_ventanilla(

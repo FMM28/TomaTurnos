@@ -1,0 +1,155 @@
+{% extends "admin_area/base.html" %}
+
+{% block title %}Asignar Trámites - {{ ventanilla.name }}{% endblock %}
+
+{% block content %}
+<div class="users-page">
+
+    <div class="page-header">
+        <h1 class="page-title">Asignar Trámites a Ventanilla</h1>
+        <p class="page-subtitle">
+            Ventanilla: <strong>{{ ventanilla.name }}</strong>
+        </p>
+        <div class="header-actions">
+            <a href="{{ url_for('admin_area.ventanillas') }}" class="btn-secondary">
+                ← Volver a Ventanillas
+            </a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="users-section">
+        <h3 class="section-title">Trámites asignados a esta ventanilla</h3>
+
+        {% if tramites_ventanilla %}
+            {% for tramite in tramites_ventanilla %}
+            <div class="user-card active">
+                <div class="user-info">
+                    <span class="user-name">{{ tramite.name }}</span>
+                </div>
+
+                <form method="POST"
+                      action="{{ url_for('admin_area.desasignar_tramite_ventanilla',
+                                         id_ventanilla=ventanilla.id_ventanilla,
+                                         id_tramite=tramite.id_tramite) }}"
+                      onsubmit="return confirm('¿Desea desasignar este trámite?');">
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <button class="btn-unassign">Desasignar</button>
+                </form>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="empty-state">No hay trámites asignados</p>
+        {% endif %}
+    </div>
+
+    <div class="users-section">
+        <h3 class="section-title">Trámites sin ventanilla</h3>
+
+        {% if tramites_sin_ventanilla %}
+            {% for tramite in tramites_sin_ventanilla %}
+            <div class="user-card">
+                <div class="user-info">
+                    <span class="user-name">{{ tramite.name }}</span>
+                    <span class="badge badge-available">Disponible</span>
+                </div>
+
+                <form method="POST"
+                      action="{{ url_for('admin_area.asignar_tramite_ventanilla',
+                                         id_ventanilla=ventanilla.id_ventanilla,
+                                         id_tramite=tramite.id_tramite) }}">
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <button class="btn-assign">Asignar</button>
+                </form>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="empty-state">No hay trámites disponibles</p>
+        {% endif %}
+    </div>
+
+    <div class="users-section">
+        <h3 class="section-title">Trámites asignados a otra ventanilla</h3>
+
+        {% if tramites_con_otra_ventanilla %}
+            {% for tramite in tramites_con_otra_ventanilla %}
+            <div class="user-card assigned">
+                <div class="user-info">
+                    <span class="user-name">{{ tramite.name }}</span>
+                    <span class="badge badge-assigned">
+                        Asignado a: {{ tramite.ventanilla.name }}
+                    </span>
+                </div>
+
+                <button type="button"
+                        class="btn-reassign"
+                        onclick="confirmarReasignacion(
+                            '{{ tramite.id_tramite }}',
+                            '{{ tramite.name }}',
+                            '{{ tramite.ventanilla.name }}',
+                            '{{ ventanilla.name }}'
+                        )">
+                    Reasignar
+                </button>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="empty-state">No hay trámites asignados a otras ventanillas</p>
+        {% endif %}
+    </div>
+
+</div>
+
+<div id="confirmModal" class="modal">
+    <div class="modal-content">
+        <h3>Confirmar Reasignación</h3>
+        <p id="confirmMessage"></p>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+            <form id="reassignForm" method="POST">
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" class="btn-confirm">Confirmar</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmarReasignacion(idTramite, nombre, ventanillaActual, ventanillaNueva) {
+    const modal = document.getElementById('confirmModal');
+    const message = document.getElementById('confirmMessage');
+    const form = document.getElementById('reassignForm');
+
+    message.textContent =
+        `El trámite "${nombre}" está asignado a "${ventanillaActual}". ` +
+        `¿Desea reasignarlo a "${ventanillaNueva}"?`;
+
+    form.action =
+        "{{ url_for('admin_area.asignar_tramite_ventanilla',id_ventanilla=ventanilla.id_ventanilla,id_tramite=0) }}".replace('/0', '/' + idTramite);
+
+    modal.style.display = 'block';
+}
+
+function cerrarModal() {
+    document.getElementById('confirmModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('confirmModal');
+    if (event.target === modal) {
+        cerrarModal();
+    }
+};
+</script>
+
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "admin_area/base_form.html" %}
+
+{% set page_title = 'Editar Ventanilla' if ventanilla else 'Crear Ventanilla' %}
+{% set submit_text = 'Actualizar' if ventanilla else 'Crear' %}
+{% set cancel_url = url_for('admin_area.ventanillas') %}
+
+{% block form_fields %}
+    <div class="form-group">
+        <label for="name" class="form-label">Nombre de la Ventanilla *</label>
+        <input 
+            type="text" 
+            id="name" 
+            name="name" 
+            class="form-input" 
+            value="{{ ventanilla.name if ventanilla else '' }}" 
+            required
+            maxlength="45"
+            placeholder="Ej: Ventanilla 1">
+    </div>
+{% endblock %}

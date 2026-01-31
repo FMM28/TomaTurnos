@@ -1,5 +1,6 @@
 from app.models import Tramite
 from app.extensions import db
+from datetime import timezone
 from typing import List, Optional, Tuple
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
@@ -206,7 +207,7 @@ class TramiteService:
             if not tramite:
                 return False, "Trámite no encontrado o ya eliminado"
 
-            tramite.deleted_at = datetime.utcnow()
+            tramite.deleted_at = datetime.now()
             db.session.commit()
             return True, None
 
