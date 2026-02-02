@@ -17,8 +17,10 @@ class AnuncioService:
     VIDEO_EXT = {"mp4", "webm", "ogg", "mov", "mkv"}
     IMAGE_EXT = {"jpg", "jpeg", "png", "webp"}
     MAX_FILE_SIZE = 100 * 1024 * 1024
-
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    BASE_DIR = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..")
+    )
 
     FFMPEG_PATH = os.path.join(
         BASE_DIR,
@@ -26,6 +28,9 @@ class AnuncioService:
         "bin",
         "ffmpeg.exe"
     )
+
+    if not os.path.exists(FFMPEG_PATH):
+        raise FileNotFoundError(f"FFmpeg no encontrado en: {FFMPEG_PATH}")
 
     @staticmethod
     def _init_folders():
