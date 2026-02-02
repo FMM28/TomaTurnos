@@ -18,7 +18,14 @@ class AnuncioService:
     IMAGE_EXT = {"jpg", "jpeg", "png", "webp"}
     MAX_FILE_SIZE = 100 * 1024 * 1024
 
-    FFMPEG_PATH = r"C:\ffmpeg\bin\ffmpeg.exe"
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    FFMPEG_PATH = os.path.join(
+        BASE_DIR,
+        "ffmpeg",
+        "bin",
+        "ffmpeg.exe"
+    )
 
     @staticmethod
     def _init_folders():

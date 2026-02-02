@@ -4,3 +4,5 @@ __pycache__/
 *.sh
 test.py
 app/static/uploads/
+cloc-2.08.exe
+conteo.txt
