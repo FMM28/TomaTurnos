@@ -124,7 +124,7 @@ class TicketTramiteService:
         return cola[0] if cola else None
     
     @staticmethod
-    def get_siguiente_espera(ticket_tramite: TicketTramite):
+    def get_siguiente_espera(ticket_tramite: TicketTramite)-> Tuple[Optional[TicketTramite], Optional[str]]:
         try:
             if siguiente := (
                 TicketTramite.query
@@ -144,12 +144,51 @@ class TicketTramiteService:
                 ticket_tramite.ticket.estado = "finalizado"
 
             db.session.commit()
-            return True, None
+            return siguiente, None
 
         except SQLAlchemyError as e:
             db.session.rollback()
             print(f"Error al obtener siguiente trámite del ticket: {e}")
             return None, str(e)
+        
+    @staticmethod
+    def usuario_puede_atender(ticket_tramite: TicketTramite, usuario_id: int) -> bool:
+        """
+        Indica si el usuario puede atender un TicketTramite específico
+        """
+        try:
+            usuarios_ids = (
+                select(Suplente.id_usuario)
+                .where(Suplente.id_suplente_usuario == usuario_id)
+            )
+
+            tramites_subquery = (
+                select(Asignacion.id_tramite)
+                .where(
+                    db.or_(
+                        Asignacion.id_usuario == usuario_id,
+                        Asignacion.id_usuario.in_(usuarios_ids)
+                    )
+                )
+            )
+
+            return (
+                db.session.query(TicketTramite.id_ticket_tramite)
+                .filter(
+                    TicketTramite.id_ticket_tramite == ticket_tramite.id_ticket_tramite,
+                    TicketTramite.estado.in_(["pendiente", "espera"]),
+                    TicketTramite.id_tramite.in_(tramites_subquery)
+                )
+                .first()
+                is not None
+            )
+
+        except SQLAlchemyError as e:
+            print(
+                f"Error validando si usuario {usuario_id} "
+                f"puede atender ticket_tramite {ticket_tramite.id_ticket_tramite}: {e}"
+            )
+            return False
 
     @staticmethod
     def marcar_atendiendo(ticket_tramite_id: int) -> Tuple[bool, Optional[str]]:

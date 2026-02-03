@@ -126,6 +126,31 @@ body {
     background: #727272;
 }
 
+.btn-atender-ahora {
+    background: #27ae60;
+    color: white;
+    border: none;
+}
+
+.btn-atender-ahora:hover {
+    background: #229954;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+}
+
+.btn-dejar-espera {
+    background: #f8f9fa;
+    color: #333333;
+    border: 2px solid #495057;
+}
+
+.btn-dejar-espera:hover {
+    background: #e9ecef;
+    border-color: #2c3e50;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
 /* Flash Messages */
 .flash-messages {
     position: fixed;
@@ -363,7 +388,6 @@ body {
     font-weight: 700;
     text-align: center;
     color: #2c3e50;
-    margin-bottom: 1.5rem;
     padding: 1rem;
     background: #f8f9fa;
     border-radius: 8px;
@@ -431,6 +455,13 @@ body {
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
     color: #333333;
+}
+
+.turno-tiempo {
+    font-size: 1rem;
+    opacity: 0.8;
+    text-align: center;
+    margin: 1rem;
 }
 
 .acciones {
@@ -550,6 +581,126 @@ body {
     color: #777;
 }
 
+/* Siguiente tramite */
+.siguiente-tramite-wrapper {
+    min-height: calc(100vh - 80px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: #f4f4f3;
+}
+
+.siguiente-tramite-content {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 2.5rem 2rem;
+    max-width: 550px;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.siguiente-tramite-title {
+    text-align: center;
+    color: #333333;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 1.5rem 0;
+}
+
+.info-box {
+    background: #f8f9fa;
+    border-left: 4px solid #2c3e50;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.info-message {
+    margin: 0;
+    color: #333333;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.tramite-details {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.875rem 0;
+    gap: 1.5rem;
+}
+
+.detail-row:not(:last-child) {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.detail-label {
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    min-width: 80px;
+}
+
+.detail-value {
+    color: #333333;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-align: right;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+.turno-badge {
+    background: #2c3e50;
+    color: white;
+    padding: 0.4rem 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.question-section {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-top: 0.5rem;
+}
+
+.question-text {
+    color: #333333;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.form-full {
+    flex: 1;
+    min-width: 220px;
+}
+
+.button-group .btn {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
 
 /* Estilos para el modal */
 .modal h3 {
@@ -953,5 +1104,57 @@ body {
     
     .modal-acciones .btn {
         width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .siguiente-tramite-content {
+        padding: 2rem 1.5rem;
+    }
+
+    .siguiente-tramite-title {
+        font-size: 1.35rem;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .form-full {
+        min-width: 100%;
+    }
+
+    .status-circle {
+        width: 50px;
+        height: 50px;
+    }
+}
+
+@media (max-width: 480px) {
+    .siguiente-tramite-wrapper {
+        padding: 1rem;
+    }
+
+    .siguiente-tramite-content {
+        padding: 1.5rem 1rem;
+    }
+
+    .detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .detail-value {
+        text-align: left;
+        padding-left: 0;
+    }
+
+    .detail-label {
+        min-width: auto;
+    }
+
+    .tramite-details {
+        padding: 1rem 1.25rem;
     }
 }

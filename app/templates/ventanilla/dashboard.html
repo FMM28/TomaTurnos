@@ -138,24 +138,50 @@
             {{ turno_actual.ticket_tramite.ticket.turno }}
         </div>
 
+        <div class="turno-tiempo"
+            id="turno-tiempo"
+            data-inicio="{{ turno_actual.hora_inicio }}">
+            Tiempo transcurrido: <span id="tiempo-atencion">00:00</span>
+        </div>
+
         <div class="turno-info">
             <p><strong>Trámite:</strong> {{ turno_actual.ticket_tramite.tramite.name }}</p>
             <p><strong>Estado:</strong> {{ turno_actual.estado | capitalize }}</p>
         </div>
 
+        {% set proximos = turno_actual.ticket_tramite.ticket.ticket_tramites
+            | selectattr("estado", "equalto", "pendiente")
+            | list %}
+
+        {% if proximos %}
+        <div class="turno-historial">
+            <h4>Próximos trámites del ticket</h4>
+
+            <ul>
+                {% for pt in proximos %}
+                <li>
+                    <strong>{{ pt.tramite.name }}</strong>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
         <div class="turno-historial">
             <h4>Historial del ticket</h4>
             <ul>
-                {% for t in turno_actual.ticket_tramite.atenciones %}
-                <li>
-                    {{ t.ticket_tramite.tramite.name }}
-                    {% if t.estado != "espera" %}
-                    <span class="estado">({{ t.estado }})</span>
-                    {% if t.descripcion_estado %}
-                    <span>{{ t.descripcion_estado }}</span>
-                    {% endif %}
-                    {% endif %}
-                </li>
+                {% for tt in turno_actual.ticket_tramite.ticket.ticket_tramites %}
+                    {% for t in tt.atenciones %}
+                    <li>
+                        {{ tt.tramite.name }}
+                        {% if t.estado != "espera" %}
+                            <span class="estado">({{ t.estado }})</span>
+                            {% if t.descripcion_estado %}
+                                <span>{{ t.descripcion_estado }}</span>
+                            {% endif %}
+                        {% endif %}
+                    </li>
+                    {% endfor %}
                 {% endfor %}
             </ul>
         </div>
@@ -283,6 +309,32 @@ document.addEventListener("DOMContentLoaded", () => {
     actualizarCola();
 });
 </script>
+
+<script>
+function iniciarCronometro(inicioISO) {
+    const inicio = new Date(inicioISO);
+
+    setInterval(() => {
+        const ahora = new Date();
+        const diff = Math.floor((ahora - inicio) / 1000);
+
+        const minutos = String(Math.floor(diff / 60)).padStart(2, "0");
+        const segundos = String(diff % 60).padStart(2, "0");
+
+        document.getElementById("tiempo-atencion").textContent =
+            `${minutos}:${segundos}`;
+    }, 1000);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const contenedor = document.getElementById("turno-tiempo");
+    if (!contenedor) return;
+
+    const inicio = contenedor.dataset.inicio;
+    if (inicio) iniciarCronometro(inicio);
+});
+</script>
+
 
 <script src="{{ url_for('static', filename='js/modal_ventanilla.js') }}"></script>
 <script src="{{ url_for('static', filename='js/flash_messages.js') }}"></script>

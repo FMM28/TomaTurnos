@@ -99,13 +99,100 @@ def rellamar():
 def finalizar():
     atencion = AtencionService.get_atencion_activa_por_usuario(current_user.id_usuario)
 
+    if not atencion:
+        flash("No hay turno activo para finalizar", "warning")
+        return redirect(url_for("ventanilla.dashboard"))
+
     descripcion = request.form.get("descripcion")
 
     AtencionService.finalizar_atencion(atencion, descripcion)
-    TicketTramiteService.get_siguiente_espera(atencion.ticket_tramite)
+    
+    siguiente_tramite, error = TicketTramiteService.get_siguiente_espera(atencion.ticket_tramite)
+    
+    if siguiente_tramite and not error:
+        if puede_atender := TicketTramiteService.usuario_puede_atender(
+            siguiente_tramite, 
+            current_user.id_usuario
+        ):
+            return render_template(
+                "ventanilla/siguiente_tramite.html",
+                siguiente_tramite=siguiente_tramite,
+                usuario=current_user
+            )
+    
+    socketio.emit("turnos_en_espera", TurnoService.get_turnos_en_espera())
+    socketio.emit("turnos_en_llamado", TurnoService.get_turnos_en_llamado())
     socketio.emit("cola_actualizada")
-
+    
     flash("Turno finalizado", "success")
+    return redirect(url_for("ventanilla.dashboard"))
+
+
+@ventanilla_bp.post("/atender-siguiente")
+@login_required
+@role_required("ventanilla")
+def atender_siguiente_directo():
+
+    id_ticket_tramite = request.form.get("id_ticket_tramite", type=int)
+    
+    if not id_ticket_tramite:
+        flash("No se pudo identificar el trámite", "error")
+        return redirect(url_for("ventanilla.dashboard"))
+    
+    ticket_tramite = TicketTramiteService.get_by_id(id_ticket_tramite)
+    
+    if not ticket_tramite:
+        flash("Trámite no encontrado", "error")
+        return redirect(url_for("ventanilla.dashboard"))
+    
+    puede_atender = TicketTramiteService.usuario_puede_atender(
+        ticket_tramite, 
+        current_user.id_usuario
+    )
+    
+    if not puede_atender:
+        flash("No tienes permisos para atender este trámite", "error")
+        return redirect(url_for("ventanilla.dashboard"))
+    
+    atencion, error = AtencionService.iniciar_atencion(
+        ticket_tramite=ticket_tramite,
+        id_usuario=current_user.id_usuario
+    )
+    
+    if error:
+        flash(f"Error al iniciar la atención: {error}", "error")
+        return redirect(url_for("ventanilla.dashboard"))
+    
+    socketio.emit("turnos_en_espera", TurnoService.get_turnos_en_espera())
+    socketio.emit("turnos_en_llamado", TurnoService.get_turnos_en_llamado())
+    socketio.emit("cola_actualizada")
+    
+    flash("Atendiendo siguiente trámite del mismo ticket", "success")
+    return redirect(url_for("ventanilla.dashboard"))
+
+
+@ventanilla_bp.post("/dejar-en-espera")
+@login_required
+@role_required("ventanilla")
+def dejar_en_espera():
+    """
+    Deja el siguiente trámite en espera para que sea llamado por quien lo tome
+    """
+    id_ticket_tramite = request.form.get("id_ticket_tramite", type=int)
+    
+    if not id_ticket_tramite:
+        flash("No se pudo identificar el trámite", "error")
+        return redirect(url_for("ventanilla.dashboard"))
+    
+    ticket_tramite = TicketTramiteService.get_by_id(id_ticket_tramite)
+    
+    if not ticket_tramite:
+        flash("Trámite no encontrado", "error")
+        return redirect(url_for("ventanilla.dashboard"))
+    
+    socketio.emit("cola_actualizada")
+    
+    flash("Trámite finalizado. El siguiente quedó en espera", "success")
     return redirect(url_for("ventanilla.dashboard"))
 
 

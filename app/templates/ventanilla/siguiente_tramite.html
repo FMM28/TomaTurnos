@@ -1,0 +1,61 @@
+{% extends "ventanilla/base.html" %}
+
+{% block title %}Siguiente trámite disponible{% endblock %}
+
+{% block content %}
+
+<header class="ventanilla-header">
+    <div class="usuario-info">
+        <strong>
+            {{ usuario.nombre }} {{ usuario.ap_paterno }} {{ usuario.ap_materno or "" }}
+        </strong>
+    </div>
+
+    <a href="{{ url_for('auth.logout') }}" class="btn btn-logout">
+        Cerrar sesión
+    </a>
+</header>
+
+<div class="siguiente-tramite-wrapper">
+    <div class="siguiente-tramite-content">
+        
+        <h2 class="siguiente-tramite-title">Trámite finalizado</h2>
+        
+        <div class="info-box">
+            <p class="info-message">El siguiente trámite de este ticket puede ser atendido por ti</p>
+        </div>
+
+        <div class="tramite-details">
+            <div class="detail-row">
+                <span class="detail-label">Turno</span>
+                <span class="detail-value turno-badge">{{ siguiente_tramite.ticket.turno }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Trámite</span>
+                <span class="detail-value">{{ siguiente_tramite.tramite.name }}</span>
+            </div>
+        </div>
+
+        <div class="question-section">
+            <h3 class="question-text">¿Deseas atender este trámite ahora?</h3>
+        </div>
+
+        <div class="button-group">
+            <form method="POST" action="{{ url_for('ventanilla.atender_siguiente_directo') }}" class="form-full">
+                <input type="hidden" name="id_ticket_tramite" value="{{ siguiente_tramite.id_ticket_tramite }}">
+                <button type="submit" class="btn btn-atender-ahora">
+                    Atender ahora
+                </button>
+            </form>
+
+            <form method="POST" action="{{ url_for('ventanilla.dejar_en_espera') }}" class="form-full">
+                <input type="hidden" name="id_ticket_tramite" value="{{ siguiente_tramite.id_ticket_tramite }}">
+                <button type="submit" class="btn btn-dejar-espera">
+                    Dejar en espera
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
