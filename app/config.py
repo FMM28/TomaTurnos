@@ -10,9 +10,20 @@ class Config:
         f"{os.getenv('DB_HOST')}:"
         f"{os.getenv('DB_PORT')}/"
         f"{os.getenv('DB_NAME')}"
+        "?charset=utf8mb4"
     )
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_size": int(os.getenv("DB_POOL_SIZE", 5)),
+        "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", 5)),
+        "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", 30)),
+        "pool_recycle": int(os.getenv("DB_POOL_RECYCLE", 1800)),
+        "pool_pre_ping": True,
+        "echo": False,
+        "echo_pool": False, 
+    }
 
     SECRET_KEY = os.environ.get("SECRET_KEY")
 

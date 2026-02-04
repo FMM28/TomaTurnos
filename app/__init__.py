@@ -17,10 +17,18 @@ def create_app():
     bcrypt.init_app(app)
     login_manager.init_app(app)
 
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        db.session.remove()
+
     register_blueprints(app)
 
-    socketio.init_app(app, cors_allowed_origins="*", async_mode='threading')
-    
+    socketio.init_app(
+        app,
+        cors_allowed_origins="*",
+        async_mode="threading"
+    )
+
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         AudioService.start(app)
 
