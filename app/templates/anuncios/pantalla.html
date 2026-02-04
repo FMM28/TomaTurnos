@@ -1,174 +1,62 @@
-{% extends "anuncios/base.html" %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pantalla</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/anuncios.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <main class="container">
+        <div class="container">
 
-{% block title %}Sistema de Turnos{% endblock %}
-
-{% block content %}
-<div class="container">
-
-    <div class="header-logo">
-        <img src="{{ url_for('static',filename='img/dgf_header.svg') }}" alt="">
-    </div>
-
-    <div class="contenido-principal">
-        
-        <div class="seccion-superior">
-            
-            <div class="turnos-llamado">
-                <h2>Turnos en Llamado</h2>
-
-                <div class="llamado-grid" id="llamadoGrid">
-                </div>
+            <div class="header-logo">
+                <img src="{{ url_for('static',filename='img/dgf_header.svg') }}" alt="">
             </div>
 
-                <div id="ad-container" class="ad-container">
-                    <video
-                        id="ad-video"
-                        class="ad-video"
-                        muted
-                        playsinline
-                        style="display:none;">
-                    </video>
+            <div class="contenido-principal">
+                
+                <div class="seccion-superior">
+                    
+                    <div class="turnos-llamado">
+                        <h2>Turnos en Llamado</h2>
 
-                    <img
-                        id="ad-image"
-                        class="ad-video"
-                        style="display:none;">
+                        <div class="llamado-grid" id="llamadoGrid">
+                        </div>
+                    </div>
+
+                        <div id="ad-container" class="ad-container">
+                            <video
+                                id="ad-video"
+                                class="ad-video"
+                                muted
+                                playsinline
+                                style="display:none;">
+                            </video>
+
+                            <img
+                                id="ad-image"
+                                class="ad-video"
+                                style="display:none;">
+                        </div>
+
                 </div>
 
-        </div>
+                <div class="turnos-espera">
+                    <h3>En Espera</h3>
 
-        <div class="turnos-espera">
-            <h3>En Espera</h3>
+                    <div class="espera-lista" id="esperaLista">
+                        <p class="texto-secundario">Cargando turnos...</p>
+                    </div>
+                </div>
 
-            <div class="espera-lista" id="esperaLista">
-                <p class="texto-secundario">Cargando turnos...</p>
             </div>
+
         </div>
-
-    </div>
-
-</div>
-{% endblock %}
-
-{% block scripts %}
+    </main>
+</body>
 
 <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pantalla.js') }}"></script>
 
-<script>
-const socket = io();
-
-socket.on("connect", () => {
-    console.log("Pantalla conectada a WebSocket");
-});
-
-socket.on("turnos_en_espera", (turnos) => {
-    const lista = document.getElementById("esperaLista");
-    if (!lista) return;
-
-    lista.innerHTML = "";
-
-    if (!turnos || turnos.length === 0) {
-        const p = document.createElement("p");
-        p.className = "texto-secundario";
-        p.textContent = "No hay turnos en espera";
-        lista.appendChild(p);
-        return;
-    }
-
-    turnos.forEach(t => {
-        const card = document.createElement("div");
-        card.className = "turno-card-pequeno";
-
-        const span = document.createElement("span");
-        span.className = "numero-pequeno";
-        span.textContent = t;
-
-        card.appendChild(span);
-        lista.appendChild(card);
-    });
-
-    activarCarrusel(lista);
-});
-
-socket.on("turnos_en_llamado", (turnos) => {
-    const grid = document.getElementById("llamadoGrid");
-    if (!grid) return;
-
-    grid.innerHTML = "";
-
-    if (!turnos || turnos.length === 0) {
-        const div = document.createElement("div");
-        div.className = "sin-turnos";
-        div.innerHTML = "<p>No hay turnos en llamado</p>";
-        grid.appendChild(div);
-        return;
-    }
-
-    turnos.forEach(t => {
-        const card = document.createElement("div");
-        card.className = "turno-card";
-
-        card.innerHTML = `
-            <div class="turno-numero">Turno ${t.turno}</div>
-            <div class="turno-info">
-                <span class="turno-ventanilla">${t.ventanilla}</span>
-            </div>
-        `;
-
-        grid.appendChild(card);
-    });
-});
-
-function activarCarrusel(lista) {
-    const items = lista.querySelectorAll('.turno-card-pequeno');
-    if (items.length === 0) return;
-
-    lista.classList.remove("carousel");
-
-    let totalWidth = 0;
-    items.forEach(item => {
-        totalWidth += item.offsetWidth + 8;
-    });
-
-    const containerWidth = lista.parentElement.clientWidth;
-
-    if (totalWidth > containerWidth) {
-        const fragment = document.createDocumentFragment();
-        items.forEach(item => {
-            fragment.appendChild(item.cloneNode(true));
-        });
-        lista.appendChild(fragment);
-        lista.classList.add("carousel");
-    }
-}
-</script>
-
-<script>
-const adVideo = document.getElementById("ad-video");
-const adImage = document.getElementById("ad-image");
-
-socket.on("anuncio_play", (a) => {
-    adVideo.pause();
-    adVideo.style.display = "none";
-    adImage.style.display = "none";
-
-    if (a.tipo === "video") {
-        adVideo.src = a.enlace;
-        adVideo.style.display = "block";
-        adVideo.play().catch(() => {
-            console.log("No se pudo reproducir el video automáticamente");
-        });
-    } else {
-        adImage.src = a.enlace;
-        adImage.style.display = "block";
-    }
-});
-
-socket.on("anuncio_clear", () => {
-    adVideo.pause();
-    adVideo.style.display = "none";
-    adImage.style.display = "none";
-});
-</script>
-
-{% endblock %}
+</html>
