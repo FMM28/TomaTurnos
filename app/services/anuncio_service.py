@@ -97,12 +97,15 @@ class AnuncioService:
 
         try:
             subprocess.run(
-                cmd,
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                shell=False
-            )
+            cmd,
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            shell=False,
+            executable=AnuncioService.FFMPEG_PATH,
+            timeout=60
+        )
+
             return os.path.join("uploads", "audio", audio_filename), None
         except subprocess.CalledProcessError as e:
             return None, f"Error extrayendo audio: {e}"

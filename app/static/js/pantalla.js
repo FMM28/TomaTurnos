@@ -42,7 +42,11 @@ socket.on("turnos_en_llamado", (turnos) => {
     if (!turnos || turnos.length === 0) {
         const div = document.createElement("div");
         div.className = "sin-turnos";
-        div.innerHTML = "<p>No hay turnos en llamado</p>";
+
+        const p = document.createElement("p");
+        p.textContent = "No hay turnos en llamado";
+
+        div.appendChild(p);
         grid.appendChild(div);
         return;
     }
@@ -51,12 +55,20 @@ socket.on("turnos_en_llamado", (turnos) => {
         const card = document.createElement("div");
         card.className = "turno-card";
 
-        card.innerHTML = `
-            <div class="turno-numero">Turno ${t.turno}</div>
-            <div class="turno-info">
-                <span class="turno-ventanilla">${t.ventanilla}</span>
-            </div>
-        `;
+        const numero = document.createElement("div");
+        numero.className = "turno-numero";
+        numero.textContent = `Turno ${t.turno}`;
+
+        const info = document.createElement("div");
+        info.className = "turno-info";
+
+        const ventanilla = document.createElement("span");
+        ventanilla.className = "turno-ventanilla";
+        ventanilla.textContent = t.ventanilla;
+
+        info.appendChild(ventanilla);
+        card.appendChild(numero);
+        card.appendChild(info);
 
         grid.appendChild(card);
     });
