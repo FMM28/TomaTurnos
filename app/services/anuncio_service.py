@@ -72,6 +72,11 @@ class AnuncioService:
     @staticmethod
     def _extract_audio_from_video(video_rel_path):
         video_path = os.path.join("app", "static", video_rel_path)
+        
+        video_path = os.path.abspath(video_path)
+        allowed_dir = os.path.abspath(os.path.join("app", "static", "uploads", "anuncios"))
+        if not video_path.startswith(allowed_dir) or not os.path.exists(video_path):
+            return None, "Invalid video path"
 
         audio_filename = f"{uuid.uuid4()}.wav"
         audio_full_path = os.path.join(
@@ -95,7 +100,8 @@ class AnuncioService:
                 cmd,
                 check=True,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stderr=subprocess.DEVNULL,
+                shell=False
             )
             return os.path.join("uploads", "audio", audio_filename), None
         except subprocess.CalledProcessError as e:
