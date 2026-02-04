@@ -180,7 +180,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid #e0e0e0;
 }
@@ -647,23 +647,6 @@ body {
 
 .btn-confirm:hover {
     background-color: #c82333;
-}
-
-/* Dashboard*/
-.dashboard-cards {
-    margin-top: 30px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 20px;
-}
-
-.card {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 6px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    font-weight: bold;
-    text-align: center;
 }
 
 /* Trámites por Usuario */

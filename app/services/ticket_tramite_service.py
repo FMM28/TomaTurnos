@@ -280,3 +280,10 @@ class TicketTramiteService:
         except SQLAlchemyError as e:
             print(f"Error al obtener trámites del ticket {ticket_id}: {e}")
             return []
+        
+    @staticmethod    
+    def get_tickets_en_espera_por_tramite(id_tramite: int) -> List[TicketTramite]:
+        return db.session.query(TicketTramite).filter(
+            TicketTramite.id_tramite == id_tramite,
+            TicketTramite.estado == 'espera'
+        ).order_by(TicketTramite.fecha_creacion.asc()).all()

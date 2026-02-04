@@ -1,0 +1,161 @@
+.fila-alerta {
+    background-color: #fff5f5;
+}
+.fila-advertencia {
+    background-color: #fffbf0;
+}
+
+.dashboard-cards {
+    display: flex;
+    justify-content:center;
+    gap: 2rem;
+    margin-bottom: 20px;
+}
+
+.card {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-weight: bold;
+    text-align: center;
+}
+
+.asignacion-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    margin: -1.25rem -1.25rem 1rem -1.25rem;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+.scrollable-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.list-item:hover {
+    border-color: #0066cc;
+    box-shadow: 0 2px 6px rgba(0,102,204,0.1);
+}
+
+.list-item.selected {
+    border-color: #0066cc;
+    background-color: #e7f3ff;
+}
+
+.ticket-number strong {
+    font-size: 1.25rem;
+    color: #0066cc;
+}
+
+.user-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.mt-1 {
+    margin-top: 0.25rem;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+.modal.active {
+    display: block;
+}
+
+.ticket-card.selectable {
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ticket-card.selectable:hover {
+    background-color: #f4f8ff;
+    border-color: #c7d7ff;
+}
+
+.ticket-card.selectable.selected {
+    background-color: #e6f0ff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59,130,246,0.4);
+}
+
+.ticket-card .select-indicator {
+    font-size: 0.85rem;
+    color: #2563eb;
+    font-weight: 500;
+    opacity: 0.6;
+}
+
+.ticket-card.selected .select-indicator {
+    opacity: 1;
+    font-weight: 600;
+}
+
+.list-item.selectable {
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.list-item.selectable.selected {
+    background-color: #e6f0ff;
+    border-left: 4px solid #3b82f6;
+}
+
+.asignacion-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+#btn-asignar {
+    min-width: 220px;
+    font-size: 1.05rem;
+    padding: 0.75rem 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .asignacion-grid {
+        grid-template-columns: 1fr;
+    }
+}

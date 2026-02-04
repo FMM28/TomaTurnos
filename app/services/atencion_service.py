@@ -216,3 +216,22 @@ class AtencionService:
             .order_by(Atencion.hora_inicio.desc())
             .all()
         )
+        
+    @staticmethod
+    def get_atenciones_activas_por_tramite(id_tramite: int) -> List[Atencion]:
+        return db.session.query(Atencion).join(
+            TicketTramite, Atencion.id_ticket_tramite == TicketTramite.id_ticket_tramite
+        ).filter(
+            TicketTramite.id_tramite == id_tramite,
+            Atencion.estado.in_(["atendiendo", "llamado"])
+        ).all()
+        
+    @staticmethod
+    def usuario_tiene_turno_activo(id_usuario):
+
+        atencion_activa = db.session.query(Atencion).filter(
+            Atencion.id_usuario == id_usuario,
+            Atencion.estado.in_(["atendiendo", "llamado"])
+        ).first()
+        
+        return atencion_activa is not None

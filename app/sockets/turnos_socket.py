@@ -20,5 +20,8 @@ def on_user_connect():
     if not current_user.is_authenticated:
         return False
 
-    join_room(f"usuario_{current_user.id_usuario}")
+    room = f"usuario_{current_user.id_usuario}"
+    join_room(room)
+
+    print(f"Ventanilla unida al room {room}")
     emit("connected", {"ok": True})

@@ -1,7 +1,8 @@
-from app.models import Asignacion
+from app.models import Asignacion, Usuario, Atencion, Suplente
 from app.extensions import db
 from typing import List, Optional, Tuple
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.sql import exists, select, or_
 
 class AsignacionService:
     
@@ -75,3 +76,49 @@ class AsignacionService:
             error_msg = f"Error al eliminar asignación: {e}"
             print(error_msg)
             return error_msg
+        
+    @staticmethod
+    def get_usuarios_disponibles_para_tramite(id_tramite: int) -> List[Usuario]:
+
+        suplente_activo_para_usuario = (
+            db.session.query(Suplente.id_suplente)
+            .filter(Suplente.id_usuario == Usuario.id_usuario)
+            .exists()
+        )
+
+        usuarios_que_cubre = (
+            select(Suplente.id_usuario)
+            .where(Suplente.id_suplente_usuario == Usuario.id_usuario)
+        )
+
+        usuarios = (
+            db.session.query(Usuario)
+            .join(Asignacion, Asignacion.id_tramite == id_tramite)
+            .filter(
+                Usuario.role == "ventanilla",
+
+                db.or_(
+                    db.and_(
+                        Asignacion.id_usuario == Usuario.id_usuario,
+                        ~suplente_activo_para_usuario
+                    ),
+
+                    Asignacion.id_usuario.in_(usuarios_que_cubre)
+                )
+            )
+            .distinct()
+            .all()
+        )
+
+        for usuario in usuarios:
+            usuario.tiene_turno_activo = (
+                db.session.query(Atencion)
+                .filter(
+                    Atencion.id_usuario == usuario.id_usuario,
+                    Atencion.estado.in_(["atendiendo", "llamado"])
+                )
+                .first()
+                is not None
+            )
+
+        return usuarios

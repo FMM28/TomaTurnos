@@ -210,6 +210,31 @@ body {
     margin-top: 15px;
 }
 
+.modal-importante {
+    background: rgba(0, 0, 0, 0.85);
+}
+
+.modal-destacado {
+    border: 3px solid #f59e0b;
+    animation: pulse 1.5s infinite;
+}
+
+.ticket-info {
+    font-size: 1.8rem;
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.ticket-info strong {
+    display: block;
+    font-size: 2.4rem;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
 
 @keyframes slideIn {
     from {
@@ -754,6 +779,73 @@ body {
 
 #motivo-otro-container {
     margin-top: 1rem;
+}
+
+.modal-importante {
+    backdrop-filter: blur(5px);
+}
+
+.modal-destacado {
+    max-width: 500px;
+    text-align: center;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-icono {
+    color: #0066cc;
+    margin-bottom: 1rem;
+}
+
+.modal-destacado h2 {
+    color: #0066cc;
+    margin-bottom: 0.5rem;
+}
+
+.mensaje-principal {
+    font-size: 1.125rem;
+    color: #495057;
+    margin-bottom: 1.5rem;
+}
+
+.ticket-info {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.ticket-numero {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #0066cc;
+    margin-bottom: 0.5rem;
+}
+
+.ticket-tramite {
+    font-size: 1.25rem;
+    color: #495057;
+}
+
+.mensaje-secundario {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+}
+
+.btn-lg {
+    padding: 0.75rem 2rem;
+    font-size: 1.125rem;
 }
 
 /* Estilos reasignar*/

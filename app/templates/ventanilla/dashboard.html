@@ -68,6 +68,38 @@
     </div>
 </div>
 
+<div class="modal-overlay modal-importante" id="modal-ticket-asignado">
+    <div class="modal modal-destacado">
+
+        <h2>Ticket asignado</h2>
+
+        <p class="mensaje-principal">
+            Un administrador te asignó un nuevo ticket
+        </p>
+
+        <div class="ticket-info">
+            <div class="ticket-numero">
+                <strong id="asignado-turno">—</strong>
+            </div>
+            <div class="ticket-tramite">
+                <span id="asignado-tramite">—</span>
+            </div>
+        </div>
+
+        <p class="mensaje-secundario">
+            El turno aún <strong>no ha sido llamado</strong>.
+        </p>
+
+        <div class="modal-acciones">
+            <form method="POST" action="{{ url_for('ventanilla.llamar_asignado') }}">
+                <button type="submit" class="btn btn-success btn-lg">
+                    Llamar ahora
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <header class="ventanilla-header">
     <div class="usuario-info">
         <strong>
@@ -225,7 +257,6 @@
     {% endif %}
 </section>
 
-
 </div>
 
 {% endblock %}
@@ -242,8 +273,18 @@ const socket = io({
     reconnectionDelay: 1000
 });
 
+socket.on("connect", () => {
+    console.log("Socket base conectado");
+    socket.emit("user_connect");
+});
+
 socket.on("cola_actualizada", () => {
     actualizarCola();
+});
+
+socket.on("ticket_asignado", (data) => {
+    console.log('Ticket asignado recibido:', data);
+    mostrarModalAsignado(data);
 });
 
 function actualizarCola() {
@@ -285,6 +326,24 @@ function actualizarCola() {
         .catch(err => console.error("Error actualizando cola:", err));
 }
 
+function mostrarModalAsignado(data) {
+    const modal = document.getElementById("modal-ticket-asignado");
+    const turno = document.getElementById("asignado-turno");
+    const tramite = document.getElementById("asignado-tramite");
+    const sonido = document.getElementById("sonido-asignado");
+
+    turno.textContent = data.turno;
+    tramite.textContent = data.tramite;
+
+    modal.classList.add("activo");
+
+    if (sonido) {
+        sonido.currentTime = 0;
+        sonido.play().catch(() => {
+            console.log('No se pudo reproducir el sonido');
+        });
+    }
+}
 
 function revalidarBotonLlamar() {
     const turnoActivo = document.getElementById("turno-actual");
@@ -334,7 +393,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (inicio) iniciarCronometro(inicio);
 });
 </script>
-
+  
+<audio id="sonido-asignado" preload="auto">
+    <source src="{{ url_for('static', filename='sounds/notificacion.mp3') }}" type="audio/mpeg">
+</audio>
 
 <script src="{{ url_for('static', filename='js/modal_ventanilla.js') }}"></script>
 <script src="{{ url_for('static', filename='js/flash_messages.js') }}"></script>

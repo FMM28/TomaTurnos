@@ -93,6 +93,16 @@ def rellamar():
     return redirect(url_for("ventanilla.dashboard"))
 
 
+@ventanilla_bp.route("/llamar-asignado", methods=["POST"])
+@login_required
+def llamar_asignado():
+    atencion = AtencionService.get_atencion_activa_por_usuario(current_user.id_usuario)
+    AtencionService.rellamar(atencion)
+    AudioService.anunciar_turno(atencion.ticket_tramite.ticket.turno, atencion.ventanilla.name)
+    flash("Turno llamado correctamente", "success")
+    return redirect(url_for("ventanilla.dashboard"))
+
+
 @ventanilla_bp.post("/finalizar")
 @login_required
 @role_required("ventanilla")

@@ -1,7 +1,114 @@
-{% extends 'admin_area/base.html' %}
+{% extends "admin_area/base.html" %}
 
-{% block title %}Dashboard - Admin Área{% endblock %}
+{% block title %}Dashboard - Administrador de Área{% endblock %}
 
 {% block content %}
-    <h1>Bienvenido al Panel de Administración de Área</h1>
+
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Monitoreo de Trámites</h2>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<div class="dashboard-cards">
+    <div class="card">
+        <div class="stat-numero">{{ resumen_tramites | selectattr('en_espera', 'gt', 0) | list | length }}</div>
+        <div class="stat-label">Trámites con cola</div>
+    </div>
+    
+    <div class="card">
+        <div class="stat-numero">{{ resumen_tramites | map(attribute='en_espera') | sum }}</div>
+        <div class="stat-label">Total en espera</div>
+    </div>
+    
+    <div class="card">
+        <div class="stat-numero">{{ resumen_tramites | map(attribute='atendiendo') | sum }}</div>
+        <div class="stat-label">Total atendiendo</div>
+    </div>
+</div>
+
+
+<div class="table-container">
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Trámite</th>
+                <th class="text-center">En espera</th>
+                <th class="text-center">Atendiendo</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if resumen_tramites %}
+                {% for item in resumen_tramites %}
+                <tr class="{% if item.en_espera > 5 %}fila-alerta{% elif item.en_espera > 2 %}fila-advertencia{% endif %}">
+                    <td>
+                        <strong>{{ item.tramite.name }}</strong>
+                        {% if item.tramite.ventanilla %}
+                            <span class="badge badge-secondary">{{ item.tramite.ventanilla.name }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge {% if item.en_espera > 5 %}badge-danger{% elif item.en_espera > 2 %}badge-warning{% else %}badge-info{% endif %}">
+                            {{ item.en_espera }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-success">
+                            {{ item.atendiendo }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        {% if item.en_espera > 0 %}
+                            <a href="{{ url_for('admin_area.asignacion_manual', id_tramite=item.tramite.id_tramite) }}" 
+                               class="btn-view">
+                                Asignar manualmente
+                            </a>
+                        {% else %}
+                            <span class="text-muted">Sin tickets</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted empty-state">
+                        No hay trámites configurados en tu área
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script>
+const socket = io({
+    transports: ["websocket"],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000
+});
+
+socket.on("cola_actualizada", () => {
+    location.reload();
+});
+
+setInterval(() => {
+    location.reload();
+}, 30000);
+</script>
+<script src="{{ url_for('static', filename='js/flash_messages.js') }}"></script>
+
 {% endblock %}

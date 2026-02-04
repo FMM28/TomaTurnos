@@ -1,12 +1,15 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from app.auth.decorators import role_required, current_user
+from app.services.ticket_tramite_service import TicketTramiteService
 from app.services.user_service import UserService
 from app.services.area_service import AreaService
 from app.services.tramite_service import TramiteService
 from app.services.ventanilla_service import VentanillaService
 from app.services.asignacion_service import AsignacionService
 from app.services.suplente_service import SuplenteService
+from app.services.atencion_service import AtencionService
+from app.extensions import socketio
 
 admin_area_bp = Blueprint("admin_area", __name__, url_prefix="/admin_area")
 
@@ -14,7 +17,98 @@ admin_area_bp = Blueprint("admin_area", __name__, url_prefix="/admin_area")
 @login_required
 @role_required("admin_area")
 def dashboard():
-    return render_template("admin_area/dashboard.html")
+    tramites = TramiteService.get_tramites_by_area(current_user.area_id)
+    
+    resumen_tramites = []
+    
+    for tramite in tramites:
+        tickets_espera = TicketTramiteService.get_tickets_en_espera_por_tramite(tramite.id_tramite)
+        usuarios_atendiendo = AtencionService.get_atenciones_activas_por_tramite(tramite.id_tramite)
+        
+        resumen_tramites.append({
+            'tramite': tramite,
+            'en_espera': len(tickets_espera),
+            'atendiendo': len(usuarios_atendiendo),
+            'tickets_espera': tickets_espera
+        })
+    
+    resumen_tramites.sort(key=lambda x: x['en_espera'], reverse=True)
+    
+    return render_template(
+        "admin_area/dashboard.html",
+        resumen_tramites=resumen_tramites
+    )
+
+
+@admin_area_bp.route("/asignacion-manual/<int:id_tramite>")
+@login_required
+@role_required("admin_area")
+def asignacion_manual(id_tramite):
+    """Vista para asignar manualmente tickets a usuarios"""
+    tramite = TramiteService.get_tramite_by_id(id_tramite)
+    
+    if not tramite or tramite.id_area != current_user.area_id:
+        flash('Trámite no encontrado o no pertenece a tu área', 'error')
+        return redirect(url_for('admin_area.dashboard'))
+    
+    tickets_espera = TicketTramiteService.get_tickets_en_espera_por_tramite(id_tramite)
+    usuarios_disponibles = AsignacionService.get_usuarios_disponibles_para_tramite(id_tramite)
+    
+    return render_template(
+        "admin_area/asignacion_manual.html",
+        tramite=tramite,
+        tickets_espera=tickets_espera,
+        usuarios_disponibles=usuarios_disponibles
+    )
+
+
+@admin_area_bp.route("/asignar-ticket", methods=["POST"])
+@login_required
+@role_required("admin_area")
+def asignar_ticket_manual():
+    """Endpoint para asignar manualmente un ticket a un usuario"""
+    id_ticket_tramite = request.form.get("id_ticket_tramite", type=int)
+    id_usuario = request.form.get("id_usuario", type=int)
+    
+    if not id_ticket_tramite or not id_usuario:
+        flash('Datos incompletos', 'error')
+        return redirect(url_for('admin_area.dashboard'))
+    
+    ticket_tramite = TicketTramiteService.get_by_id(id_ticket_tramite)
+    
+    if not ticket_tramite or ticket_tramite.estado != 'espera':
+        flash('Ticket no válido o no está en espera', 'error')
+        return redirect(url_for('admin_area.dashboard'))
+    
+    usuario = UserService.get_user_by_id(id_usuario)
+    if not usuario or usuario.area_id != current_user.area_id:
+        flash('Usuario no válido', 'error')
+        return redirect(url_for('admin_area.dashboard'))
+    
+    if AtencionService.usuario_tiene_turno_activo(id_usuario):
+        flash('El usuario ya tiene un turno activo', 'warning')
+        return redirect(url_for('admin_area.asignacion_manual', id_tramite=ticket_tramite.id_tramite))
+    
+    atencion, error = AtencionService.iniciar_atencion(
+        ticket_tramite=ticket_tramite,
+        id_usuario=id_usuario
+    )
+    
+    if error:
+        flash(error, 'error')
+        return redirect(url_for('admin_area.asignacion_manual', id_tramite=ticket_tramite.id_tramite))
+    
+    socketio.emit(
+        'ticket_asignado',
+        {
+            'turno': ticket_tramite.ticket.turno,
+            'tramite': ticket_tramite.tramite.name
+        },
+        room=f'usuario_{id_usuario}'
+    )
+    
+    flash(f'Ticket {ticket_tramite.ticket.turno} asignado exitosamente a {usuario.nombre}', 'success')
+    return redirect(url_for('admin_area.dashboard'))
 
 
 @admin_area_bp.route("/users")

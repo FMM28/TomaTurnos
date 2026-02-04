@@ -1,0 +1,206 @@
+{% extends "admin_area/base.html" %}
+
+{% block title %}Asignación Manual - {{ tramite.name }}{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Asignación Manual de Tickets</h2>
+        <p class="info-span">{{ tramite.name }}</p>
+    </div>
+    <a href="{{ url_for('admin_area.dashboard') }}" class="btn btn-secondary">
+        ← Volver al dashboard
+    </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flash-messages">
+    {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="dashboard-cards asignacion-grid">
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Tickets en espera</h3>
+            <span class="badge badge-info">{{ tickets_espera|length }}</span>
+        </div>
+
+        <div class="card-body scrollable-list">
+            {% for tt in tickets_espera %}
+            <div class="list-item ticket-card selectable"
+                 data-ticket-id="{{ tt.id_ticket_tramite }}"
+                 data-turno="{{ tt.ticket.turno }}"
+                 onclick="seleccionarTicket(event)">
+                <div>
+                    <strong>Turno {{ tt.ticket.turno }}</strong>
+                    <div class="text-muted small">
+                        {{ tt.ticket.fecha_hora.strftime('%H:%M') }}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">No hay tickets en espera</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Usuarios disponibles</h3>
+            <span class="badge badge-info">{{ usuarios_disponibles|length }}</span>
+        </div>
+
+        <div class="card-body scrollable-list">
+            {% for usuario in usuarios_disponibles %}
+            <div class="list-item usuario-card selectable
+                        {% if usuario.tiene_turno_activo %}disabled{% endif %}"
+                 data-usuario-id="{{ usuario.id_usuario }}"
+                 data-nombre="{{ usuario.nombre }}"
+                 onclick="seleccionarUsuario(this)">
+                <div>
+                    {{ usuario.nombre }} {{ usuario.ap_paterno }}
+                    {% if usuario.ventanilla %}
+                        <span class="badge badge-secondary">
+                            {{ usuario.ventanilla.name }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                {% if usuario.tiene_turno_activo %}
+                    <span class="badge badge-warning">Ocupado</span>
+                {% else %}
+                    <span class="badge badge-success">Disponible</span>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="empty-state">No hay usuarios disponibles</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body text-right">
+        <button class="btn btn-success"
+                id="btn-asignar"
+                onclick="abrirModal()"
+                disabled>
+            Asignar ticket
+        </button>
+    </div>
+</div>
+
+<div class="modal" id="modal-confirmar">
+    <div class="modal-content">
+
+        <div class="modal-header">
+            <h3>Confirmar asignación</h3>
+        </div>
+
+        <div class="modal-body">
+            <p>
+                Ticket <strong id="modal-ticket">—</strong><br>
+                Usuario <strong id="modal-usuario">—</strong>
+            </p>
+
+            <form method="POST"
+                  action="{{ url_for('admin_area.asignar_ticket_manual') }}">
+                <input type="hidden" name="id_ticket_tramite" id="input-ticket">
+                <input type="hidden" name="id_usuario" id="input-usuario">
+
+                <div class="modal-actions text-right">
+                    <button type="button"
+                            class="btn-cancel"
+                            onclick="cerrarModal()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-confirm">
+                        Confirmar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="sidebar-overlay" id="modal-overlay"></div>
+
+<script>
+let ticketId = null;
+let ticketTurno = null;
+let usuarioId = null;
+let usuarioNombre = null;
+
+function seleccionarTicket(e) {
+    const card = e.currentTarget;
+
+    if (card.classList.contains('selected')) {
+        card.classList.remove('selected');
+        ticketId = null;
+        ticketTurno = null;
+        validarAsignacion();
+        return;
+    }
+
+    document.querySelectorAll('.ticket-card')
+        .forEach(c => c.classList.remove('selected'));
+
+    card.classList.add('selected');
+    ticketId = card.dataset.ticketId;
+    ticketTurno = card.dataset.turno;
+
+    validarAsignacion();
+}
+
+function seleccionarUsuario(el) {
+    if (el.classList.contains('disabled')) return;
+
+    if (el.classList.contains('selected')) {
+        el.classList.remove('selected');
+        usuarioId = null;
+        usuarioNombre = null;
+        validarAsignacion();
+        return;
+    }
+
+    document.querySelectorAll('.usuario-card')
+        .forEach(u => u.classList.remove('selected'));
+
+    el.classList.add('selected');
+    usuarioId = el.dataset.usuarioId;
+    usuarioNombre = el.dataset.nombre;
+
+    validarAsignacion();
+}
+
+function validarAsignacion() {
+    document.getElementById('btn-asignar').disabled = !(ticketId && usuarioId);
+}
+
+function abrirModal() {
+    if (!ticketId || !usuarioId) return;
+
+    document.getElementById('modal-ticket').textContent = ticketTurno;
+    document.getElementById('modal-usuario').textContent = usuarioNombre;
+
+    document.getElementById('input-ticket').value = ticketId;
+    document.getElementById('input-usuario').value = usuarioId;
+
+    document.getElementById('modal-confirmar').classList.add('active');
+    document.getElementById('modal-overlay').classList.add('active');
+}
+
+function cerrarModal() {
+    document.getElementById('modal-confirmar').classList.remove('active');
+    document.getElementById('modal-overlay').classList.remove('active');
+}
+</script>
+
+{% endblock %}
