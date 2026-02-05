@@ -254,12 +254,15 @@ class ImpresionService:
         p.text("-" * 48 + "\n")
         
         with suppress(Exception):
-            p.set(bold=False)
+            p.set(bold=False, align="left")
 
         for t in ticket.get("tramites", []):
-            lineas = textwrap.wrap(t, width=ANCHO_LINEA)
+            lineas = textwrap.wrap(f"• {t}", width=ANCHO_LINEA)
             for linea in lineas:
                 p.text(linea + "\n")
+                
+        with suppress(Exception):
+            p.set(align="center")
 
         p.text("\nPor favor espere su turno\n\n")
         

@@ -23,7 +23,7 @@ class AudioService:
     _pending_delete = set()
 
     BASE_VOLUME = 0.9
-    DUCK_VOLUME = 0.2
+    DUCK_VOLUME = 0.1
     
     VOICE_INDEX = 0
     RATE = 0
@@ -120,62 +120,12 @@ class AudioService:
     def _loop(cls):
         pythoncom.CoInitialize()
         try:
-            speaker = win32com.client.Dispatch("SAPI.SpVoice")
-            speaker.Volume = 100
-
-            while not hasattr(socketio, 'server') or socketio.server is None:
-                time.sleep(1)
+            cls._initialize_audio_loop()
 
             current_index = 0
-
             with cls._app.app_context():
                 while cls._running:
-
-                    if cls._dirty:
-                        cls._reload_anuncios()
-                        current_index = 0
-                        cls._dirty = False
-
-                    if not cls._anuncios_cache:
-                        time.sleep(2)
-                        continue
-
-                    num_clients = 0
-                    with suppress(Exception):
-                        rooms = socketio.server.manager.rooms.get('/', {})
-                        num_clients = len(rooms.keys())
-                    if num_clients == 0:
-                        time.sleep(2)
-                        continue
-
-                    if current_index >= len(cls._anuncios_cache):
-                        current_index = 0
-
-                    anuncio = cls._anuncios_cache[current_index]
-
-                    enlace = "/static/" + anuncio.enlace.replace("\\", "/")
-                    data = {
-                        "id": anuncio.id_anuncio,
-                        "tipo": anuncio.tipo,
-                        "enlace": enlace,
-                        "duracion": anuncio.duracion
-                    }
-
-                    cls._emit_to_clients("anuncio_play", data)
-
-                    interrupted = False
-                    if anuncio.audio:
-                        interrupted = cls._play_sound(anuncio.audio, anuncio.duracion)
-                    else:
-                        interrupted = cls._interruptible_sleep(anuncio.duracion)
-
-                    if interrupted:
-                        print(f"Anuncio [{current_index}] interrumpido. Se reintentará.")
-                    elif cls._dirty:
-                        print("Anuncios marcados como dirty durante reproducción. Reiniciando índice.")
-                    else:
-                        current_index += 1
-
+                    current_index = cls._process_next_anuncio(current_index)
                     cls._cleanup_audio_files()
 
         except Exception as e:
@@ -188,15 +138,93 @@ class AudioService:
             pythoncom.CoUninitialize()
 
     @classmethod
-    def _play_sound(cls, audio_rel_path, duracion):
-        audio_path = os.path.join("app", "static", audio_rel_path)
-        if not os.path.exists(audio_path):
-            time.sleep(duracion)
-            return False
+    def _initialize_audio_loop(cls):
+        speaker = win32com.client.Dispatch("SAPI.SpVoice")
+        speaker.Volume = 100
 
+        if not pygame.mixer.get_init():
+            pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
+
+        with cls._app.app_context():
+            cls._reload_anuncios()
+            cls._dirty = False
+
+        cls._wait_for_socketio_server()
+
+    @classmethod
+    def _wait_for_socketio_server(cls):
+        print("Esperando servidor SocketIO...")
+        while not hasattr(socketio, 'server') or socketio.server is None:
+            time.sleep(1)
+        print("Servidor SocketIO disponible")
+
+    @classmethod
+    def _process_next_anuncio(cls, current_index: int) -> int:
+        if cls._dirty:
+            cls._reload_anuncios()
+            cls._dirty = False
+            current_index = 0
+
+        if not cls._anuncios_cache:
+            time.sleep(2)
+            return current_index
+
+        num_clients = 0
+        with suppress(Exception):
+            rooms = socketio.server.manager.rooms.get('/', {})
+            num_clients = len(rooms.keys())
+        if num_clients == 0:
+            time.sleep(2)
+            return current_index
+
+        if current_index >= len(cls._anuncios_cache):
+            current_index = 0
+
+        anuncio = cls._anuncios_cache[current_index]
+
+        enlace = "/static/" + anuncio.enlace.replace("\\", "/")
+        data = {
+            "id": anuncio.id_anuncio,
+            "tipo": anuncio.tipo,
+            "enlace": enlace,
+            "duracion": anuncio.duracion,
+        }
+
+        interrupted = False
+        audio_path = None
         sound = None
+
+        if anuncio.audio:
+            audio_path = os.path.join("app", "static", anuncio.audio)
+            if os.path.exists(audio_path):
+                try:
+                    sound = pygame.mixer.Sound(audio_path)
+                except Exception as e:
+                    print(f"Error cargando audio: {e}")
+                    sound = None
+
+        cls._emit_to_clients("anuncio_play", data)
+
+        if sound:
+            interrupted = cls._play_sound_preloaded(sound, anuncio.duracion)
+        elif anuncio.audio:
+            interrupted = cls._play_sound(anuncio.audio, anuncio.duracion)
+        else:
+            interrupted = cls._interruptible_sleep(anuncio.duracion)
+
+        if interrupted:
+            print(f"Anuncio [{current_index}] interrumpido. Se reintentará.")
+        elif cls._dirty:
+            print("Anuncios marcados como dirty durante reproducción. Reiniciando índice.")
+        else:
+            current_index += 1
+
+        return current_index
+
+    @classmethod
+    def _play_sound_preloaded(cls, sound, duracion):
+        """Reproduce un sonido ya cargado en memoria"""
         try:
-            sound = pygame.mixer.Sound(audio_path)
             with cls._sound_lock:
                 if cls._current_sound:
                     cls._current_sound.stop()
