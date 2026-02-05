@@ -36,9 +36,13 @@
             </div>
 
             <div class="form-group"
+                 id="archivo-group"
                  data-modo="{{ 'edit' if anuncio else 'create' }}"
                  data-duracion="{{ anuncio.duracion if anuncio else '' }}"
-                 data-tipo="{{ anuncio.tipo if anuncio else '' }}">
+                 data-tipo="{{ anuncio.tipo if anuncio else '' }}"
+                 {% if anuncio and anuncio.enlace %}
+                 data-archivo-url="{{ url_for('static', filename=anuncio.enlace.replace('\\', '/')) }}"
+                 {% endif %}>
 
                 <label class="form-label">
                     Archivo {% if not anuncio %}*{% endif %}
@@ -69,8 +73,18 @@
                     Tamaño máximo: <strong>100 MB</strong>
                 </small>
 
-                <input type="hidden" name="tipo" id="tipo">
-                <input type="hidden" name="duracion" id="duracion">
+                <input type="hidden" name="tipo" id="tipo" value="{{ anuncio.tipo if anuncio else '' }}">
+            </div>
+
+            <div class="form-group" id="duracion-group" style="display:none;">
+                <label class="form-label">Duración (segundos) *</label>
+                <input type="number"
+                       class="form-input"
+                       name="duracion"
+                       id="duracion"
+                       min="1"
+                       value="{{ anuncio.duracion if anuncio else '5' }}"
+                       placeholder="Ingresa la duración en segundos">
             </div>
 
             <div id="preview-box" class="preview-box" style="display:none;">
@@ -80,12 +94,16 @@
                            controls
                            muted
                            playsinline
-                           style="max-width:100%; border-radius:6px;"></video>
+                           style="max-width:100%; border-radius:6px; display:none;"></video>
+                    <img id="image-preview"
+                         style="max-width:100%; border-radius:6px; display:none;"
+                         alt="Vista previa">
                 </div>
 
                 <div class="preview-meta">
                     <p><strong>Título:</strong> <span id="preview-titulo"></span></p>
-                    <p><strong>Duración:</strong> <span id="preview-duracion"></span> s</p>
+                    <p><strong>Tipo:</strong> <span id="preview-tipo"></span></p>
+                    <p id="preview-duracion-container"><strong>Duración:</strong> <span id="preview-duracion"></span> s</p>
                 </div>
             </div>
 
