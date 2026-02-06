@@ -58,6 +58,7 @@
                             Activar
                         </button>
                     {% endif %}
+                    </form>
 
                     <form method="POST"
                           action="{{ url_for('admin.delete_anuncio', id_anuncio=anuncio.id_anuncio) }}"

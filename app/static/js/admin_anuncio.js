@@ -186,3 +186,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.form-card form');
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    const processingMessage = document.createElement('div');
+    processingMessage.id = 'processing-message';
+    processingMessage.style.marginTop = '15px';
+    processingMessage.style.padding = '10px';
+    processingMessage.style.backgroundColor = '#f0f0f0';
+    processingMessage.style.border = '1px solid #ccc';
+    processingMessage.style.borderRadius = '5px';
+    processingMessage.style.color = '#333';
+    processingMessage.style.fontWeight = 'bold';
+    processingMessage.style.display = 'none';
+    processingMessage.textContent = 'Se está procesando su video, por favor espere...';
+
+    form.appendChild(processingMessage);
+
+    form.addEventListener('submit', function(e) {
+        submitButton.disabled = true;
+        processingMessage.style.display = 'block';
+    });
+});

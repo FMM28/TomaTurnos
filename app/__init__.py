@@ -1,6 +1,6 @@
 from flask import Flask
 from .config import Config
-from .extensions import db,migrate, bcrypt, login_manager, socketio
+from .extensions import db, migrate, bcrypt, login_manager, socketio
 from app.auth.login_manager import load_user
 from .routes import register_blueprints
 import app.sockets
@@ -29,7 +29,7 @@ def create_app():
         async_mode="threading"
     )
 
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+    if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         AudioService.start(app)
 
     return app
