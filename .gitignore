@@ -6,4 +6,7 @@ test.py
 app/static/uploads/
 cloc-2.08.exe
 conteo.txt
-instalador
+instalador/nginx-1.28.2/
+instalador/nssm/
+instalador/proyecto/
+instalador/zadig-2.9.exe

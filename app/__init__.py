@@ -1,4 +1,5 @@
 from flask import Flask
+from dotenv import load_dotenv
 from .config import Config
 from .extensions import db, migrate, bcrypt, login_manager, socketio
 from app.auth.login_manager import load_user
@@ -9,6 +10,8 @@ from app.services.audio_service import AudioService
 import os
 
 def create_app():
+    load_dotenv() 
+    
     app = Flask(__name__)
     app.config.from_object(Config)
 
