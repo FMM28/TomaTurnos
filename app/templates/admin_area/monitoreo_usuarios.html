@@ -1,0 +1,127 @@
+{% extends "admin_area/base.html" %}
+
+{% block title %}Monitoreo de Usuarios{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div class="monitoreo">
+        <h2 class="page-title">Monitoreo de Usuarios</h2>
+        <a href="{{ url_for('admin_area.dashboard') }}" class="btn-secondary">Trámites</a>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<div class="dashboard-cards">
+    <div class="card">
+        <div class="stat-numero">
+            {{ usuarios_info | length }}
+        </div>
+        <div class="stat-label">Usuarios registrados</div>
+    </div>
+
+    <div class="card">
+        <div class="stat-numero">
+            {{ usuarios_info | selectattr('atencion_activa') | list | length }}
+        </div>
+        <div class="stat-label">Usuarios atendiendo</div>
+    </div>
+
+    <div class="card">
+        <div class="stat-numero">
+            {{ usuarios_info | rejectattr('atencion_activa') | list | length }}
+        </div>
+        <div class="stat-label">Usuarios disponibles</div>
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th class="text-center">Estado</th>
+                <th>Trámite</th>
+                <th class="text-center">Turno</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if usuarios_info %}
+                {% for item in usuarios_info %}
+                <tr class="{% if item.atencion_activa %}fila-activa{% else %}fila-libre{% endif %}">
+                    <td>
+                        <strong>{{ item.usuario.nombre }} {{ item.usuario.ap_paterno }}</strong>
+                    </td>
+
+                    <td class="text-center">
+                        {% if item.atencion_activa %}
+                            <span class="badge badge-success">
+                                Atendiendo
+                            </span>
+                        {% else %}
+                            <span class="badge badge-info">
+                                Disponible
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if item.atencion_activa %}
+                            {{ item.atencion_activa.ticket_tramite.tramite.name }}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="text-center">
+                        {% if item.atencion_activa %}
+                            <span class="badge badge-secondary">
+                                {{ item.atencion_activa.ticket_tramite.ticket.turno }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted empty-state">
+                        No hay usuarios registrados en esta área
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script>
+const socket = io({
+    transports: ["websocket"],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000
+});
+
+socket.on("cola_actualizada", () => {
+    location.reload();
+});
+
+setInterval(() => {
+    location.reload();
+}, 30000);
+</script>
+
+<script src="{{ url_for('static', filename='js/flash_messages.js') }}"></script>
+
+{% endblock %}

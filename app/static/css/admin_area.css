@@ -19,6 +19,8 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     font-weight: bold;
     text-align: center;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .asignacion-grid {
@@ -26,6 +28,7 @@
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
+    height: 73vh;
 }
 
 .card-header {
@@ -35,7 +38,7 @@
     padding: 1rem 1.25rem;
     background-color: #f8f9fa;
     border-bottom: 1px solid #e9ecef;
-    margin: -1.25rem -1.25rem 1rem -1.25rem;
+    margin: -1.25rem -1.25rem 0 -1.25rem;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
 }
@@ -151,6 +154,37 @@
     min-width: 220px;
     font-size: 1.05rem;
     padding: 0.75rem 2rem;
+}
+
+.fila-activa {
+    background-color: rgba(40, 167, 69, 0.05);
+}
+
+.fila-libre {
+    background-color: rgba(23, 162, 184, 0.05);
+}
+
+.monitoreo{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.list-separator{
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.list-section-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.asignar-button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
 }
 
 /* Responsive */

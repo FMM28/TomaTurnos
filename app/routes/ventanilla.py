@@ -56,6 +56,7 @@ def llamar_siguiente():
 
     socketio.emit("turnos_en_espera", TurnoService.get_turnos_en_espera())
     socketio.emit("turnos_en_llamado", TurnoService.get_turnos_en_llamado())
+    socketio.emit("cola_actualizada")
     socketio.sleep(0.1)
     
     AudioService.anunciar_turno(sigiente.ticket.turno, sigiente.tramite.ventanilla.name)

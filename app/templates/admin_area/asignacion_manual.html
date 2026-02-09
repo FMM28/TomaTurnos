@@ -26,6 +26,7 @@
 
 <div class="dashboard-cards asignacion-grid">
 
+    <!-- TICKETS -->
     <div class="card">
         <div class="card-header">
             <h3>Tickets en espera</h3>
@@ -51,13 +52,25 @@
         </div>
     </div>
 
+    <!-- USUARIOS -->
     <div class="card">
         <div class="card-header">
-            <h3>Usuarios disponibles</h3>
-            <span class="badge badge-info">{{ usuarios_disponibles|length }}</span>
+            <h3>Usuarios</h3>
+            <span class="badge badge-info">
+                {{ usuarios_disponibles|length + usuarios_area|length }}
+            </span>
         </div>
 
         <div class="card-body scrollable-list">
+
+            <!-- ASIGNADOS AL TRÁMITE -->
+            <div class="list-section-title">
+                Usuarios asignados al trámite
+                <span class="badge badge-success">
+                    {{ usuarios_disponibles|length }}
+                </span>
+            </div>
+
             {% for usuario in usuarios_disponibles %}
             <div class="list-item usuario-card selectable
                         {% if usuario.tiene_turno_activo %}disabled{% endif %}"
@@ -80,23 +93,62 @@
                 {% endif %}
             </div>
             {% else %}
-            <div class="empty-state">No hay usuarios disponibles</div>
+            <div class="empty-state small">
+                No hay usuarios asignados a este trámite
+            </div>
             {% endfor %}
+
+            <hr class="list-separator">
+
+            <!-- OTROS USUARIOS DEL ÁREA -->
+            <div class="list-section-title muted">
+                Otros usuarios del área
+                <span class="badge badge-secondary">
+                    {{ usuarios_area|length }}
+                </span>
+            </div>
+
+            {% for usuario in usuarios_area %}
+            <div class="list-item usuario-card selectable
+                        {% if usuario.tiene_turno_activo %}disabled{% endif %}"
+                 data-usuario-id="{{ usuario.id_usuario }}"
+                 data-nombre="{{ usuario.nombre }}"
+                 onclick="seleccionarUsuario(this)">
+                <div>
+                    {{ usuario.nombre }} {{ usuario.ap_paterno }}
+                    {% if usuario.ventanilla %}
+                        <span class="badge badge-secondary">
+                            {{ usuario.ventanilla.name }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                {% if usuario.tiene_turno_activo %}
+                    <span class="badge badge-warning">Ocupado</span>
+                {% else %}
+                    <span class="badge badge-success">Disponible</span>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="empty-state small">
+                No hay otros usuarios en el área
+            </div>
+            {% endfor %}
+
         </div>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-body text-right">
-        <button class="btn btn-success"
-                id="btn-asignar"
-                onclick="abrirModal()"
-                disabled>
-            Asignar ticket
-        </button>
-    </div>
+<div class="asignar-button-container">
+    <button class="btn btn-success"
+            id="btn-asignar"
+            onclick="abrirModal()"
+            disabled>
+        Asignar ticket
+    </button>
 </div>
 
+<!-- MODAL -->
 <div class="modal" id="modal-confirmar">
     <div class="modal-content">
 

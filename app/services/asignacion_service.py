@@ -96,6 +96,7 @@ class AsignacionService:
             .join(Asignacion, Asignacion.id_tramite == id_tramite)
             .filter(
                 Usuario.role == "ventanilla",
+                Usuario.deleted_at.is_(None),
 
                 db.or_(
                     db.and_(
@@ -122,3 +123,44 @@ class AsignacionService:
             )
 
         return usuarios
+    
+    @staticmethod
+    def get_usuarios_disponibles_del_area(
+        id_area: int,
+        excluir_ids: List[int]
+    ) -> List[Usuario]:
+
+        try:
+            suplente_activo_para_usuario = (
+                db.session.query(Suplente.id_suplente)
+                .filter(Suplente.id_usuario == Usuario.id_usuario)
+                .exists()
+            )
+
+            usuarios = (
+                db.session.query(Usuario)
+                .filter(
+                    Usuario.area_id == id_area,
+                    Usuario.role == "ventanilla",
+                    Usuario.deleted_at.is_(None),
+                    ~suplente_activo_para_usuario,
+                    Usuario.id_usuario.notin_(excluir_ids)
+                )
+                .all()
+            )
+            for usuario in usuarios:
+                usuario.tiene_turno_activo = (
+                    db.session.query(Atencion)
+                    .filter(
+                        Atencion.id_usuario == usuario.id_usuario,
+                        Atencion.estado.in_(["atendiendo", "llamado"])
+                    )
+                    .first()
+                    is not None
+                )
+
+            return usuarios
+
+        except SQLAlchemyError as e:
+            print(f"Error al obtener usuarios del área {id_area}: {e}")
+            return []

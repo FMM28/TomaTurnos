@@ -38,6 +38,28 @@ def dashboard():
         "admin_area/dashboard.html",
         resumen_tramites=resumen_tramites
     )
+    
+    
+@admin_area_bp.route("/monitoreo_usuarios")
+@login_required
+@role_required("admin_area")
+def monitoreo_usuarios():
+    usuarios = UserService.get_usuarios_by_area(current_user.area_id)
+    
+    usuarios_info = []
+    
+    for usuario in usuarios:
+        atencion_activa = AtencionService.get_atencion_activa_por_usuario(usuario.id_usuario) or None
+        
+        usuarios_info.append({
+            'usuario': usuario,
+            'atencion_activa': atencion_activa,
+        })
+    
+    return render_template(
+        "admin_area/monitoreo_usuarios.html",
+        usuarios_info=usuarios_info
+    )
 
 
 @admin_area_bp.route("/asignacion-manual/<int:id_tramite>")
@@ -50,15 +72,22 @@ def asignacion_manual(id_tramite):
     if not tramite or tramite.id_area != current_user.area_id:
         flash('Trámite no encontrado o no pertenece a tu área', 'error')
         return redirect(url_for('admin_area.dashboard'))
-    
+
     tickets_espera = TicketTramiteService.get_tickets_en_espera_por_tramite(id_tramite)
     usuarios_disponibles = AsignacionService.get_usuarios_disponibles_para_tramite(id_tramite)
-    
+    ids_usuarios_disponibles = {u.id for u in usuarios_disponibles}
+
+    usuarios_area = AsignacionService.get_usuarios_disponibles_del_area(
+        id_area=current_user.area_id,
+        excluir_ids=ids_usuarios_disponibles
+    )
+
     return render_template(
         "admin_area/asignacion_manual.html",
         tramite=tramite,
         tickets_espera=tickets_espera,
-        usuarios_disponibles=usuarios_disponibles
+        usuarios_disponibles=usuarios_disponibles,
+        usuarios_area=usuarios_area
     )
 
 
