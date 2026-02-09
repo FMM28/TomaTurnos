@@ -29,6 +29,16 @@
             <span class="label">Anuncios</span>
         </a>
 
+        <a href="#" class="menu-item">
+            <img class="icon" src="{{ url_for('static', filename='icons/statistics.svg') }}" alt="">
+            <span class="label">Estadísticas</span>
+        </a>
+
+        <a href="#" class="menu-item">
+            <img class="icon" src="{{ url_for('static', filename='icons/db.svg') }}" alt="">
+            <span class="label">Respaldos</span>
+        </a>
+
         <a href="{{ url_for('auth.logout') }}" class="menu-item logout">
             <img class="icon" src="{{ url_for('static', filename='icons/logout.svg') }}" alt="">
             <span class="label">Salir</span>
