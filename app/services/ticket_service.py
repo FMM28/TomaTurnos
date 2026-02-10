@@ -38,6 +38,19 @@ class TicketService:
         except SQLAlchemyError as e:
             print(f"Error al obtener tickets con estado {estado}: {e}")
             return []
+        
+    @staticmethod
+    def get_tickets_atendidos_hoy() -> List[Ticket]:
+        """Obtiene tickets atendidos hoy"""
+        try:
+            today = datetime.now().date()
+            return Ticket.query.filter(
+                Ticket.estado == "finalizado",
+                db.func.date(Ticket.fecha_hora) == today
+            ).order_by(Ticket.id_ticket).all()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener tickets atendidos hoy: {e}")
+            return []
 
     @staticmethod
     def create_ticket(

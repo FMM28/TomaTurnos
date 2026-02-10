@@ -94,22 +94,7 @@
 </div>
 
 <script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
-<script>
-const socket = io({
-    transports: ["websocket"],
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000
-});
-
-socket.on("cola_actualizada", () => {
-    location.reload();
-});
-
-setInterval(() => {
-    location.reload();
-}, 30000);
-</script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script src="{{ url_for('static', filename='js/flash_messages.js') }}"></script>
 
 {% endblock %}

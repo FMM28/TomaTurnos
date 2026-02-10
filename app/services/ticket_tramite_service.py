@@ -287,3 +287,33 @@ class TicketTramiteService:
             TicketTramite.id_tramite == id_tramite,
             TicketTramite.estado == 'espera'
         ).order_by(TicketTramite.fecha_creacion.asc()).all()
+        
+    @staticmethod
+    def get_tickets_by_estados(estado_list: List[str]) -> List[TicketTramite]:
+        try:
+            return (
+                TicketTramite.query
+                .filter(TicketTramite.estado.in_(estado_list))
+                .order_by(TicketTramite.id_ticket_tramite)
+                .all()
+            )
+        except SQLAlchemyError as e:
+            print(f"Error al obtener TicketTramites por estados {estado_list}: {e}")
+            return []
+        
+    @staticmethod
+    def get_tickets_by_estados_and_area(estados: List[str], id_area: int) -> List[TicketTramite]:
+        try:
+            return (
+                db.session.query(TicketTramite)
+                .join(Tramite, TicketTramite.id_tramite == Tramite.id_tramite)
+                .filter(
+                    TicketTramite.estado.in_(estados),
+                    Tramite.id_area == id_area
+                )
+                .order_by(TicketTramite.id_ticket_tramite)
+                .all()
+            )
+        except SQLAlchemyError as e:
+            print(f"Error al obtener TicketTramites por estados {estados} y área {id_area}: {e}")
+            return []

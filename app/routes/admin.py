@@ -5,6 +5,8 @@ from app.services.anuncio_service import AnuncioService
 from app.services.user_service import UserService
 from app.services.area_service import AreaService
 from app.services.tramite_service import TramiteService
+from app.services.ticket_tramite_service import TicketTramiteService
+from app.services.ticket_service import TicketService
 from app.services.ventanilla_service import VentanillaService
 from app.services.asignacion_service import AsignacionService
 from app.services.suplente_service import SuplenteService
@@ -16,7 +18,20 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 @login_required
 @role_required("admin")
 def dashboard():
-    return render_template("admin/dashboard.html")
+    areas = AreaService.get_all_areas()
+    info_areas = {}
+    for area in areas:
+        info_areas[area] = {
+            "espera": len(TicketTramiteService.get_tickets_by_estados_and_area(["espera"], area.id_area)),
+            "atendiendo": len(TicketTramiteService.get_tickets_by_estados_and_area(["atendiendo","llamado"], area.id_area))
+        }
+    info_general = {
+        "tickets_activos": len(TicketService.get_tickets_by_estado("activo")),
+        "tickets_espera": len(TicketTramiteService.get_tickets_by_estados(["espera"])),
+        "tickets_atendiendo": len(TicketTramiteService.get_tickets_by_estados(["atendiendo","llamado"])),
+        "tickets_atendidos_hoy": len(TicketService.get_tickets_atendidos_hoy())
+    }
+    return render_template("admin/dashboard.html", info_areas=info_areas, info_general=info_general)
 
 
 @admin_bp.route("/users")
