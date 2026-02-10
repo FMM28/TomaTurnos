@@ -1,15 +1,11 @@
-# ===============================
-# Flask + Jinja project
-# Control de lenguajes en GitHub
-# ===============================
+# =====================================
+# Flask + Jinja + Blueprints + SocketIO
+# =====================================
 
-# ---- Templates Jinja / HTML ----
-# Son vistas, no lógica principal
-app/templates/**/* linguist-documentation
-*.html linguist-language=Jinja
+# ---- Templates Jinja ----
+app/templates/**/*.html linguist-language=Jinja
 
 # ---- Archivos estáticos ----
-# CSS, JS, imágenes, etc
 app/static/**/* linguist-vendored
 
 # ---- Migraciones ----
@@ -21,13 +17,12 @@ migrations/**/* linguist-generated
 ffmpeg/**/* linguist-vendored
 ffmpeg/**/* linguist-generated
 
-# ---- Instaladores y scripts ----
-# No representan el core del proyecto
+# ---- Instaladores y utilidades ----
 installer/**/* linguist-vendored
 
-# ---- PowerShell / Batch ----
+# ---- Scripts auxiliares ----
 *.ps1 linguist-vendored
 *.bat linguist-vendored
 
-# ---- Forzar Python como código ----
+# ---- Python es código real ----
 *.py linguist-detectable=true
