@@ -8,6 +8,9 @@ app/templates/**/*.html linguist-language=Jinja
 # ---- Archivos estáticos ----
 app/static/**/* linguist-vendored
 
+# ---- JavaScript ----
+app/static/**/*.js linguist-detectable=true
+
 # ---- Migraciones ----
 # Código generado automáticamente
 migrations/**/* linguist-generated
