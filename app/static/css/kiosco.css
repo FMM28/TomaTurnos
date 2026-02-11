@@ -25,12 +25,15 @@ body {
 
 .areas-overlay {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     background-image: url("../img/thumbnail.jpeg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     width: 100%;
-    height: 100%;
+    flex: 1;
     padding: 2rem;
 }
 
@@ -222,11 +225,13 @@ body {
     align-items: center;
     justify-content: center;
     height: 12rem;
-    width: 30rem;
+    width: 100%;
+    max-width: 350px;
     padding: 2rem;
     text-decoration: none;
     cursor: pointer;
 }
+
 .tramite-card {
     display: flex;
     align-items: center;
@@ -424,10 +429,13 @@ body {
 
 .areas-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 350px));
     gap: 1.5rem;
-    max-width: 1200px;
+    max-width: 80vw;
+    width: 100%;
     margin: 0 auto;
+    justify-content: center;
+    align-items: center;
 }
 
 .tramites-grid {
