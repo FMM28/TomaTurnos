@@ -1,7 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from app.auth.decorators import role_required, current_user
+from app.services.ticket_service import TicketService
 from app.services.ticket_tramite_service import TicketTramiteService
+from app.services.turno_service import TurnoService
 from app.services.user_service import UserService
 from app.services.area_service import AreaService
 from app.services.tramite_service import TramiteService
@@ -60,6 +62,146 @@ def monitoreo_usuarios():
         "admin_area/monitoreo_usuarios.html",
         usuarios_info=usuarios_info
     )
+    
+
+@admin_area_bp.route("/tickets")
+@login_required
+@role_required("admin_area")
+def tickets():
+    tickets = TicketService.get_tickets_by_estado("activo")
+    tickets_tramites = {}
+    for ticket in tickets:
+        tickets_tramites[ticket] = TicketTramiteService.get_ticket_tramites_by_ticket(ticket.id_ticket)
+    return render_template("admin_area/tickets.html", tickets_tramites=tickets_tramites)
+
+
+@admin_area_bp.route("/tickets/cancelar/<int:id_ticket_tramite>")
+@login_required
+@role_required("admin_area")
+def cancelar_ticket_tramite(id_ticket_tramite):
+    ticket_tramite = TicketTramiteService.get_by_id(id_ticket_tramite)
+    if ticket_tramite:
+        TicketTramiteService.cancelar_ticket_tramite(ticket_tramite.id_ticket_tramite)
+        flash('Trámite cancelado exitosamente', 'success')
+        socketio.emit("turnos_en_espera", TurnoService.get_turnos_en_espera())
+        socketio.emit('cola_actualizada')
+    else:
+        flash('Error al cancelar ticket tramite', 'error')
+    return redirect(url_for('admin_area.tickets'))
+
+
+@admin_area_bp.route("/tickets/cancelar-ticket/<int:id_ticket>")
+@login_required
+@role_required("admin_area")
+def cancelar_ticket(id_ticket):
+    ticket = TicketService.get_ticket_by_id(id_ticket)
+    if ticket:
+        TicketService.cancelar_ticket(ticket.id_ticket)
+        flash('Ticket cancelado exitosamente', 'success')
+        socketio.emit("turnos_en_espera", TurnoService.get_turnos_en_espera())
+        socketio.emit('cola_actualizada')
+    else:
+        flash('Error al cancelar ticket', 'error')
+    return redirect(url_for('admin_area.tickets'))
+
+
+@admin_area_bp.get("/tickets/reasignar/<int:id_ticket_tramite>")
+@login_required
+@role_required("admin_area")
+def reasignar_ticket(id_ticket_tramite):
+
+    ticket = TicketTramiteService.get_by_id(id_ticket_tramite)
+    id_area = request.args.get("id_area", type=int)
+    area = AreaService.get_area_by_id(id_area) if id_area else current_user.area
+    tramites = TramiteService.get_tramites_by_area(area.id_area)
+    areas = AreaService.get_all_areas()
+
+    return render_template(
+        "admin_area/reasignar.html",
+        ticket=ticket,
+        area=area,
+        tramites=tramites,
+        areas=areas
+    )
+    
+    
+@admin_area_bp.post("/tickets/reasignar/<int:id_ticket_tramite>")
+@login_required
+@role_required("admin_area")
+def reasignar_ticket_post(id_ticket_tramite):
+    id_tramite_nuevo = request.form.get("id_tramite_nuevo", type=int)
+    tipo = request.form.get("tipo_reasignacion")
+
+    if not id_tramite_nuevo or not tipo:
+        flash("Información incompleta para la reasignación", "warning")
+        return redirect(url_for("admin_area.tickets"))
+
+    if tipo == "error":
+        TicketTramiteService.reasignar(
+            id_ticket_tramite,
+            id_tramite_nuevo
+        )
+
+    elif tipo == "previo":
+        TicketTramiteService.insertar_tramite_prioritario(
+            id_ticket_tramite,
+            id_tramite_nuevo
+        )
+
+    flash("Ticket reasignado correctamente", "success")
+    return redirect(url_for("admin_area.tickets"))
+
+
+@admin_area_bp.get("/tickets/agregar-tramite/<int:id_ticket>")
+@login_required
+@role_required("admin_area")
+def agregar_tramite(id_ticket):
+    
+    ticket = TicketService.get_ticket_by_id(id_ticket)
+    id_area = request.args.get("id_area", type=int)
+    area = AreaService.get_area_by_id(id_area) if id_area else current_user.area
+    tramites = TramiteService.get_tramites_by_area(area.id_area)
+    areas = AreaService.get_all_areas()
+
+    return render_template(
+        "admin_area/agregar_tramite.html",
+        ticket=ticket,
+        area=area,
+        tramites=tramites,
+        areas=areas
+    )
+    
+    
+@admin_area_bp.post("/tickets/agregar-tramite/<int:id_ticket>")
+@login_required
+@role_required("admin_area")
+def agregar_tramite_post(id_ticket):
+
+    id_tramite = request.form.get("id_tramite")
+    posicion_tipo = request.form.get("posicion_tipo")
+    referencia_id = request.form.get("referencia_id")
+
+    if not id_tramite or not posicion_tipo:
+        flash("Datos incompletos para agregar trámite.", "error")
+        return redirect(url_for("admin_area.tickets"))
+
+    try:
+        success, error = TicketTramiteService.insertar_tramite_en_ticket(
+            ticket_id=id_ticket,
+            id_tramite=int(id_tramite),
+            posicion_tipo=posicion_tipo,
+            referencia_id=int(referencia_id) if referencia_id else None
+        )
+
+        if not success:
+            flash(error or "No se pudo insertar el trámite.", "error")
+        else:
+            flash("Trámite agregado correctamente.", "success")
+
+    except Exception as e:
+        flash(f"Error inesperado: {str(e)}", "error")
+
+    return redirect(url_for("admin_area.tickets"))
 
 
 @admin_area_bp.route("/asignacion-manual/<int:id_tramite>")
@@ -135,6 +277,8 @@ def asignar_ticket_manual():
         },
         room=f'usuario_{id_usuario}'
     )
+    socketio.emit("turnos_en_espera", TurnoService.get_turnos_en_espera())
+    socketio.emit('cola_actualizada')
     
     flash(f'Ticket {ticket_tramite.ticket.turno} asignado exitosamente a {usuario.nombre}', 'success')
     return redirect(url_for('admin_area.dashboard'))

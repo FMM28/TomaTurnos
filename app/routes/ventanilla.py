@@ -315,4 +315,5 @@ def reasignar_ticket_post():
         )
 
     flash("Ticket reasignado correctamente", "success")
+    socketio.emit("cola_actualizada")
     return redirect(url_for("ventanilla.dashboard"))

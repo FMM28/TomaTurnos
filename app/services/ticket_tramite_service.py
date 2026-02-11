@@ -26,20 +26,35 @@ class TicketTramiteService:
     def create(
         id_ticket: int,
         id_tramite: int,
-        prioridad: int = 0
+        prioridad: Optional[int] = None
     ) -> Tuple[Optional[TicketTramite], Optional[str]]:
-        """Crea la relación Ticket–Trámite"""
+
         try:
+            if prioridad is None:
+                ultimo = (
+                    TicketTramite.query
+                    .filter(
+                        TicketTramite.id_ticket == id_ticket,
+                        TicketTramite.estado.in_(["espera", "pendiente"])
+                    )
+                    .order_by(TicketTramite.prioridad.asc())
+                    .first()
+                )
+                prioridad = ultimo.prioridad - 1 if ultimo else 1
+
             tt = TicketTramite(
                 id_ticket=id_ticket,
                 id_tramite=id_tramite,
                 prioridad=prioridad,
-                estado="espera",
+                estado="pendiente",
                 fecha_creacion=datetime.now()
             )
+
             db.session.add(tt)
-            db.session.commit()
+            db.session.flush()
+
             return tt, None
+
         except SQLAlchemyError as e:
             db.session.rollback()
             return None, str(e)
@@ -47,28 +62,29 @@ class TicketTramiteService:
     @staticmethod
     def create_multiple(
         id_ticket: int,
-        tramites: List[int],
-        prioridad: int = 0
+        tramites: List[int]
     ) -> Tuple[List[TicketTramite], Optional[str]]:
         """Crea múltiples trámites para un mismo ticket"""
         try:
             registros = []
-            TicketTramiteService.create(id_ticket, tramites[0], prioridad)
-            for id_tramite in tramites:
-                if id_tramite == tramites[0]:
-                    continue
+
+            prioridad_base = len(tramites)
+
+            for index, id_tramite in enumerate(tramites):
                 tt = TicketTramite(
                     id_ticket=id_ticket,
                     id_tramite=id_tramite,
-                    prioridad=prioridad,
-                    estado="pendiente",
+                    prioridad=prioridad_base - index,
+                    estado="espera" if index == 0 else "pendiente",
                     fecha_creacion=datetime.now()
                 )
+
                 db.session.add(tt)
                 registros.append(tt)
 
             db.session.commit()
             return registros, None
+
         except SQLAlchemyError as e:
             db.session.rollback()
             return [], str(e)
@@ -217,6 +233,27 @@ class TicketTramiteService:
         except SQLAlchemyError as e:
             db.session.rollback()
             return False, str(e)
+        
+    @staticmethod
+    def cancelar_ticket_tramite(ticket_tramite_id: int) -> Tuple[bool, Optional[str]]:
+        try:
+            tt = TicketTramite.query.get(ticket_tramite_id)
+            if not tt:
+                return False, "TicketTramite no encontrado"
+
+            estado_anterior = tt.estado
+
+            tt.estado = "cancelado"
+
+            if estado_anterior == "espera":
+                siguiente = TicketTramiteService.get_siguiente_espera(tt)
+
+            db.session.commit()
+            return True, None
+
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return False, str(e)
 
     @staticmethod
     def reasignar(ticket_tramite_id: int, nuevo_tramite_id: int, prioridad_extra: int = 10) -> Tuple[bool, Optional[str]]:
@@ -265,7 +302,120 @@ class TicketTramiteService:
         except SQLAlchemyError as e:
             db.session.rollback()
             return None, str(e)
+        
+    @staticmethod
+    def insertar_tramite_en_ticket(
+        ticket_id: int,
+        id_tramite: int,
+        posicion_tipo: str,
+        referencia_id: Optional[int] = None
+    ) -> Tuple[bool, Optional[str]]:
 
+        try:
+            ticket = Ticket.query.get(ticket_id)
+            if not ticket:
+                return False, "Ticket no encontrado"
+
+            cola = (
+                TicketTramite.query
+                .filter(
+                    TicketTramite.id_ticket == ticket_id,
+                    TicketTramite.estado.in_(["espera", "pendiente"])
+                )
+                .order_by(
+                    TicketTramite.prioridad.desc(),
+                    TicketTramite.id_ticket_tramite.asc()
+                )
+                .all()
+            )
+
+            if not cola:
+                nuevo_tt, error = TicketTramiteService.create(
+                    id_ticket=ticket_id,
+                    id_tramite=id_tramite,
+                    prioridad=1
+                )
+                if error:
+                    return False, error
+
+                nuevo_tt.estado = "espera"
+                db.session.commit()
+                return True, None
+
+            if posicion_tipo == "inicio":
+                index = 0
+
+            elif posicion_tipo == "final":
+                index = len(cola)
+
+            elif posicion_tipo in ("antes", "despues"):
+                referencia = next(
+                    (x for x in cola if x.id_ticket_tramite == int(referencia_id)),
+                    None
+                )
+                if not referencia:
+                    return False, "Referencia no válida"
+
+                ref_index = cola.index(referencia)
+                index = ref_index if posicion_tipo == "antes" else ref_index + 1
+
+            else:
+                return False, "Posición inválida"
+
+            nuevo_tt, error = TicketTramiteService.create(
+                id_ticket=ticket_id,
+                id_tramite=id_tramite
+            )
+            if error:
+                return False, error
+
+            cola.insert(index, nuevo_tt)
+
+            prioridad_base = len(cola)
+            for tt in cola:
+                tt.prioridad = prioridad_base
+                prioridad_base -= 1
+
+            actual_espera = next((x for x in cola if x.estado == "espera"), None)
+
+            if actual_espera:
+                idx_espera = cola.index(actual_espera)
+                if index <= idx_espera:
+                    actual_espera.estado = "pendiente"
+                    nuevo_tt.estado = "espera"
+                else:
+                    nuevo_tt.estado = "pendiente"
+            else:
+                cola[0].estado = "espera"
+
+            db.session.commit()
+            return True, None
+
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            return False, str(e)
+        
+    @staticmethod
+    def _reordenar_prioridades(ticket_id: int):
+
+        cola = (
+            TicketTramite.query
+            .filter(
+                TicketTramite.id_ticket == ticket_id,
+                TicketTramite.estado.in_(["espera", "pendiente"])
+            )
+            .order_by(
+                TicketTramite.prioridad.desc(),
+                TicketTramite.id_ticket_tramite.asc()
+            )
+            .all()
+        )
+
+        prioridad_base = len(cola)
+
+        for tt in cola:
+            tt.prioridad = prioridad_base
+            prioridad_base -= 1
 
     @staticmethod
     def get_tramites_by_ticket(ticket_id: int) -> List[Tramite]:
@@ -316,4 +466,17 @@ class TicketTramiteService:
             )
         except SQLAlchemyError as e:
             print(f"Error al obtener TicketTramites por estados {estados} y área {id_area}: {e}")
+            return []
+        
+    @staticmethod
+    def get_ticket_tramites_by_ticket(ticket_id: int) -> List[TicketTramite]:
+        try:
+            return (
+                TicketTramite.query
+                .filter(TicketTramite.id_ticket == ticket_id)
+                .order_by(TicketTramite.id_ticket_tramite)
+                .all()
+            )
+        except SQLAlchemyError as e:
+            print(f"Error al obtener TicketTramites por ticket_id {ticket_id}: {e}")
             return []

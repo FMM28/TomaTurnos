@@ -1,0 +1,114 @@
+{% extends "admin_area/base.html" %}
+
+{% block title %}Tickets Activos{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div class="monitoreo">
+        <h2 class="page-title">Tickets Activos</h2>
+        <div>
+            <a href="{{ url_for('admin_area.dashboard') }}" class="btn-secondary">Trámites</a>
+            <a href="{{ url_for('admin_area.monitoreo_usuarios') }}" class="btn-secondary">Usuarios</a>
+        </div>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<div class="tickets-list">
+
+{% for ticket, tramites in tickets_tramites.items() %}
+
+    <div class="ticket-card">
+
+        <div class="ticket-header">
+            <div>
+                <h3 class="ticket-folio">
+                    Ticket #{{ ticket.id_ticket }} - Turno {{ ticket.turno}}
+                </h3>
+                <span class="ticket-meta">
+                    Creado: {{ ticket.fecha_hora.strftime('%H:%M %d/%m/%Y') }}
+                </span>
+            </div>
+        </div>
+
+        <div class="tramites-list">
+
+            {% for tt in tramites %}
+            <div class="tramite-item status-{{ tt.estado }}">
+
+                <div class="tramite-info">
+                    <strong>{{ tt.tramite.name }}</strong>
+
+                    <div class="tramite-meta">
+                        Estado:
+                        <span class="badge-ticket badge-{{ tt.estado }}">
+                            {{ tt.estado }}
+                        </span>
+
+                        {% set ultima = tt.atenciones | sort(attribute='fecha_hora') | last %}
+
+                        {% if ultima %}
+                            · Atendido por {{ ultima.usuario.nombre }} {{ ultima.usuario.ap_paterno }}
+                        {% else %}
+                            · Sin atención asignada
+                        {% endif %}
+
+                    </div>
+                </div>
+
+                <div class="tramite-actions">
+                    {% if tt.estado not in ['cancelado', 'atendido','llamado','atendiendo'] %}
+                        <a href="{{ url_for('admin_area.reasignar_ticket', id_ticket_tramite=tt.id_ticket_tramite) }}"
+                           class="btn btn-sm btn-warning">
+                            Reasignar
+                        </a>
+
+                        <a href="{{ url_for('admin_area.cancelar_ticket_tramite', id_ticket_tramite=tt.id_ticket_tramite) }}"
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('¿Cancelar este trámite?')">
+                            Cancelar
+                        </a>
+                    {% endif %}
+                </div>
+
+            </div>
+            {% endfor %}
+
+        </div>
+
+        <div class="ticket-actions">
+            <a href="{{ url_for('admin_area.agregar_tramite', id_ticket=ticket.id_ticket) }}"
+               class="btn btn-primary btn-sm">
+                + Agregar trámite
+            </a>
+
+            <a href="{{ url_for('admin_area.cancelar_ticket', id_ticket=ticket.id_ticket) }}"
+               class="btn btn-outline-danger btn-sm"
+               onclick="return confirm('¿Cancelar todo el ticket?')">
+                Cancelar ticket
+            </a>
+        </div>
+
+    </div>
+{% else %}
+    <div class="empty-state">
+        <p>No hay tickets activos</p>
+    </div>
+{% endfor %}
+
+</div>
+
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "ventanilla/base.html" %}
+
+{% block title %}Reasignar Ticket{% endblock %}
+
+{% block content %}
+
+<div class="modal-overlay" id="reasignarModal">
+    <div class="modal-content">
+
+        <h3 class="modal-title">Reasignar trámite</h3>
+
+        <p class="modal-text">
+            Trámite seleccionado:
+            <strong id="modalTramiteNombre"></strong>
+        </p>
+        <p class="modal-text">
+            Seleccione el motivo de la reasignación:
+        </p>
+
+        <form method="POST"
+              action="{{ url_for('admin_area.reasignar_ticket_post', id_ticket_tramite=ticket.id_ticket_tramite) }}"
+              id="reasignarForm">
+
+            <input type="hidden"
+                   name="id_tramite_nuevo"
+                   id="modalIdTramite">
+
+            <div class="radio-group">
+
+                <label class="radio-option">
+                    <input type="radio"
+                           name="tipo_reasignacion"
+                           value="error"
+                           required>
+                    <span>Error de trámite</span>
+                </label>
+
+                <label class="radio-option">
+                    <input type="radio"
+                           name="tipo_reasignacion"
+                           value="previo"
+                           required>
+                    <span>Requiere trámite previo</span>
+                </label>
+
+            </div>
+
+            <div class="modal-actions">
+                <button type="button"
+                        class="modal-btn modal-btn-cancel"
+                        onclick="closeReasignarModal()">
+                    Cancelar
+                </button>
+
+                <button type="submit"
+                        class="modal-btn modal-btn-confirm"
+                        id="btnConfirmar">
+                    Confirmar reasignación
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+<div class="tramites-layout">
+
+    <aside class="tramites-sidebar">
+        <div class="back">
+            <a href="{{ url_for('admin_area.tickets') }}" class="btn-back"> ← Regresar</a>
+        </div>
+
+        <section class="sidebar-section">
+            <h2 class="sidebar-title">Áreas</h2>
+
+            <div class="sidebar-areas">
+                {% for area_idx in areas %}
+                <a href="{{ url_for(
+                        'admin_area.reasignar_ticket',
+                        id_area=area_idx.id_area,
+                        id_ticket_tramite=ticket.id_ticket_tramite
+                    ) }}"
+                   class="sidebar-area-btn
+                   {% if area_idx.id_area == area.id_area %}active{% endif %}">
+                    {{ area_idx.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+
+    </aside>
+
+    <main class="tramites-main">
+
+        <header class="tramites-header">
+            <h1 class="tramites-title">
+                Reasignar ticket
+            </h1>
+
+            <p class="tramites-subtitle">
+                Área actual:
+                <strong>{{ area.name }}</strong>
+            </p>
+        </header>
+
+        {% if tramites %}
+        <div class="tramites-grid">
+            {% for tramite in tramites %}
+            <button type="button"
+                    class="tramite-card"
+                    onclick="openReasignarModal(
+                        '{{ tramite.id_tramite }}',
+                        '{{ tramite.name }}'
+                    )">
+                {{ tramite.name }}
+            </button>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="tramites-empty">
+            No hay trámites disponibles para esta área.
+        </p>
+        {% endif %}
+
+    </main>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/modal_ventanilla_reasignacion.js') }}"></script>
+{% endblock %}

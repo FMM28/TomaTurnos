@@ -93,6 +93,29 @@ class TicketService:
             error_msg = f"Error al actualizar estado del ticket {ticket_id}: {e}"
             print(error_msg)
             return False, error_msg
+        
+    @staticmethod
+    def cancelar_ticket(ticket_id: int) -> Tuple[bool, Optional[str]]:
+        """Cancela un ticket"""
+        try:
+            ticket = Ticket.query.get(ticket_id)
+            if not ticket:
+                return False, "Ticket no encontrado"
+
+            ticket.estado = "cancelado"
+
+            for tt in ticket.ticket_tramites:
+                if tt.estado in ("pendiente", "espera"):
+                    tt.estado = "cancelado"
+
+            db.session.commit()
+            return True, None
+
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            error_msg = f"Error al cancelar ticket {ticket_id}: {e}"
+            print(error_msg)
+            return False, error_msg
 
     @staticmethod
     def delete_ticket(ticket_id: int) -> Tuple[bool, Optional[str]]:

@@ -1,0 +1,138 @@
+{% extends "ventanilla/base.html" %}
+
+{% block title %}Agregar Trámite{% endblock %}
+
+{% block content %}
+
+<div class="modal-overlay" id="reasignarModal">
+    <div class="modal-content">
+
+        <h3 class="modal-title">Agregar trámite</h3>
+
+        <p class="modal-text">
+            Trámite seleccionado:
+            <strong id="modalTramiteNombre"></strong>
+        </p>
+        <p class="modal-text">
+            Seleccione la posición donde desea agregar el nuevo trámite:
+        </p>
+
+        <form method="POST"
+            action="{{ url_for('admin_area.agregar_tramite_post', id_ticket=ticket.id_ticket) }}">
+
+            <input type="hidden" name="id_tramite" id="modalIdTramite">
+
+            <div class="radio-group">
+
+                <label>
+                    <input type="radio" name="posicion_tipo" value="inicio" required>
+                    Al inicio
+                </label>
+
+                <label>
+                    <input type="radio" name="posicion_tipo" value="final" required>
+                    Al final
+                </label>
+
+                <label>
+                    <input type="radio" name="posicion_tipo" value="antes" required>
+                    Antes de:
+                </label>
+
+                <label>
+                    <input type="radio" name="posicion_tipo" value="despues" required>
+                    Después de:
+                </label>
+
+            </div>
+
+            <div class="select-group">
+                <select name="referencia_id" id="referenciaSelect">
+                    <option value="">Seleccione trámite de referencia</option>
+                    {% for tt in ticket.ticket_tramites
+                        | selectattr('estado', 'in', ['espera', 'pendiente'])
+                        | sort(attribute='prioridad', reverse=true) %}
+                        <option value="{{ tt.id_ticket_tramite }}">
+                            {{ loop.index }}. {{ tt.tramite.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="modal-actions">
+                <button type="submit" class="modal-btn modal-btn-confirm">Confirmar</button>
+            </div>
+            
+        </form>
+
+    </div>
+</div>
+
+<div class="tramites-layout">
+
+    <aside class="tramites-sidebar">
+        <div class="back">
+            <a href="{{ url_for('admin_area.tickets') }}" class="btn-back"> ← Regresar</a>
+        </div>
+
+        <section class="sidebar-section">
+            <h2 class="sidebar-title">Áreas</h2>
+
+            <div class="sidebar-areas">
+                {% for area_idx in areas %}
+                <a href="{{ url_for(
+                        'admin_area.agregar_tramite',
+                        id_area=area_idx.id_area,
+                        id_ticket=ticket.id_ticket
+                    ) }}"
+                   class="sidebar-area-btn
+                   {% if area_idx.id_area == area.id_area %}active{% endif %}">
+                    {{ area_idx.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+
+    </aside>
+
+    <main class="tramites-main">
+
+        <header class="tramites-header">
+            <h1 class="tramites-title">
+                Agregar trámite
+            </h1>
+
+            <p class="tramites-subtitle">
+                Área actual:
+                <strong>{{ area.name }}</strong>
+            </p>
+        </header>
+
+        {% if tramites %}
+        <div class="tramites-grid">
+            {% for tramite in tramites %}
+            <button type="button"
+                    class="tramite-card"
+                    onclick="openReasignarModal(
+                        '{{ tramite.id_tramite }}',
+                        '{{ tramite.name }}'
+                    )">
+                {{ tramite.name }}
+            </button>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="tramites-empty">
+            No hay trámites disponibles para esta área.
+        </p>
+        {% endif %}
+
+    </main>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/modal_agregar_tramite.js') }}"></script>
+{% endblock %}
