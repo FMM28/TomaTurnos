@@ -10,3 +10,4 @@ instalador/nginx-1.28.2/
 instalador/nssm/
 instalador/proyecto/
 instalador/zadig-2.9.exe
+app/backups/*

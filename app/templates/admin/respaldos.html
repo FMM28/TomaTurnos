@@ -1,0 +1,78 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Respaldos del Sistema{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Gestión de Respaldos</h2>
+        <p class="page-subtitle">
+            Generar una copia de los datos del sistema para resguardo externo.
+        </p>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<div class="backup-container">
+
+    <div class="backup-card">
+
+        <div class="backup-info">
+
+            <h3>¿Qué incluye el respaldo?</h3>
+
+            <ul class="backup-list">
+                <li>✔ <strong>Datos de la base de datos</strong> (registros actuales)</li>
+                <li>✔ <strong>Archivos adjuntos</strong> (anuncios, documentos)</li>
+                <li>✔ <strong>Metadatos del sistema</strong></li>
+            </ul>
+
+            <div class="backup-note">
+                ℹ️ <strong>Nota importante:</strong> Este respaldo contiene solo los <strong>datos</strong>. 
+                No incluye la estructura de la base de datos ni los archivos de configuración.
+            </div>
+
+            <div class="backup-warning">
+                ⚠️ El archivo será descargado a su equipo.  
+                Guárdelo en un medio externo (USB, nube o disco externo).
+            </div>
+
+        </div>
+
+        <div class="backup-actions">
+
+            <form method="POST"
+                  action="{{ url_for('admin.generar_respaldo') }}"
+                  onsubmit="return confirmBackup();">
+
+                <button type="submit" class="btn-primary btn-large">Generar y descargar respaldo</button>
+
+            </form>
+
+            <p class="backup-help">
+                El proceso puede tardar unos minutos dependiendo del tamaño de los datos.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+function confirmBackup() {
+    return confirm('¿Desea generar el respaldo del sistema?\n\nEste proceso puede tardar varios minutos.');
+}
+</script>
+
+{% endblock %}

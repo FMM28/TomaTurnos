@@ -1,7 +1,9 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from flask_login import login_required
+from flask import Blueprint, current_app, render_template, request, redirect, url_for, flash, send_file
+from flask import Response, stream_with_context
+from flask_login import login_required, current_user
 from app.auth.decorators import role_required
 from app.services.anuncio_service import AnuncioService
+from app.services.backup_service import BackupService
 from app.services.user_service import UserService
 from app.services.area_service import AreaService
 from app.services.tramite_service import TramiteService
@@ -10,9 +12,14 @@ from app.services.ticket_service import TicketService
 from app.services.ventanilla_service import VentanillaService
 from app.services.asignacion_service import AsignacionService
 from app.services.suplente_service import SuplenteService
+import os
+import threading
+from datetime import datetime
+import json
+import time
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
-
+backup_progress = {}
 
 @admin_bp.route("/")
 @login_required
@@ -680,3 +687,121 @@ def delete_anuncio(id_anuncio):
         flash("No se pudo eliminar el anuncio", "error")
 
     return redirect(url_for("admin.anuncios"))
+
+
+@admin_bp.get("/respaldos")
+@login_required
+@role_required("admin")
+def respaldos():
+    return render_template("admin/respaldos.html")
+
+
+@admin_bp.post("/respaldos/generar")
+@login_required
+@role_required("admin")
+def generar_respaldo():
+    """Inicia el proceso de respaldo en un hilo separado"""
+    
+    session_id = f"{current_user.id}_{datetime.now().timestamp()}"
+    
+    backup_progress[session_id] = {
+        'status': 'iniciando',
+        'message': 'Preparando respaldo...',
+        'percentage': 0,
+        'zip_path': None,
+        'error': None
+    }
+    
+    app = current_app._get_current_object()
+    
+    def run_backup():
+        """Función que se ejecuta en el hilo de fondo"""
+        
+        with app.app_context():
+            def update_progress(message: str, percentage: int):
+                """Callback para actualizar el progreso"""
+                backup_progress[session_id]['message'] = message
+                backup_progress[session_id]['percentage'] = percentage
+                backup_progress[session_id]['status'] = 'procesando'
+            
+            zip_path, error = BackupService.crear_respaldo(progress_callback=update_progress)
+            
+            if error:
+                backup_progress[session_id]['status'] = 'error'
+                backup_progress[session_id]['error'] = error
+            else:
+                backup_progress[session_id]['status'] = 'completado'
+                backup_progress[session_id]['zip_path'] = zip_path
+    
+    thread = threading.Thread(target=run_backup)
+    thread.daemon = True
+    thread.start()
+    
+    return redirect(url_for('admin.progreso_respaldo', session_id=session_id))
+
+
+@admin_bp.get("/respaldos/progreso/<session_id>")
+@login_required
+@role_required("admin")
+def progreso_respaldo(session_id):
+    """Página que muestra el progreso del respaldo"""
+    return render_template("admin/progreso_respaldo.html", session_id=session_id)
+
+
+@admin_bp.get("/respaldos/progreso/<session_id>/stream")
+@login_required
+@role_required("admin")
+def stream_progreso(session_id):
+    def generate():
+        """Generador que envía actualizaciones de progreso"""
+        while True:
+            if session_id in backup_progress:
+                data = backup_progress[session_id]
+                yield f"data: {json.dumps(data)}\n\n"
+                if data['status'] in ['completado', 'error']:
+                    break
+            
+            time.sleep(0.5)
+    
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no'
+        }
+    )
+
+
+@admin_bp.get("/respaldos/descargar/<session_id>")
+@login_required
+@role_required("admin")
+def descargar_respaldo(session_id):
+    """Descarga el archivo de respaldo generado"""
+    
+    if session_id not in backup_progress:
+        flash("Sesión de respaldo no encontrada", "error")
+        return redirect(url_for("admin.respaldos"))
+    
+    data = backup_progress[session_id]
+    
+    if data['status'] != 'completado':
+        flash("El respaldo aún no ha sido completado", "error")
+        return redirect(url_for("admin.respaldos"))
+    
+    zip_path = data['zip_path']
+    
+    if not zip_path or not os.path.exists(zip_path):
+        flash("Archivo de respaldo no encontrado", "error")
+        return redirect(url_for("admin.respaldos"))
+    
+    del backup_progress[session_id]
+    
+    response = send_file(
+        zip_path,
+        as_attachment=True,
+        download_name=os.path.basename(zip_path),
+        mimetype="application/zip"
+    )
+    
+    return response

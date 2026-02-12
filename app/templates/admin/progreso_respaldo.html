@@ -1,0 +1,137 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Generando Respaldo{% endblock %}
+
+{% block content %}
+
+<div class="progress-container">
+    
+    <div class="progress-card">
+        
+        <div class="progress-header">
+            <div class="spinner-container">
+                <div class="spinner"></div>
+            </div>
+            <h2 id="status-title">Generando respaldo del sistema...</h2>
+            <p id="status-message">Iniciando proceso...</p>
+        </div>
+
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-bar">
+                <span class="progress-text" id="progress-text">0%</span>
+            </div>
+        </div>
+
+        <div class="progress-details">
+            <div class="detail-item">
+                <span class="detail-label">Estado:</span>
+                <span class="detail-value" id="status-state">Procesando</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Progreso:</span>
+                <span class="detail-value" id="progress-percentage">0%</span>
+            </div>
+        </div>
+
+        <div class="progress-info">
+            <p>Por favor, no cierre esta ventana mientras se genera el respaldo.</p>
+            <p>El proceso puede tardar varios minutos dependiendo del tamaño de los datos.</p>
+        </div>
+
+        <div class="progress-actions" id="progress-actions" style="display: none;">
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+const sessionId = "{{ session_id }}";
+const eventSource = new EventSource("{{ url_for('admin.stream_progreso', session_id=session_id) }}");
+
+eventSource.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    
+    document.getElementById('status-message').textContent = data.message;
+    
+    // Actualizar barra de progreso
+    const percentage = data.percentage;
+    document.getElementById('progress-bar').style.width = percentage + '%';
+    document.getElementById('progress-text').textContent = percentage + '%';
+    document.getElementById('progress-percentage').textContent = percentage + '%';
+    
+    // Actualizar estado
+    const statusMap = {
+        'iniciando': 'Iniciando...',
+        'procesando': 'Procesando...',
+        'completado': 'Completado',
+        'error': 'Error'
+    };
+    document.getElementById('status-state').textContent = statusMap[data.status] || 'Procesando';
+    
+    // Si completó exitosamente
+    if (data.status === 'completado') {
+        eventSource.close();
+        
+        // Actualizar encabezado
+        document.querySelector('.spinner-container').innerHTML = `
+            <div class="success-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+        `;
+        document.getElementById('status-title').textContent = '¡Respaldo completado!';
+        document.querySelector('.progress-header').style.background = '#ecfdf5';
+        document.getElementById('status-title').style.color = '#065f46';
+
+        // Mostrar botón de descarga
+        document.getElementById('progress-actions').style.display = 'block';
+        document.getElementById('progress-actions').innerHTML = `
+            <a href="{{ url_for('admin.descargar_respaldo', session_id=session_id) }}" class="btn-success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Descargar respaldo
+            </a>
+            <br>
+            <a href="{{ url_for('admin.respaldos') }}" class="btn-secondary">Volver a respaldos</a>
+        `;
+    }
+    
+    // Si hubo error
+    if (data.status === 'error') {
+        eventSource.close();
+        
+        // Actualizar encabezado
+        document.querySelector('.spinner').style.display = 'none';
+        document.getElementById('status-title').textContent = 'Error al generar respaldo';
+        document.querySelector('.progress-header').style.background = '#fef2f2';
+        document.getElementById('status-title').style.color = '#7f1d1d';
+        
+        // Mostrar mensaje de error
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = data.error || 'Ocurrió un error inesperado';
+        document.querySelector('.progress-card').insertBefore(
+            errorDiv,
+            document.querySelector('.progress-details')
+        );
+        
+        // Mostrar botón para volver
+        document.getElementById('progress-actions').style.display = 'block';
+        document.getElementById('progress-actions').innerHTML = `
+            <a href="{{ url_for('admin.respaldos') }}" class="btn-secondary">Volver e intentar nuevamente</a>
+        `;
+    }
+};
+
+eventSource.onerror = function(error) {
+    console.error('Error en la conexión:', error);
+    eventSource.close();
+};
+</script>
+
+{% endblock %}
