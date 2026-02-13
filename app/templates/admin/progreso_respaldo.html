@@ -97,7 +97,7 @@ eventSource.onmessage = function(event) {
                 Descargar respaldo
             </a>
             <br>
-            <a href="{{ url_for('admin.respaldos') }}" class="btn-secondary">Volver a respaldos</a>
+            <a href="{{ url_for('admin.respaldos') }}" class="btn-backup">Volver a respaldos</a>
         `;
     }
     
@@ -123,7 +123,7 @@ eventSource.onmessage = function(event) {
         // Mostrar botón para volver
         document.getElementById('progress-actions').style.display = 'block';
         document.getElementById('progress-actions').innerHTML = `
-            <a href="{{ url_for('admin.respaldos') }}" class="btn-secondary">Volver e intentar nuevamente</a>
+            <a href="{{ url_for('admin.respaldos') }}" class="btn-backup">Volver e intentar nuevamente</a>
         `;
     }
 };

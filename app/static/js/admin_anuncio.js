@@ -1,5 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
 
+    const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+    const MAX_FILE_SIZE_MB = 100;
+
     const fileInput = document.getElementById("archivo");
     const tituloInput = document.getElementById("titulo");
     const tipoInput = document.getElementById("tipo");
@@ -20,13 +23,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const tipoExistente = archivoGroup.dataset.tipo;
     const archivoUrl = archivoGroup.dataset.archivoUrl;
 
+    // Elemento para mostrar tamaño
+    const sizeInfo = document.createElement("small");
+    sizeInfo.id = "file-size-info";
+    sizeInfo.className = "form-hint";
+    sizeInfo.style.display = "block";
+    sizeInfo.style.marginTop = "5px";
+    archivoGroup.appendChild(sizeInfo);
+
     if (modo === 'edit' && tipoExistente) {
         loadExistingPreview(tipoExistente, archivoUrl, tituloInput.value, duracionExistente);
     }
 
     fileInput.addEventListener("change", () => {
+
         const file = fileInput.files[0];
+
         if (!file) {
+            sizeInfo.textContent = "";
             if (modo === 'edit' && tipoExistente) {
                 loadExistingPreview(tipoExistente, archivoUrl, tituloInput.value, duracionExistente);
             } else {
@@ -34,6 +48,26 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             return;
         }
+
+        // Mostrar tamaño
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        sizeInfo.textContent = `Tamaño del archivo: ${sizeMB} MB`;
+
+        // Validar límite
+        if (file.size > MAX_FILE_SIZE) {
+
+            sizeInfo.style.color = "red";
+            sizeInfo.textContent = `El archivo pesa ${sizeMB} MB. Máximo permitido: ${MAX_FILE_SIZE_MB} MB`;
+
+            fileInput.value = "";
+            resetPreview();
+
+            alert(`El archivo excede el límite de ${MAX_FILE_SIZE_MB} MB`);
+
+            return;
+        }
+
+        sizeInfo.style.color = "green";
 
         const nombreLimpio = file.name
             .replace(/\.[^/.]+$/, "")
@@ -87,7 +121,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 };
 
                 videoPreview.onerror = () => {
-                    console.error("Error cargando video:", url);
                     previewTitulo.textContent = titulo;
                     previewTipo.textContent = "Video";
                     previewDuracion.textContent = duracion || 5;
@@ -101,10 +134,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 imagePreview.src = url;
                 imagePreview.style.display = "block";
                 videoPreview.style.display = "none";
-
-                imagePreview.onerror = () => {
-                    console.error("Error cargando imagen:", url);
-                };
             }
 
             duracionInput.value = duracion || 5;
@@ -150,6 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function handleImageFile(file, nombreLimpio) {
         tipoInput.value = "imagen";
+
         const duracionActual = duracionInput.value || 5;
         duracionInput.value = duracionActual;
         duracionGroup.style.display = "block";
@@ -184,12 +214,16 @@ document.addEventListener("DOMContentLoaded", () => {
         duracionInput.value = "";
         duracionInput.removeAttribute("required");
     }
-
 });
 
+
 document.addEventListener('DOMContentLoaded', function() {
+
+    const MAX_FILE_SIZE = 100 * 1024 * 1024;
+
     const form = document.querySelector('.form-card form');
     const submitButton = form.querySelector('button[type="submit"]');
+    const fileInput = document.getElementById("archivo");
 
     const processingMessage = document.createElement('div');
     processingMessage.id = 'processing-message';
@@ -201,12 +235,22 @@ document.addEventListener('DOMContentLoaded', function() {
     processingMessage.style.color = '#333';
     processingMessage.style.fontWeight = 'bold';
     processingMessage.style.display = 'none';
-    processingMessage.textContent = 'Se está procesando su video, por favor espere...';
+    processingMessage.textContent = 'Se está procesando su archivo, por favor espere...';
 
     form.appendChild(processingMessage);
 
     form.addEventListener('submit', function(e) {
+
+        const file = fileInput.files[0];
+
+        if (file && file.size > MAX_FILE_SIZE) {
+            alert("El archivo excede el límite de 100 MB.");
+            e.preventDefault();
+            return;
+        }
+
         submitButton.disabled = true;
         processingMessage.style.display = 'block';
     });
+
 });

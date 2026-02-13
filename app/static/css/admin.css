@@ -1045,7 +1045,7 @@ body {
     background: #15803d;
 }
 
-.btn-secondary {
+.btn-backup {
     background: #374151;
     color: white;
     border: none;
@@ -1058,7 +1058,7 @@ body {
     display: inline-block;
 }
 
-.btn-secondary:hover {
+.btn-backup:hover {
     background: #1f2937;
 }
 
