@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 from flask_login import login_required
 from app.auth.decorators import role_required, current_user
 from app.services.ticket_service import TicketService
@@ -11,7 +11,9 @@ from app.services.ventanilla_service import VentanillaService
 from app.services.asignacion_service import AsignacionService
 from app.services.suplente_service import SuplenteService
 from app.services.atencion_service import AtencionService
+from app.services.report_service import ReportService
 from app.extensions import socketio
+from datetime import datetime, timedelta
 
 admin_area_bp = Blueprint("admin_area", __name__, url_prefix="/admin_area")
 
@@ -751,3 +753,145 @@ def asignar_usuario_tramite(id_tramite):
         usuarios_asignados=usuarios_asignados,
         usuarios_sin_asignar=usuarios_sin_asignar
     )
+    
+    
+def get_default_date_range():
+    """Retorna el rango de fechas por defecto (lunes de esta semana - hoy)"""
+    hoy = datetime.now().date()
+    lunes = hoy - timedelta(days=hoy.weekday())
+    return lunes, hoy
+
+
+def parse_date_range(fecha_inicio_str, fecha_fin_str):
+    try:
+        if fecha_inicio_str and fecha_fin_str:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
+            fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
+            
+            if fecha_inicio > fecha_fin:
+                return None, None, "La fecha de inicio no puede ser mayor a la fecha fin"
+            
+            if fecha_inicio > datetime.now().date() or fecha_fin > datetime.now().date():
+                return None, None, "No se pueden seleccionar fechas futuras"
+            
+            return fecha_inicio, fecha_fin, None
+        else:
+            return get_default_date_range() + (None,)
+    except ValueError:
+        return None, None, "Formato de fecha inválido"
+
+
+def parse_metricas(metricas_list):
+
+    if not metricas_list:
+        return None
+    
+    if isinstance(metricas_list, str):
+        metricas_list = [metricas_list]
+    
+    config = {
+        'incluir_resumen': 'resumen_general' in metricas_list,
+        'incluir_estadisticas_base': 'estadisticas_base' in metricas_list,
+        'incluir_tiempos': 'tiempos_atencion' in metricas_list,
+        'incluir_estados': 'estados_atencion' in metricas_list,
+        'incluir_horas_pico': 'horas_pico' in metricas_list,
+        'incluir_horas_pico_semanal': 'horas_pico_semanal' in metricas_list,
+        'incluir_top_tramites': 'top_tramites' in metricas_list,
+        'incluir_top_usuarios': 'top_usuarios' in metricas_list,
+        'incluir_tabla_cruzada': 'tabla_cruzada' in metricas_list,
+    }
+    
+    return config
+
+
+@admin_area_bp.route("/estadisticas", methods=["GET"])
+@login_required
+@role_required("admin_area")
+def estadisticas_area():
+    """Vista simple de generación de reportes"""
+    
+    if not current_user.area_id:
+        flash("No tienes un área asignada. Contacta al administrador.", "error")
+        return redirect(url_for('admin_area.dashboard'))
+    
+    fecha_inicio, fecha_fin = get_default_date_range()
+    
+    return render_template(
+        "admin_area/estadisticas.html",
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+        area=current_user.area
+    )
+
+
+@admin_area_bp.route("/estadisticas/generar", methods=["POST"])
+@login_required
+@role_required("admin_area")
+def generar_reporte():
+    """Genera y descarga el reporte según los parámetros seleccionados"""
+    
+    if not current_user.area_id:
+        flash("No tienes un área asignada.", "error")
+        return redirect(url_for('admin_area.estadisticas_area'))
+    
+    try:
+        fecha_inicio_str = request.form.get("fecha_inicio")
+        fecha_fin_str = request.form.get("fecha_fin")
+        modo = request.form.get("modo", "ambos")
+        formato = request.form.get("formato", "excel")
+        metricas = request.form.getlist("metricas")
+        
+        if not metricas:
+            flash("Debes seleccionar al menos una métrica para el reporte.", "warning")
+            return redirect(url_for('admin_area.estadisticas_area'))
+        
+        fecha_inicio, fecha_fin, error = parse_date_range(fecha_inicio_str, fecha_fin_str)
+        
+        if error:
+            flash(error, "error")
+            return redirect(url_for('admin_area.estadisticas_area'))
+        
+        fecha_inicio_dt = datetime.combine(fecha_inicio, datetime.min.time())
+        fecha_fin_dt = datetime.combine(fecha_fin, datetime.max.time())
+        
+        config_metricas = parse_metricas(metricas)
+        
+        reporte = ReportService.generar_reporte(
+            fecha_inicio=fecha_inicio_dt,
+            fecha_fin=fecha_fin_dt,
+            area_id=current_user.area_id,
+            modo=modo,
+            exportar=formato,
+            metricas_config=config_metricas
+        )
+        
+        metricas_totales = 9
+        metricas_seleccionadas = len(metricas)
+        
+        if metricas_seleccionadas < metricas_totales:
+            metricas_suffix = f"_{metricas_seleccionadas}metricas"
+        else:
+            metricas_suffix = "_completo"
+        
+        extension = 'xlsx' if formato == 'excel' else 'pdf'
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f'reporte_{current_user.area.name}_{fecha_inicio}_{fecha_fin}{metricas_suffix}_{timestamp}.{extension}'
+        
+        mimetype = (
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            if formato == 'excel'
+            else 'application/pdf'
+        )
+        
+        return send_file(
+            reporte,
+            download_name=filename,
+            as_attachment=True,
+            mimetype=mimetype
+        )
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        flash(f"Error al generar el reporte: {str(e)}", "error")
+        return redirect(url_for('admin_area.estadisticas_area'))

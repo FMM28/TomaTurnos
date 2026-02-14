@@ -22,7 +22,7 @@ class AudioService:
 
     _pending_delete = set()
 
-    BASE_VOLUME = 0.9
+    BASE_VOLUME = 0.7
     DUCK_VOLUME = 0.1
     
     VOICE_INDEX = 0
