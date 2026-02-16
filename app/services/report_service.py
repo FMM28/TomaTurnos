@@ -10,7 +10,7 @@ import re
 from datetime import datetime
 from sqlalchemy import func, case, and_
 from app import db
-from app.models import Ticket, TicketTramite, Atencion, Tramite, Usuario, Area
+from app.models import Atencion, Tramite, Usuario, Area
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
@@ -69,12 +69,10 @@ class ReportService:
                 'incluir_resumen': True,
                 'incluir_estadisticas_base': True,
                 'incluir_tiempos': True,
-                'incluir_estados': True,
                 'incluir_horas_pico': True,
                 'incluir_horas_pico_semanal': True,
-                'incluir_top_tramites': True,
-                'incluir_top_usuarios': True,
                 'incluir_tabla_cruzada': False,
+                'incluir_descripciones': False,
             }
 
         data = {}
@@ -88,14 +86,24 @@ class ReportService:
 
         # Resumen general
         if metricas_config.get('incluir_resumen', True):
-            data["resumen_general"] = ReportService._resumen_general(filtros)
+            data["resumen_general"] = ReportService._resumen_general(filtros, metricas_config)
 
         # Estadísticas base
         if metricas_config.get('incluir_estadisticas_base', True):
             if modo in ("tramites", "ambos"):
-                data["tramites"] = ReportService._stats_por_tramite(filtros)
+                data["tramites"] = ReportService._stats_por_tramite(filtros, metricas_config)
             if modo in ("usuarios", "ambos"):
-                data["usuarios"] = ReportService._stats_por_usuario(filtros)
+                data["usuarios"] = ReportService._stats_por_usuario(filtros, metricas_config)
+
+        # Descripciones de estados
+        if metricas_config.get('incluir_descripciones', False):
+            data["descripciones_general"] = ReportService._descripciones_general(filtros)
+            
+            if modo in ("tramites", "ambos"):
+                data["descripciones_tramites"] = ReportService._descripciones_por_tramite(filtros)
+            
+            if modo in ("usuarios", "ambos"):
+                data["descripciones_usuarios"] = ReportService._descripciones_por_usuario(filtros)
 
         # Horas pico
         if metricas_config.get('incluir_horas_pico', True):
@@ -121,65 +129,195 @@ class ReportService:
         return filtros
 
     @staticmethod
-    def _stats_por_tramite(filtros):
-        query = (
-            db.session.query(
-                TicketTramite.id_tramite,
-                Tramite.name.label('nombre_tramite'),
-                func.count(Atencion.id_atencion).label('total_atenciones'),
-                func.sum(case((Atencion.estado == ReportService.ESTADO_FINALIZADO, 1), else_=0)).label('finalizadas'),
-                func.sum(case((Atencion.estado == ReportService.ESTADO_REASIGNADO, 1), else_=0)).label('reasignadas'),
-                func.sum(case((Atencion.estado == ReportService.ESTADO_CANCELADO, 1), else_=0)).label('canceladas'),
+    def _stats_por_tramite(filtros, metricas_config):
+        """
+        Ahora usa Atencion.id_tramite directamente para obtener el trámite original
+        """
+        incluir_tiempos = metricas_config.get('incluir_tiempos', True)
+        
+        # Columnas base
+        columnas_query = [
+            Atencion.id_tramite,
+            Tramite.name.label('nombre_tramite'),
+            func.count(Atencion.id_atencion).label('total_atenciones'),
+            func.sum(case((Atencion.estado == ReportService.ESTADO_FINALIZADO, 1), else_=0)).label('finalizadas'),
+            func.sum(case((Atencion.estado == ReportService.ESTADO_REASIGNADO, 1), else_=0)).label('reasignadas'),
+            func.sum(case((Atencion.estado == ReportService.ESTADO_CANCELADO, 1), else_=0)).label('canceladas'),
+        ]
+        
+        columnas_df = [
+            'id_tramite', 'nombre_tramite', 'total_atenciones', 
+            'finalizadas', 'reasignadas', 'canceladas'
+        ]
+        
+        # Agregar columna de tiempo solo si está habilitada
+        if incluir_tiempos:
+            columnas_query.append(
                 func.avg(func.timestampdiff(db.text("SECOND"), Atencion.hora_inicio, Atencion.hora_fin)).label('tiempo_promedio_segundos')
             )
-            .join(TicketTramite, TicketTramite.id_ticket_tramite == Atencion.id_ticket_tramite)
-            .join(Tramite, Tramite.id_tramite == TicketTramite.id_tramite)
-            .join(Ticket, Ticket.id_ticket == TicketTramite.id_ticket)
+            columnas_df.append('tiempo_promedio_segundos')
+        
+        query = (
+            db.session.query(*columnas_query)
+            .join(Tramite, Tramite.id_tramite == Atencion.id_tramite)
             .join(Usuario, Usuario.id_usuario == Atencion.id_usuario)
             .filter(and_(*filtros))
-            .group_by(TicketTramite.id_tramite, Tramite.name)
+            .group_by(Atencion.id_tramite, Tramite.name)
         )
 
-        df = pd.DataFrame(query.all(), columns=[
-            'id_tramite', 'nombre_tramite', 'total_atenciones', 
-            'finalizadas', 'reasignadas', 'canceladas', 'tiempo_promedio_segundos'
-        ])
+        df = pd.DataFrame(query.all(), columns=columnas_df)
 
         if not df.empty:
-            df['tiempo_promedio_minutos'] = (df['tiempo_promedio_segundos'] / 60).round(2)
+            if incluir_tiempos:
+                df['tiempo_promedio_minutos'] = (df['tiempo_promedio_segundos'] / 60).round(2)
+                df = df.drop(columns=['tiempo_promedio_segundos'])
             df = df.fillna(0)
+        
         return df
 
     @staticmethod
-    def _stats_por_usuario(filtros):
-        query = (
-            db.session.query(
-                Atencion.id_usuario,
-                Usuario.username.label('username'),
-                func.concat(Usuario.nombre, ' ', Usuario.ap_paterno, ' ', func.coalesce(Usuario.ap_materno, '')).label('nombre_completo'),
-                func.count(Atencion.id_atencion).label('total_atenciones'),
-                func.sum(case((Atencion.estado == ReportService.ESTADO_FINALIZADO, 1), else_=0)).label('finalizadas'),
-                func.sum(case((Atencion.estado == ReportService.ESTADO_REASIGNADO, 1), else_=0)).label('reasignadas'),
-                func.sum(case((Atencion.estado == ReportService.ESTADO_CANCELADO, 1), else_=0)).label('canceladas'),
+    def _stats_por_usuario(filtros, metricas_config):
+        incluir_tiempos = metricas_config.get('incluir_tiempos', True)
+        
+        # Columnas base
+        columnas_query = [
+            Atencion.id_usuario,
+            Usuario.username.label('username'),
+            func.concat(Usuario.nombre, ' ', Usuario.ap_paterno, ' ', func.coalesce(Usuario.ap_materno, '')).label('nombre_completo'),
+            func.count(Atencion.id_atencion).label('total_atenciones'),
+            func.sum(case((Atencion.estado == ReportService.ESTADO_FINALIZADO, 1), else_=0)).label('finalizadas'),
+            func.sum(case((Atencion.estado == ReportService.ESTADO_REASIGNADO, 1), else_=0)).label('reasignadas'),
+            func.sum(case((Atencion.estado == ReportService.ESTADO_CANCELADO, 1), else_=0)).label('canceladas'),
+        ]
+        
+        columnas_df = [
+            'id_usuario', 'username', 'nombre_completo', 'total_atenciones',
+            'finalizadas', 'reasignadas', 'canceladas'
+        ]
+        
+        # Agregar columna de tiempo solo si está habilitada
+        if incluir_tiempos:
+            columnas_query.append(
                 func.avg(func.timestampdiff(db.text("SECOND"), Atencion.hora_inicio, Atencion.hora_fin)).label('tiempo_promedio_segundos')
             )
+            columnas_df.append('tiempo_promedio_segundos')
+        
+        query = (
+            db.session.query(*columnas_query)
             .join(Usuario, Usuario.id_usuario == Atencion.id_usuario)
-            .join(TicketTramite, TicketTramite.id_ticket_tramite == Atencion.id_ticket_tramite)
-            .join(Ticket, Ticket.id_ticket == TicketTramite.id_ticket)
             .filter(and_(*filtros))
             .group_by(Atencion.id_usuario, Usuario.username, 'nombre_completo')
         )
 
-        df = pd.DataFrame(query.all(), columns=[
-            'id_usuario', 'username', 'nombre_completo', 'total_atenciones',
-            'finalizadas', 'reasignadas', 'canceladas', 'tiempo_promedio_segundos'
-        ])
+        df = pd.DataFrame(query.all(), columns=columnas_df)
 
         if not df.empty:
-            df['tiempo_promedio_minutos'] = (df['tiempo_promedio_segundos'] / 60).round(2)
+            if incluir_tiempos:
+                df['tiempo_promedio_minutos'] = (df['tiempo_promedio_segundos'] / 60).round(2)
+                df = df.drop(columns=['tiempo_promedio_segundos'])
             df = df.fillna(0)
             df['nombre_completo'] = df['nombre_completo'].str.strip()
+        
         return df
+
+    @staticmethod
+    def _descripciones_general(filtros):
+        """
+        Agrupa las descripciones de estado por cada estado (cancelado, reasignado, finalizado)
+        """
+        query = (
+            db.session.query(
+                Atencion.estado,
+                Atencion.descripcion_estado,
+                func.count(Atencion.id_atencion).label('total')
+            )
+            .join(Usuario, Usuario.id_usuario == Atencion.id_usuario)
+            .filter(and_(*filtros))
+            .filter(Atencion.descripcion_estado.isnot(None))
+            .filter(Atencion.descripcion_estado != '')
+            .group_by(Atencion.estado, Atencion.descripcion_estado)
+            .order_by(Atencion.estado, func.count(Atencion.id_atencion).desc())
+        )
+        
+        df = pd.DataFrame(query.all(), columns=['estado', 'descripcion_estado', 'total'])
+        
+        # Crear un diccionario con un DataFrame por cada estado
+        result = {}
+        if not df.empty:
+            for estado in df['estado'].unique():
+                df_estado = df[df['estado'] == estado][['descripcion_estado', 'total']].copy()
+                df_estado.columns = ['motivo', 'total']
+                result[estado] = df_estado
+        
+        return result
+
+    @staticmethod
+    def _descripciones_por_tramite(filtros):
+        """
+        Agrupa las descripciones de estado por trámite y estado
+        """
+        query = (
+            db.session.query(
+                Atencion.id_tramite,
+                Tramite.name.label('nombre_tramite'),
+                Atencion.estado,
+                Atencion.descripcion_estado,
+                func.count(Atencion.id_atencion).label('total')
+            )
+            .join(Tramite, Tramite.id_tramite == Atencion.id_tramite)
+            .join(Usuario, Usuario.id_usuario == Atencion.id_usuario)
+            .filter(and_(*filtros))
+            .filter(Atencion.descripcion_estado.isnot(None))
+            .filter(Atencion.descripcion_estado != '')
+            .group_by(Atencion.id_tramite, Tramite.name, Atencion.estado, Atencion.descripcion_estado)
+            .order_by(Tramite.name, Atencion.estado, func.count(Atencion.id_atencion).desc())
+        )
+        
+        df = pd.DataFrame(query.all(), columns=['id_tramite', 'nombre_tramite', 'estado', 'descripcion_estado', 'total'])
+        
+        # Crear un diccionario con DataFrames por estado
+        result = {}
+        if not df.empty:
+            for estado in df['estado'].unique():
+                df_estado = df[df['estado'] == estado][['nombre_tramite', 'descripcion_estado', 'total']].copy()
+                df_estado.columns = ['tramite', 'motivo', 'total']
+                result[estado] = df_estado
+        
+        return result
+
+    @staticmethod
+    def _descripciones_por_usuario(filtros):
+        """
+        Agrupa las descripciones de estado por usuario y estado
+        """
+        query = (
+            db.session.query(
+                Atencion.id_usuario,
+                func.concat(Usuario.nombre, ' ', Usuario.ap_paterno, ' ', func.coalesce(Usuario.ap_materno, '')).label('nombre_completo'),
+                Atencion.estado,
+                Atencion.descripcion_estado,
+                func.count(Atencion.id_atencion).label('total')
+            )
+            .join(Usuario, Usuario.id_usuario == Atencion.id_usuario)
+            .filter(and_(*filtros))
+            .filter(Atencion.descripcion_estado.isnot(None))
+            .filter(Atencion.descripcion_estado != '')
+            .group_by(Atencion.id_usuario, 'nombre_completo', Atencion.estado, Atencion.descripcion_estado)
+            .order_by('nombre_completo', Atencion.estado, func.count(Atencion.id_atencion).desc())
+        )
+        
+        df = pd.DataFrame(query.all(), columns=['id_usuario', 'nombre_completo', 'estado', 'descripcion_estado', 'total'])
+        
+        # Crear un diccionario con DataFrames por estado
+        result = {}
+        if not df.empty:
+            df['nombre_completo'] = df['nombre_completo'].str.strip()
+            for estado in df['estado'].unique():
+                df_estado = df[df['estado'] == estado][['nombre_completo', 'descripcion_estado', 'total']].copy()
+                df_estado.columns = ['usuario', 'motivo', 'total']
+                result[estado] = df_estado
+        
+        return result
 
     @staticmethod
     def _tabla_cruzada_global(filtros):
@@ -191,9 +329,7 @@ class ReportService:
                 func.count(Atencion.id_atencion).label('total')
             )
             .join(Usuario, Usuario.id_usuario == Atencion.id_usuario)
-            .join(TicketTramite, TicketTramite.id_ticket_tramite == Atencion.id_ticket_tramite)
-            .join(Tramite, Tramite.id_tramite == TicketTramite.id_tramite)
-            .join(Ticket, Ticket.id_ticket == TicketTramite.id_ticket)
+            .join(Tramite, Tramite.id_tramite == Atencion.id_tramite)
             .filter(and_(*filtros))
             .group_by('empleado', Tramite.name)
         )
@@ -215,9 +351,7 @@ class ReportService:
                 func.count(Atencion.id_atencion).label('total')
             )
             .join(Usuario, Usuario.id_usuario == Atencion.id_usuario)
-            .join(TicketTramite, TicketTramite.id_ticket_tramite == Atencion.id_ticket_tramite)
-            .join(Tramite, Tramite.id_tramite == TicketTramite.id_tramite)
-            .join(Ticket, Ticket.id_ticket == TicketTramite.id_ticket)
+            .join(Tramite, Tramite.id_tramite == Atencion.id_tramite)
             .filter(and_(*filtros))
             .group_by('empleado', Tramite.name)
             .order_by('empleado', Tramite.name)
@@ -239,8 +373,6 @@ class ReportService:
                 func.hour(Atencion.hora_inicio).label('hora'),
                 func.count(Atencion.id_atencion).label('total')
             )
-            .join(TicketTramite, TicketTramite.id_ticket_tramite == Atencion.id_ticket_tramite)
-            .join(Ticket, Ticket.id_ticket == TicketTramite.id_ticket)
             .join(Usuario, Usuario.id_usuario == Atencion.id_usuario)
             .filter(and_(*filtros))
             .group_by('hora')
@@ -260,8 +392,6 @@ class ReportService:
                 func.hour(Atencion.hora_inicio).label('hora'),
                 func.count(Atencion.id_atencion).label('total')
             )
-            .join(TicketTramite, TicketTramite.id_ticket_tramite == Atencion.id_ticket_tramite)
-            .join(Ticket, Ticket.id_ticket == TicketTramite.id_ticket)
             .join(Usuario, Usuario.id_usuario == Atencion.id_usuario)
             .filter(and_(*filtros))
             .group_by('dia_semana', 'hora')
@@ -275,34 +405,43 @@ class ReportService:
         return df
 
     @staticmethod
-    def _resumen_general(filtros):
+    def _resumen_general(filtros, metricas_config):
+        incluir_tiempos = metricas_config.get('incluir_tiempos', True)
+        
+        columnas_query = [
+            func.count(Atencion.id_atencion).label('total_atenciones'),
+            func.sum(case((Atencion.estado == ReportService.ESTADO_FINALIZADO, 1), else_=0)).label('finalizadas'),
+            func.sum(case((Atencion.estado == ReportService.ESTADO_REASIGNADO, 1), else_=0)).label('reasignadas'),
+            func.sum(case((Atencion.estado == ReportService.ESTADO_CANCELADO, 1), else_=0)).label('canceladas'),
+            func.count(func.distinct(Atencion.id_usuario)).label('usuarios_activos'),
+            func.count(func.distinct(Atencion.id_tramite)).label('tramites_distintos')
+        ]
+        
+        if incluir_tiempos:
+            columnas_query.insert(4, func.avg(func.timestampdiff(db.text("SECOND"), Atencion.hora_inicio, Atencion.hora_fin)).label('tiempo_promedio_segundos'))
+        
         query = (
-            db.session.query(
-                func.count(Atencion.id_atencion).label('total_atenciones'),
-                func.sum(case((Atencion.estado == ReportService.ESTADO_FINALIZADO, 1), else_=0)).label('finalizadas'),
-                func.sum(case((Atencion.estado == ReportService.ESTADO_REASIGNADO, 1), else_=0)).label('reasignadas'),
-                func.sum(case((Atencion.estado == ReportService.ESTADO_CANCELADO, 1), else_=0)).label('canceladas'),
-                func.avg(func.timestampdiff(db.text("SECOND"), Atencion.hora_inicio, Atencion.hora_fin)).label('tiempo_promedio_segundos'),
-                func.count(func.distinct(Atencion.id_usuario)).label('usuarios_activos'),
-                func.count(func.distinct(TicketTramite.id_tramite)).label('tramites_distintos')
-            )
-            .join(TicketTramite, TicketTramite.id_ticket_tramite == Atencion.id_ticket_tramite)
-            .join(Ticket, Ticket.id_ticket == TicketTramite.id_ticket)
+            db.session.query(*columnas_query)
             .join(Usuario, Usuario.id_usuario == Atencion.id_usuario)
             .filter(and_(*filtros))
         )
 
         result = query.first()
         if result:
-            return {
+            resumen = {
                 'total_atenciones': result.total_atenciones or 0,
                 'finalizadas': result.finalizadas or 0,
                 'reasignadas': result.reasignadas or 0,
                 'canceladas': result.canceladas or 0,
-                'tiempo_promedio_minutos': round((result.tiempo_promedio_segundos or 0) / 60, 2),
                 'usuarios_activos': result.usuarios_activos or 0,
                 'tramites_distintos': result.tramites_distintos or 0
             }
+            
+            if incluir_tiempos:
+                resumen['tiempo_promedio_minutos'] = round((result.tiempo_promedio_segundos or 0) / 60, 2)
+            
+            return resumen
+        
         return {}
 
     @staticmethod
@@ -322,7 +461,7 @@ class ReportService:
             ws['A1'].font = Font(bold=True, size=14)
             row = 3
             for key, value in data['resumen_general'].items():
-                ws[f'A{row}'] = ReportService._format_header_text(key)  # Formatted header
+                ws[f'A{row}'] = ReportService._format_header_text(key)
                 ws[f'B{row}'] = value
                 ws[f'A{row}'].font = Font(bold=True)
                 row += 1
@@ -337,8 +476,32 @@ class ReportService:
             ws = wb.create_sheet('Estadísticas por Usuario')
             ReportService._write_dataframe_to_sheet(ws, data['usuarios'], header_font, header_fill, border)
 
+        # Descripciones generales
+        if 'descripciones_general' in data and data['descripciones_general']:
+            for estado, df_desc in data['descripciones_general'].items():
+                if not df_desc.empty:
+                    sheet_name = f'Motivos {estado.title()}'
+                    ws = wb.create_sheet(sheet_name)
+                    ReportService._write_dataframe_to_sheet(ws, df_desc, header_font, header_fill, border)
+
+        # Descripciones por trámite
+        if 'descripciones_tramites' in data and data['descripciones_tramites']:
+            for estado, df_desc in data['descripciones_tramites'].items():
+                if not df_desc.empty:
+                    sheet_name = f'Motivos {estado.title()} x Trámite'
+                    ws = wb.create_sheet(sheet_name)
+                    ReportService._write_dataframe_to_sheet(ws, df_desc, header_font, header_fill, border)
+
+        # Descripciones por usuario
+        if 'descripciones_usuarios' in data and data['descripciones_usuarios']:
+            for estado, df_desc in data['descripciones_usuarios'].items():
+                if not df_desc.empty:
+                    sheet_name = f'Motivos {estado.title()} x Usuario'
+                    ws = wb.create_sheet(sheet_name)
+                    ReportService._write_dataframe_to_sheet(ws, df_desc, header_font, header_fill, border)
+
         # Matriz global
-        if data.get('metricas_config', {}).get('incluir_tabla_cruzada', False):
+        if metadata.get('metricas_config', {}).get('incluir_tabla_cruzada', False):
             tabla_global = ReportService._tabla_cruzada_global(filtros)
             if not tabla_global.empty:
                 ws = wb.create_sheet('Matriz Empleado-Trámite')
@@ -412,6 +575,8 @@ class ReportService:
         )
 
         temp_image_paths = []
+        metricas_config = metadata.get('metricas_config', {})
+        incluir_tiempos = metricas_config.get('incluir_tiempos', True)
 
         try:
             elements.append(Paragraph("Reporte Estadístico de Atenciones", title_style))
@@ -454,16 +619,23 @@ class ReportService:
             if 'resumen_general' in data and data['resumen_general']:
                 elements.append(Paragraph("Resumen General", heading_style))
                 resumen = data['resumen_general']
+                
                 resumen_data = [
                     ['Métrica', 'Valor'],
                     ['Total de Atenciones', f"{resumen.get('total_atenciones', 0):,}"],
                     ['Atendidas', f"{resumen.get('finalizadas', 0):,}"],
                     ['Reasignadas', f"{resumen.get('reasignadas', 0):,}"],
                     ['Canceladas', f"{resumen.get('canceladas', 0):,}"],
-                    ['Tiempo Promedio (min)', f"{resumen.get('tiempo_promedio_minutos', 0):.2f}"],
+                ]
+                
+                if incluir_tiempos:
+                    resumen_data.append(['Tiempo Promedio (min)', f"{resumen.get('tiempo_promedio_minutos', 0):.2f}"])
+                
+                resumen_data.extend([
                     ['Usuarios Activos', f"{resumen.get('usuarios_activos', 0):,}"],
                     ['Trámites Distintos', f"{resumen.get('tramites_distintos', 0):,}"]
-                ]
+                ])
+                
                 table = Table(resumen_data, colWidths=[3*inch, 2*inch])
                 table.setStyle(TableStyle([
                     ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#366092')),
@@ -494,8 +666,15 @@ class ReportService:
                 elements.append(PageBreak())
                 elements.append(Paragraph("Estadísticas por Trámite", heading_style))
                 
-                df_tramites = data['tramites'][['nombre_tramite', 'total_atenciones', 'finalizadas', 
-                                               'reasignadas', 'canceladas', 'tiempo_promedio_minutos']].head(10).copy()
+                # Seleccionar columnas según si incluir_tiempos está activo
+                if incluir_tiempos:
+                    columnas_a_mostrar = ['nombre_tramite', 'total_atenciones', 'finalizadas', 
+                                         'reasignadas', 'canceladas', 'tiempo_promedio_minutos']
+                else:
+                    columnas_a_mostrar = ['nombre_tramite', 'total_atenciones', 'finalizadas', 
+                                         'reasignadas', 'canceladas']
+                
+                df_tramites = data['tramites'][columnas_a_mostrar].head(10).copy()
                 df_tramites['nombre_tramite'] = df_tramites['nombre_tramite'].astype(str).apply(
                     lambda x: (x[:35] + '...') if len(x) > 35 else x
                 )
@@ -530,8 +709,15 @@ class ReportService:
                 elements.append(PageBreak())
                 elements.append(Paragraph("Estadísticas por Empleado", heading_style))
                 
-                df_usuarios = data['usuarios'][['nombre_completo', 'total_atenciones', 'finalizadas',
-                                               'reasignadas', 'canceladas', 'tiempo_promedio_minutos']].head(10).copy()
+                # Seleccionar columnas según si incluir_tiempos está activo
+                if incluir_tiempos:
+                    columnas_a_mostrar = ['nombre_completo', 'total_atenciones', 'finalizadas',
+                                         'reasignadas', 'canceladas', 'tiempo_promedio_minutos']
+                else:
+                    columnas_a_mostrar = ['nombre_completo', 'total_atenciones', 'finalizadas',
+                                         'reasignadas', 'canceladas']
+                
+                df_usuarios = data['usuarios'][columnas_a_mostrar].head(10).copy()
                 df_usuarios['nombre_completo'] = df_usuarios['nombre_completo'].astype(str).apply(
                     lambda x: (x[:30] + '...') if len(x) > 30 else x
                 )
@@ -560,6 +746,102 @@ class ReportService:
                         img = RLImage(img_path, width=5.0*inch, height=3.5*inch)
                         elements.append(img)
                         elements.append(Spacer(1, 0.3*inch))
+
+            # Descripciones generales
+            if 'descripciones_general' in data and data['descripciones_general']:
+                elements.append(PageBreak())
+                elements.append(Paragraph("Análisis de Motivos por Estado", heading_style))
+                
+                for estado, df_desc in data['descripciones_general'].items():
+                    if not df_desc.empty:
+                        elements.append(Paragraph(f"Motivos - {estado.title()}", styles['Heading3']))
+                        
+                        df_desc_limited = df_desc.head(10).copy()
+                        table_data = [[ReportService._format_header_text('Motivo'), ReportService._format_header_text('Total')]]
+                        for _, row in df_desc_limited.iterrows():
+                            motivo_text = Paragraph(str(row['motivo']), styles['Normal'])
+                            table_data.append([motivo_text, row['total']])
+                        
+                        table = Table(table_data, colWidths=[4*inch, 1.5*inch])
+                        table.setStyle(TableStyle([
+                            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#366092')),
+                            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                            ('FONTSIZE', (0, 0), (-1, 0), 9),
+                            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                        ]))
+                        elements.append(table)
+                        elements.append(Spacer(1, 0.2*inch))
+
+            # Descripciones por trámite
+            if 'descripciones_tramites' in data and data['descripciones_tramites']:
+                elements.append(PageBreak())
+                elements.append(Paragraph("Motivos por Trámite", heading_style))
+                
+                for estado, df_desc in data['descripciones_tramites'].items():
+                    if not df_desc.empty:
+                        elements.append(Paragraph(f"Estado: {estado.title()}", styles['Heading3']))
+                        
+                        df_desc_limited = df_desc.head(15).copy()
+                        columnas_formateadas = [ReportService._format_header_text(col) for col in df_desc_limited.columns]
+                        table_data = [columnas_formateadas]
+                        
+                        for _, row in df_desc_limited.iterrows():
+                            tramite_text = Paragraph(str(row['tramite']), styles['Normal'])
+                            motivo_text = Paragraph(str(row['motivo']), styles['Normal'])
+                            table_data.append([tramite_text, motivo_text, row['total']])
+                        
+                        table = Table(table_data, colWidths=[2*inch, 2.5*inch, 1*inch])
+                        table.setStyle(TableStyle([
+                            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#366092')),
+                            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                            ('FONTSIZE', (0, 0), (-1, 0), 9),
+                            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                        ]))
+                        elements.append(table)
+                        elements.append(Spacer(1, 0.2*inch))
+
+            # Descripciones por usuario
+            if 'descripciones_usuarios' in data and data['descripciones_usuarios']:
+                elements.append(PageBreak())
+                elements.append(Paragraph("Motivos por Usuario", heading_style))
+                
+                for estado, df_desc in data['descripciones_usuarios'].items():
+                    if not df_desc.empty:
+                        elements.append(Paragraph(f"Estado: {estado.title()}", styles['Heading3']))
+                        
+                        df_desc_limited = df_desc.head(15).copy()
+                        columnas_formateadas = [ReportService._format_header_text(col) for col in df_desc_limited.columns]
+                        table_data = [columnas_formateadas]
+                        
+                        for _, row in df_desc_limited.iterrows():
+                            usuario_text = Paragraph(str(row['usuario']), styles['Normal'])
+                            motivo_text = Paragraph(str(row['motivo']), styles['Normal'])
+                            table_data.append([usuario_text, motivo_text, row['total']])
+                        
+                        table = Table(table_data, colWidths=[2*inch, 2.5*inch, 1*inch])
+                        table.setStyle(TableStyle([
+                            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#366092')),
+                            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                            ('FONTSIZE', (0, 0), (-1, 0), 9),
+                            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                        ]))
+                        elements.append(table)
+                        elements.append(Spacer(1, 0.2*inch))
 
             # Desglose por Empleado
             if 'usuarios' in data and not data['usuarios'].empty:

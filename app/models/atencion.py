@@ -23,6 +23,12 @@ class Atencion(BaseModel):
         db.ForeignKey("usuario.id_usuario"),
         nullable=False
     )
+    
+    id_tramite = db.Column(
+        db.Integer,
+        db.ForeignKey("tramite.id_tramite"),
+        nullable=False
+    )
 
     estado = db.Column(db.String(20))
     descripcion_estado = db.Column(db.String(100))
@@ -32,3 +38,4 @@ class Atencion(BaseModel):
     ticket_tramite = db.relationship("TicketTramite", back_populates="atenciones")
     ventanilla = db.relationship("Ventanilla", back_populates="atenciones")
     usuario = db.relationship("Usuario", back_populates="atenciones")
+    tramite = db.relationship("Tramite", back_populates="atenciones")

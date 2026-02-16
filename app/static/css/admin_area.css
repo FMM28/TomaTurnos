@@ -663,6 +663,9 @@ tickets-list {
     font-style: italic;
 }
 
+#metric_cruzada_block {
+    display: none;
+}
 
 /* Responsive */
 @media (max-width: 768px) {

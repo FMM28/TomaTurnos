@@ -794,6 +794,7 @@ def parse_metricas(metricas_list):
         'incluir_estadisticas_base': 'estadisticas_base' in metricas_list,
         'incluir_tiempos': 'tiempos_atencion' in metricas_list,
         'incluir_estados': 'estados_atencion' in metricas_list,
+        'incluir_descripciones': 'descripcion_estados' in metricas_list,
         'incluir_horas_pico': 'horas_pico' in metricas_list,
         'incluir_horas_pico_semanal': 'horas_pico_semanal' in metricas_list,
         'incluir_top_tramites': 'top_tramites' in metricas_list,

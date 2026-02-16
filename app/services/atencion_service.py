@@ -33,7 +33,8 @@ class AtencionService:
                 id_ventanilla=ventanilla.id_ventanilla,
                 id_usuario=id_usuario,
                 estado="llamado",
-                hora_inicio=datetime.now()
+                hora_inicio=datetime.now(),
+                id_tramite=ticket_tramite.id_tramite
             )
 
             ticket_tramite.estado = "llamado"

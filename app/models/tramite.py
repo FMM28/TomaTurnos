@@ -46,3 +46,9 @@ class Tramite(BaseModel):
         "Ventanilla",
         back_populates="tramites"
     )
+    
+    atenciones = db.relationship(
+        "Atencion",
+        back_populates="tramite",
+        passive_deletes=True
+    )
