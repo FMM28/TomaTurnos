@@ -1,0 +1,298 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Reporte General de Estadísticas{% endblock %}
+
+{% block content %}
+
+<div class="report-page">
+
+    <div class="page-header">
+        <h1>Generar Reporte General</h1>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST"
+          action="{{ url_for('admin.generar_reporte') }}"
+          class="report-form"
+          id="reportForm">
+
+        <div class="form-section">
+
+            <h2>Periodo del Reporte</h2>
+
+            <div class="section-description">
+                Selecciona el rango de fechas a analizar
+            </div>
+
+            <div class="form-row">
+
+                <div class="form-group">
+
+                    <div>
+                        <label for="fecha_inicio">
+                            Fecha de inicio
+                        </label>
+
+                        <input type="date"
+                               id="fecha_inicio"
+                               name="fecha_inicio"
+                               value="{{ fecha_inicio }}"
+                               required>
+                    </div>
+
+                    <span class="help-text">
+                        Primer día del periodo
+                    </span>
+
+                </div>
+
+
+                <div class="form-group">
+                    <div>
+                        <label for="fecha_fin">
+                            Fecha de fin
+                        </label>
+
+                        <input type="date"
+                            id="fecha_fin"
+                            name="fecha_fin"
+                            value="{{ fecha_fin }}"
+                            required>
+                    </div>
+                    <span class="help-text">
+                        Último día del periodo
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="form-section">
+
+            <h2>Áreas a Analizar</h2>
+
+            <div class="section-description">
+                Selecciona una o más áreas
+            </div>
+
+            <div class="select-all-metrics">
+
+                <button type="button"
+                        class="btn-select-all"
+                        id="btnSelectAllAreas">
+                    ✓ Seleccionar Todas
+                </button>
+
+                <button type="button"
+                        class="btn-deselect-all"
+                        id="btnDeselectAllAreas">
+                    ✗ Deseleccionar Todas
+                </button>
+
+            </div>
+
+            <div class="metrics-grid">
+
+                {% for area in areas %}
+
+                <div class="metric-option selected"
+                     onclick="toggleArea(this)">
+
+                    <input type="checkbox"
+                           name="area_ids"
+                           value="{{ area.id_area }}"
+                           checked
+                           style="display:none;">
+
+                    <div class="metric-content">
+
+                        <div class="metric-title">
+                            {{ area.name }}
+                        </div>
+
+                        <div class="metric-description">
+                            Área de atención
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+        <div class="form-section">
+
+            <h2>Contenido del Reporte</h2>
+
+            <div class="section-description">
+                Selecciona las métricas a incluir
+            </div>
+
+            <div class="select-all-metrics">
+
+                <button type="button"
+                        class="btn-select-all"
+                        id="btnSelectAllMetrics">
+                    ✓ Seleccionar Todo
+                </button>
+
+                <button type="button"
+                        class="btn-deselect-all"
+                        id="btnDeselectAllMetrics">
+                    ✗ Deseleccionar Todo
+                </button>
+
+            </div>
+
+            <div class="metrics-grid">
+
+                <div class="metric-option selected"
+                     onclick="toggleMetric(this)">
+
+                    <input type="checkbox"
+                           name="metricas"
+                           value="resumen_general"
+                           checked
+                           style="display:none;">
+
+                    <div class="metric-content">
+                        <div class="metric-title">Resumen General</div>
+                        <div class="metric-description">
+                            Totales globales y comparativa entre áreas
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="metric-option selected"
+                     onclick="toggleMetric(this)">
+
+                    <input type="checkbox"
+                           name="metricas"
+                           value="estadisticas_areas"
+                           checked
+                           style="display:none;">
+
+                    <div class="metric-content">
+                        <div class="metric-title">Estadísticas por Área</div>
+                        <div class="metric-description">
+                            Totales y promedios por cada área
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="metric-option selected"
+                     onclick="toggleMetric(this)">
+
+                    <input type="checkbox"
+                           name="metricas"
+                           value="horas_pico"
+                           checked
+                           style="display:none;">
+
+                    <div class="metric-content">
+                        <div class="metric-title">Distribución por Hora</div>
+                        <div class="metric-description">
+                            Cantidad de atenciones por hora
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="metric-option selected"
+                     onclick="toggleMetric(this)">
+
+                    <input type="checkbox"
+                           name="metricas"
+                           value="horas_pico_semanal"
+                           checked
+                           style="display:none;">
+
+                    <div class="metric-content">
+                        <div class="metric-title">Patrón Semanal</div>
+                        <div class="metric-description">
+                            Mapa de calor semanal
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="form-section">
+
+            <h2>Formato del Reporte</h2>
+
+            <div class="format-options">
+
+                <label class="format-card selected">
+
+                    <input type="radio"
+                           name="formato"
+                           value="excel"
+                           checked>
+
+                    <div class="title">Excel (.xlsx)</div>
+
+                    <div class="description">
+                        Editable y con múltiples hojas
+                    </div>
+
+                </label>
+
+                <label class="format-card">
+
+                    <input type="radio"
+                           name="formato"
+                           value="pdf">
+
+                    <div class="title">PDF (.pdf)</div>
+
+                    <div class="description">
+                        Listo para imprimir
+                    </div>
+
+                </label>
+
+            </div>
+
+        </div>
+
+        <div class="submit-section">
+
+            <button type="submit"
+                    id="btnGenerate"
+                    class="btn-generate">
+
+                Generar Reporte
+
+            </button>
+        </div>
+    </form>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/estadisticas_admin.js') }}"></script>
+
+{% endblock %}

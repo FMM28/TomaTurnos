@@ -866,7 +866,7 @@ def generar_reporte():
             metricas_config=config_metricas
         )
         
-        metricas_totales = 9
+        metricas_totales = 7
         metricas_seleccionadas = len(metricas)
         
         if metricas_seleccionadas < metricas_totales:

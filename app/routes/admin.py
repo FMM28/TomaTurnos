@@ -4,6 +4,7 @@ from flask_login import login_required, current_user
 from app.auth.decorators import role_required
 from app.services.anuncio_service import AnuncioService
 from app.services.backup_service import BackupService
+from app.services.report_service import ReportService
 from app.services.user_service import UserService
 from app.services.area_service import AreaService
 from app.services.tramite_service import TramiteService
@@ -14,7 +15,7 @@ from app.services.asignacion_service import AsignacionService
 from app.services.suplente_service import SuplenteService
 import os
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import time
 
@@ -805,3 +806,127 @@ def descargar_respaldo(session_id):
     )
     
     return response
+
+
+def get_default_date_range():
+    """Retorna el rango de fechas por defecto (lunes de esta semana - hoy)"""
+    hoy = datetime.now().date()
+    lunes = hoy - timedelta(days=hoy.weekday())
+    return lunes, hoy
+
+
+def parse_date_range(fecha_inicio_str, fecha_fin_str):
+    try:
+        if fecha_inicio_str and fecha_fin_str:
+            fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d").date()
+            fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d").date()
+            
+            if fecha_inicio > fecha_fin:
+                return None, None, "La fecha de inicio no puede ser mayor a la fecha fin"
+            
+            if fecha_inicio > datetime.now().date() or fecha_fin > datetime.now().date():
+                return None, None, "No se pueden seleccionar fechas futuras"
+            
+            return fecha_inicio, fecha_fin, None
+        else:
+            return get_default_date_range() + (None,)
+    except ValueError:
+        return None, None, "Formato de fecha inválido"
+
+
+def parse_metricas(metricas_list):
+
+    if not metricas_list:
+        return None
+    
+    if isinstance(metricas_list, str):
+        metricas_list = [metricas_list]
+    
+    config = {
+        'incluir_resumen': 'resumen_general' in metricas_list,
+        'incluir_estadisticas_areas': 'estadisticas_areas' in metricas_list,
+        'incluir_horas_pico': 'horas_pico' in metricas_list,
+        'incluir_horas_pico_semanal': 'horas_pico_semanal' in metricas_list,
+    }
+    
+    return config
+
+
+@admin_bp.route("/estadisticas", methods=["GET"])
+@login_required
+@role_required("admin")
+def estadisticas():
+    """Vista simple de generación de reportes"""
+    
+    fecha_inicio, fecha_fin = get_default_date_range()
+    
+    return render_template(
+        "admin/estadisticas.html",
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+        areas=AreaService.get_all_areas()
+    )
+
+
+@admin_bp.route("/estadisticas/generar", methods=["POST"])
+@login_required
+@role_required("admin")
+def generar_reporte():
+    """Genera y descarga el reporte según los parámetros seleccionados"""
+    
+    try:
+        fecha_inicio_str = request.form.get("fecha_inicio")
+        fecha_fin_str = request.form.get("fecha_fin")
+        formato = request.form.get("formato", "excel")
+        metricas = request.form.getlist("metricas")
+        areas = request.form.getlist("area_ids")
+        
+        if not metricas:
+            flash("Debes seleccionar al menos una métrica para el reporte.", "warning")
+            return redirect(url_for('admin.estadisticas'))
+        
+        if not areas:
+            flash("Debes seleccionar al menos un área para el reporte.", "warning")
+            return redirect(url_for('admin.estadisticas'))
+        
+        fecha_inicio, fecha_fin, error = parse_date_range(fecha_inicio_str, fecha_fin_str)
+        
+        if error:
+            flash(error, "error")
+            return redirect(url_for('admin.estadisticas'))
+        
+        fecha_inicio_dt = datetime.combine(fecha_inicio, datetime.min.time())
+        fecha_fin_dt = datetime.combine(fecha_fin, datetime.max.time())
+        
+        config_metricas = parse_metricas(metricas)
+        
+        reporte = ReportService.generar_reporte_admin_general(
+            fecha_inicio=fecha_inicio_dt,
+            fecha_fin=fecha_fin_dt,
+            area_ids=areas,
+            exportar=formato,
+            metricas_config=config_metricas
+        )
+        
+        extension = 'xlsx' if formato == 'excel' else 'pdf'
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f'reporte_general_{fecha_inicio}_{fecha_fin}_{timestamp}.{extension}'
+        
+        mimetype = (
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            if formato == 'excel'
+            else 'application/pdf'
+        )
+        
+        return send_file(
+            reporte,
+            download_name=filename,
+            as_attachment=True,
+            mimetype=mimetype
+        )
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        flash(f"Error al generar el reporte: {str(e)}", "error")
+        return redirect(url_for('admin.estadisticas'))
