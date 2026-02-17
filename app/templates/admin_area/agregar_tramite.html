@@ -21,6 +21,7 @@
             action="{{ url_for('admin_area.agregar_tramite_post', id_ticket=ticket.id_ticket) }}">
 
             <input type="hidden" name="id_tramite" id="modalIdTramite">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="radio-group">
 

@@ -23,6 +23,7 @@
     {% endwith %}
 
     <form method="POST" action="{{ url_for('admin_area.generar_reporte') }}" class="report-form" id="reportForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="form-section">
             <h2>Periodo del Reporte</h2>

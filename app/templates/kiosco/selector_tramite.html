@@ -74,6 +74,7 @@
                           class="selected-item-form"
                           id="removeForm{{ loop.index }}">
                         <input type="hidden" name="id_tramite" value="{{ t.id_tramite }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="button" 
                                 class="selected-item-btn"
                                 onclick="showModal('{{ t.nombre }}', 'removeForm{{ loop.index }}')">
@@ -107,7 +108,7 @@
                   class="tramite-form">
 
                 <input type="hidden" name="id_tramite" value="{{ tramite.id_tramite }}">
-
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="button"
                         class="tramite-card {% if tramite.requerimientos %}has-requirements{% endif %}"
                         data-requerimientos="{{ tramite.requerimientos or '' }}"

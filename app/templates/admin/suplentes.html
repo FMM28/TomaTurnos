@@ -48,6 +48,7 @@ Suplentes de {{ usuario.nombre }} {{ usuario.ap_paterno }}
                       action="{{ url_for('admin.eliminar_suplente',
                                          id_suplente=suplente.id_suplente) }}"
                       onsubmit="return confirm('¿Desea desasignar este suplente?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button class="btn-delete">
                         Desasignar
                     </button>
@@ -78,6 +79,7 @@ Suplentes de {{ usuario.nombre }} {{ usuario.ap_paterno }}
                       action="{{ url_for('admin.asignar_suplente',
                                          id_usuario=usuario.id_usuario,
                                          id_suplente_usuario=user.id_usuario) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button class="btn-assign">
                         Asignar
                     </button>

@@ -21,9 +21,8 @@
               action="{{ url_for('ventanilla.reasignar_ticket_post') }}"
               id="reasignarForm">
 
-            <input type="hidden"
-                   name="id_tramite_nuevo"
-                   id="modalIdTramite">
+            <input type="hidden" name="id_tramite_nuevo" id="modalIdTramite">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="radio-group">
 

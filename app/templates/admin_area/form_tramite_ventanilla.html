@@ -44,6 +44,7 @@
                                          id_tramite=tramite.id_tramite) }}"
                       onsubmit="return confirm('¿Desea desasignar este trámite?');">
                     <input type="hidden" name="next" value="{{ request.path }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button class="btn-unassign">Desasignar</button>
                 </form>
             </div>
@@ -68,6 +69,7 @@
                                              id_ventanilla=ventanilla.id_ventanilla,
                                              id_tramite=tramite.id_tramite) }}">
                         <input type="hidden" name="next" value="{{ request.path }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button class="btn-assign">Asignar</button>
                     </form>
                 </div>

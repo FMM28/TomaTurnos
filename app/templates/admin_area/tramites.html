@@ -72,6 +72,7 @@
                           ) }}"
                           class="delete-form"
                           onsubmit="return confirm('¿Está seguro de eliminar este trámite?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn-delete">
                             Eliminar
                         </button>

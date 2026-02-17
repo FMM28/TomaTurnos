@@ -46,6 +46,7 @@
                     <form method="POST"
                           action="{{ url_for('admin.deactivate_anuncio', id_anuncio=anuncio.id_anuncio) }}"
                           class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn-view">
                             Desactivar
                         </button>
@@ -54,16 +55,18 @@
                     <form method="POST"
                           action="{{ url_for('admin.activate_anuncio', id_anuncio=anuncio.id_anuncio) }}"
                           class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn-view">
                             Activar
                         </button>
-                    {% endif %}
                     </form>
+                    {% endif %}
 
                     <form method="POST"
                           action="{{ url_for('admin.delete_anuncio', id_anuncio=anuncio.id_anuncio) }}"
                           class="delete-form"
                           onsubmit="return confirm('¿Eliminar este anuncio?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn-delete">
                             Eliminar
                         </button>

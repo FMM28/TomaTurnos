@@ -24,6 +24,7 @@
           action="{{ url_for('admin.generar_reporte') }}"
           class="report-form"
           id="reportForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="form-section">
 

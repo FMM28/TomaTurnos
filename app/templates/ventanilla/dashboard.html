@@ -9,6 +9,7 @@
         <h3>Finalizar trámite</h3>
 
         <form method="POST" action="{{ url_for('ventanilla.finalizar') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label for="descripcion">Observaciones:</label>
 
             <textarea
@@ -36,6 +37,7 @@
         <h3>Cancelar trámite</h3>
 
         <form method="POST" action="{{ url_for('ventanilla.cancelar') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label for="motivo_cancelacion">Motivo de cancelación:</label>
 
             <select name="motivo_cancelacion" id="motivo_cancelacion" required>
@@ -92,6 +94,7 @@
 
         <div class="modal-acciones">
             <form method="POST" action="{{ url_for('ventanilla.llamar_asignado') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-success btn-lg">
                     Llamar ahora
                 </button>
@@ -152,6 +155,7 @@
         </ul>
 
         <form method="POST" action="{{ url_for('ventanilla.llamar_siguiente') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button
                 id="btn-llamar"
                 class="btn btn-primary"
@@ -220,10 +224,12 @@
 
         <div class="acciones">
             <form method="POST" action="{{ url_for('ventanilla.rellamar') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button class="btn">Volver a llamar</button>
             </form>
 
             <form method="GET" action="{{ url_for('ventanilla.reasignar_ticket_view') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button class="btn">Reasignar</button>
             </form>
 

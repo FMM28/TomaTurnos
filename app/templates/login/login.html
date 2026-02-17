@@ -11,6 +11,7 @@
 
     <div class="login-card">
         <form method="POST" class="login-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <h2>Iniciar sesión</h2>
 
             <label>

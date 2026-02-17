@@ -53,6 +53,7 @@ Trámites de {{ usuario.nombre }} {{ usuario.ap_paterno }}
 
                     <input type="hidden" name="next"
                            value="{{ url_for('admin_area.tramites_usuario', id_usuario=usuario.id_usuario) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <button type="submit" class="btn-unassign">
                         Desasignar
@@ -84,6 +85,7 @@ Trámites de {{ usuario.nombre }} {{ usuario.ap_paterno }}
 
                     <input type="hidden" name="next"
                            value="{{ url_for('admin_area.tramites_usuario', id_usuario=usuario.id_usuario) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <button type="submit" class="btn-assign">
                         Asignar

@@ -43,6 +43,7 @@
         <div class="button-group">
             <form method="POST" action="{{ url_for('ventanilla.atender_siguiente_directo') }}" class="form-full">
                 <input type="hidden" name="id_ticket_tramite" value="{{ siguiente_tramite.id_ticket_tramite }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-atender-ahora">
                     Atender ahora
                 </button>
@@ -50,6 +51,7 @@
 
             <form method="POST" action="{{ url_for('ventanilla.dejar_en_espera') }}" class="form-full">
                 <input type="hidden" name="id_ticket_tramite" value="{{ siguiente_tramite.id_ticket_tramite }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-dejar-espera">
                     Dejar en espera
                 </button>

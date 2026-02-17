@@ -44,6 +44,7 @@
                 ← Volver
             </a>
             <form method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="checkout-btn checkout-btn-confirm">
                     Imprimir Ticket
                 </button>

@@ -28,6 +28,7 @@
                     <a href="{{ url_for('admin_area.suplentes_usuario', id_usuario=user.id_usuario) }}" class="btn-user">Suplentes</a>
                     <a href="{{ url_for('admin_area.edit_user', id=user.id_usuario) }}" class="btn-edit">Editar</a>
                     <form method="POST" action="{{ url_for('admin_area.delete_user', id=user.id_usuario) }}" class="delete-form" onsubmit="return confirm('¿Estás seguro de eliminar este usuario?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn-delete">Eliminar</button>
                     </form>
                 </div>

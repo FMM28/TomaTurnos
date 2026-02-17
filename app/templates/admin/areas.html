@@ -26,6 +26,7 @@
                     <a href="{{ url_for('admin.tramites', id_area=area.id_area) }}" class="btn-view">Trámites</a>
                     <a href="{{ url_for('admin.edit_area', id_area=area.id_area) }}" class="btn-edit">Editar</a>
                     <form method="POST" action="{{ url_for('admin.delete_area', id_area=area.id_area) }}" class="delete-form" onsubmit="return confirm('¿Está seguro de eliminar esta área? Se eliminarán también todos sus trámites.');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn-delete">Eliminar</button>
                     </form>
                 </div>

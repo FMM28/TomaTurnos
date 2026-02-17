@@ -29,6 +29,7 @@
                     <a href="{{ url_for('admin_area.ventanilla_tramites', id_ventanilla=ventanilla.id_ventanilla) }}" class="btn-view">Trámites</a>
                     <a href="{{ url_for('admin_area.edit_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" class="btn-edit">Editar</a>
                     <form method="POST" action="{{ url_for('admin_area.delete_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" class="delete-form" onsubmit="return confirm('¿Está seguro de eliminar esta ventanilla?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn-delete">Eliminar</button>
                     </form>
                 </div>

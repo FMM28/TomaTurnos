@@ -54,7 +54,7 @@
             <form method="POST"
                   action="{{ url_for('admin.generar_respaldo') }}"
                   onsubmit="return confirmBackup();">
-
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-primary btn-large">Generar y descargar respaldo</button>
 
             </form>
