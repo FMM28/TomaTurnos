@@ -12,3 +12,4 @@ login_manager = LoginManager()
 socketio = SocketIO(cors_allowed_origins="*", async_mode='threading')
 
 login_manager.login_view = "auth.login"
+login_manager.login_message = "Tu sesión ha expirado. Por favor inicia sesión nuevamente."

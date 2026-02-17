@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import redirect, url_for, abort
+from flask import redirect, url_for, flash
 from flask_login import current_user
 
 def role_required(role):
@@ -10,7 +10,11 @@ def role_required(role):
                 return redirect(url_for("auth.login"))
 
             if current_user.role != role:
-                abort(403)
+                flash(
+                    "No tienes permisos para acceder a esta sección.",
+                    "warning"
+                )
+                return redirect(url_for(f"{current_user.role}.dashboard"))
 
             return f(*args, **kwargs)
         return wrapper

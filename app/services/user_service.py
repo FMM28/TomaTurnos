@@ -34,6 +34,20 @@ class UserService:
         except SQLAlchemyError as e:
             print(f"Error al obtener usuario {user_id}: {e}")
             return None
+        
+    @staticmethod
+    def get_user_by_username(username: str, include_deleted: bool = False) -> Optional[Usuario]:
+        """Obtiene un usuario por username"""
+        try:
+            query = Usuario.query.filter_by(username=username)
+
+            if not include_deleted:
+                query = query.filter(Usuario.deleted_at.is_(None))
+
+            return query.first()
+        except SQLAlchemyError as e:
+            print(f"Error al obtener usuario con username {username}: {e}")
+            return None
 
     @staticmethod
     def get_usuarios_by_role(role: str) -> List[Usuario]:
