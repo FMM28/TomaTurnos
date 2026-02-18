@@ -23,7 +23,7 @@ def dashboard():
         "turnos": [
             {
                 "turno": atencion.ticket_tramite.ticket.turno,
-                "tramite": atencion.ticket_tramite.tramite.name,
+                "tramite": atencion.tramite.name,
                 "hora_inicio": atencion.hora_inicio.strftime("%H:%M"),
                 "hora_fin": atencion.hora_fin.strftime("%H:%M") if atencion.hora_fin else None,
                 "estado": atencion.estado

@@ -209,7 +209,7 @@
                 {% for tt in turno_actual.ticket_tramite.ticket.ticket_tramites %}
                     {% for t in tt.atenciones %}
                     <li>
-                        {{ tt.tramite.name }}
+                        {{ t.tramite.name }}
                         {% if t.estado != "espera" %}
                             <span class="estado">({{ t.estado }})</span>
                             {% if t.descripcion_estado %}
