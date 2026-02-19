@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}Ventanilla{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/ventanilla.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='icons/ticketsQLogo_white.svg') }}" type="image/x-icon">
@@ -14,5 +15,5 @@
 </body>
 
 {% block scripts %}{% endblock %}
-
+<script src="{{ url_for('static', filename='js/refresh_csrf.js') }}"></script>
 </html>
