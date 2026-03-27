@@ -225,6 +225,9 @@ DB_PORT=$DB_PORT
 DB_NAME=turnos
 
 SECRET_KEY=$SECRET
+
+MAX_TURNOS=999
+PRINT_MODE=usb
 "@ | Set-Content "$BASE_DIR\.env"
 
 # ==========================

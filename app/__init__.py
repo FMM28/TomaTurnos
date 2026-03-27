@@ -33,7 +33,6 @@ def create_app():
         async_mode="threading"
     )
 
-    if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        AudioService.start(app)
+    AudioService.start(app)
 
     return app
