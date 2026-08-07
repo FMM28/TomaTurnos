@@ -100,24 +100,99 @@ function activarCarrusel(lista) {
 const adVideo = document.getElementById("ad-video");
 const adImage = document.getElementById("ad-image");
 
+const FALLBACK_MS = 600;
+
+let videoRevealTimer = null;
+
+function revelarVideo() {
+    if (videoRevealTimer) {
+        clearTimeout(videoRevealTimer);
+        videoRevealTimer = null;
+    }
+    adVideo.style.display = "block";
+}
+
 socket.on("anuncio_play", (a) => {
+    if (videoRevealTimer) {
+        clearTimeout(videoRevealTimer);
+        videoRevealTimer = null;
+    }
+
+    adVideo.removeEventListener("playing", revelarVideo);
     adVideo.pause();
+    adVideo.currentTime = 0;
     adVideo.style.display = "none";
     adImage.style.display = "none";
 
     if (a.tipo === "video") {
         adVideo.src = a.enlace;
-        adVideo.style.display = "block";
-        adVideo.play().catch(() => {
-            console.log("No se pudo reproducir el video automáticamente");
-        });
+        adVideo.load();
+
+        const reproducir = () => {
+            adVideo.addEventListener("playing", revelarVideo, { once: true });
+
+            videoRevealTimer = setTimeout(revelarVideo, FALLBACK_MS);
+
+            adVideo.play().catch(() => {
+                console.log("No se pudo reproducir el video automáticamente");
+                revelarVideo();
+            });
+        };
+
+        const iniciar = () => {
+            const delay = (a.play_at * 1000) - Date.now();
+
+            if (delay > 0) {
+                setTimeout(reproducir, delay);
+            } else {
+                reproducir();
+            }
+        };
+
+        if (adVideo.readyState >= 3) {
+            iniciar();
+        } else {
+            adVideo.addEventListener(
+                "canplay",
+                iniciar,
+                { once: true }
+            );
+        }
+
     } else {
-        adImage.src = a.enlace;
-        adImage.style.display = "block";
+        const delay = (a.play_at * 1000) - Date.now();
+
+        const mostrarImagen = () => {
+
+            const pre = new Image();
+
+            pre.onload = () => {
+                adImage.src = a.enlace;
+                adImage.style.display = "block";
+            };
+
+            pre.onerror = () => {
+                console.log("No se pudo cargar la imagen del anuncio");
+            };
+
+            pre.src = a.enlace;
+        };
+
+        if (delay > 0) {
+            setTimeout(mostrarImagen, delay);
+        } else {
+            mostrarImagen();
+        }
     }
 });
 
 socket.on("anuncio_clear", () => {
+    if (videoRevealTimer) {
+        clearTimeout(videoRevealTimer);
+        videoRevealTimer = null;
+    }
+
+    adVideo.removeEventListener("playing", revelarVideo);
     adVideo.pause();
     adVideo.style.display = "none";
     adImage.style.display = "none";

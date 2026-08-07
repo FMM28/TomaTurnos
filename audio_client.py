@@ -1,10 +1,26 @@
+import configparser
+import io
+import os
 import socketio
 import pygame
 import threading
 import time
-import os
 import pythoncom
 import win32com.client
+import requests
+
+
+config = configparser.ConfigParser()
+
+if not config.read("config.ini"):
+    raise FileNotFoundError(
+        "No se encontró el archivo config.ini"
+    )
+
+HOST = config.get("SERVER", "HOST")
+PORT = config.getint("SERVER", "PORT")
+
+SERVER_URL = f"http://{HOST}:{PORT}"
 
 sio = socketio.Client()
 
@@ -16,8 +32,10 @@ DUCK_VOLUME = 0.1
 current_sound = None
 sound_lock = threading.Lock()
 
+
 def speak(texto):
     pythoncom.CoInitialize()
+
     try:
         speaker = win32com.client.Dispatch("SAPI.SpVoice")
 
@@ -34,15 +52,14 @@ def speak(texto):
 
         pythoncom.CoUninitialize()
 
-def play_audio(path, duracion):
+
+def play_audio(audio_bytes, duracion):
     global current_sound
 
-    try:
-        if not os.path.exists(path):
-            print("No existe:", path)
-            return
+    sound = None
 
-        sound = pygame.mixer.Sound(path)
+    try:
+        sound = pygame.mixer.Sound(io.BytesIO(audio_bytes))
 
         with sound_lock:
             if current_sound:
@@ -62,35 +79,75 @@ def play_audio(path, duracion):
             if current_sound is sound:
                 current_sound = None
 
+
 @sio.event
 def connect():
-    print("Conectado al servidor")
+    print(f"Conectado al servidor {SERVER_URL}")
+
+
+@sio.event
+def disconnect():
+    print("Desconectado del servidor")
 
 
 @sio.on("tts")
 def on_tts(data):
     texto = data.get("texto")
 
-    threading.Thread(target=speak, args=(texto,), daemon=True).start()
+    threading.Thread(
+        target=speak,
+        args=(texto,),
+        daemon=True
+    ).start()
+
 
 @sio.on("anuncio_play")
 def on_anuncio(data):
     audio = data.get("audio")
     duracion = data.get("duracion", 5)
+    play_at = data.get("play_at")
 
-    path = os.path.join("app", "static", audio)
+    if not audio:
+        return
 
-    threading.Thread(
-        target=play_audio,
-        args=(path, duracion),
-        daemon=True
-    ).start()
+    audio_url = f"{SERVER_URL}{audio}"
+
+    try:
+        # Descargar audio antes del momento de reproducción
+        response = requests.get(audio_url, timeout=10)
+        response.raise_for_status()
+
+        audio_bytes = response.content
+
+        # Esperar hasta play_at
+        if play_at:
+            delay = play_at - time.time()
+
+            if delay > 0:
+                time.sleep(delay)
+
+        threading.Thread(
+            target=play_audio,
+            args=(audio_bytes, duracion),
+            daemon=True
+        ).start()
+
+    except Exception as e:
+        print(f"Error descargando audio: {e}")
+
 
 def connect_loop():
     while True:
         try:
-            sio.connect("http://localhost:5000", transports=["websocket"])
+            print(f"Conectando a {SERVER_URL}...")
+
+            sio.connect(
+                SERVER_URL,
+                transports=["websocket"]
+            )
+
             break
+
         except Exception as e:
             print("Reintentando conexión...", e)
             time.sleep(2)

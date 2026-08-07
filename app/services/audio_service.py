@@ -92,17 +92,24 @@ class AudioService:
 
         enlace = "/static/" + anuncio.enlace.replace("\\", "/")
 
+        audio = None
+        if anuncio.audio:
+            audio = "/static/" + anuncio.audio.replace("\\", "/")
+
+        play_at = time.time() + 1.5
+
         data = {
             "id": anuncio.id_anuncio,
             "tipo": anuncio.tipo,
             "enlace": enlace,
             "duracion": anuncio.duracion,
-            "audio": anuncio.audio
+            "audio": audio,
+            "play_at": play_at
         }
 
         cls._emit_to_clients("anuncio_play", data)
 
-        time.sleep(anuncio.duracion)
+        time.sleep(anuncio.duracion + 1.5)
 
         return current_index + 1
 
