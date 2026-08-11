@@ -1,17 +1,13 @@
 import configparser
 import io
-import os
 import socketio
 import pygame
 import threading
 import time
-import pythoncom
-import win32com.client
 import requests
-
+import pyttsx3
 
 config = configparser.ConfigParser()
-
 if not config.read("config.ini"):
     raise FileNotFoundError(
         "No se encontró el archivo config.ini"
@@ -19,11 +15,9 @@ if not config.read("config.ini"):
 
 HOST = config.get("SERVER", "HOST")
 PORT = config.getint("SERVER", "PORT")
-
 SERVER_URL = f"http://{HOST}:{PORT}"
 
 sio = socketio.Client()
-
 pygame.mixer.init()
 
 BASE_VOLUME = 0.7
@@ -31,49 +25,40 @@ DUCK_VOLUME = 0.1
 
 current_sound = None
 sound_lock = threading.Lock()
+tts_lock = threading.Lock()
 
 
 def speak(texto):
-    pythoncom.CoInitialize()
 
-    try:
-        speaker = win32com.client.Dispatch("SAPI.SpVoice")
-
+    with tts_lock:
         with sound_lock:
             if current_sound:
                 current_sound.set_volume(DUCK_VOLUME)
-
-        speaker.Speak(texto)
-
-    finally:
-        with sound_lock:
-            if current_sound:
-                current_sound.set_volume(BASE_VOLUME)
-
-        pythoncom.CoUninitialize()
+        try:
+            engine = pyttsx3.init()
+            engine.say(texto)
+            engine.runAndWait()
+            engine.stop()
+        finally:
+            with sound_lock:
+                if current_sound:
+                    current_sound.set_volume(BASE_VOLUME)
 
 
 def play_audio(audio_bytes, duracion):
     global current_sound
-
     sound = None
-
     try:
         sound = pygame.mixer.Sound(io.BytesIO(audio_bytes))
-
         with sound_lock:
             if current_sound:
                 current_sound.stop()
-
             current_sound = sound
             sound.set_volume(BASE_VOLUME)
-
         sound.play()
-
         start = time.time()
         while time.time() - start < duracion and pygame.mixer.get_busy():
             time.sleep(0.05)
-
     finally:
         with sound_lock:
             if current_sound is sound:
@@ -93,7 +78,6 @@ def disconnect():
 @sio.on("tts")
 def on_tts(data):
     texto = data.get("texto")
-
     threading.Thread(
         target=speak,
         args=(texto,),
@@ -106,23 +90,17 @@ def on_anuncio(data):
     audio = data.get("audio")
     duracion = data.get("duracion", 5)
     play_at = data.get("play_at")
-
     if not audio:
         return
 
     audio_url = f"{SERVER_URL}{audio}"
-
     try:
-        # Descargar audio antes del momento de reproducción
         response = requests.get(audio_url, timeout=10)
         response.raise_for_status()
-
         audio_bytes = response.content
 
-        # Esperar hasta play_at
         if play_at:
             delay = play_at - time.time()
-
             if delay > 0:
                 time.sleep(delay)
 
@@ -131,7 +109,6 @@ def on_anuncio(data):
             args=(audio_bytes, duracion),
             daemon=True
         ).start()
-
     except Exception as e:
         print(f"Error descargando audio: {e}")
 
@@ -140,14 +117,11 @@ def connect_loop():
     while True:
         try:
             print(f"Conectando a {SERVER_URL}...")
-
             sio.connect(
                 SERVER_URL,
                 transports=["websocket"]
             )
-
             break
-
         except Exception as e:
             print("Reintentando conexión...", e)
             time.sleep(2)
