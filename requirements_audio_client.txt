@@ -1,5 +1,0 @@
-pygame==2.6.1
-python-socketio==5.16.4
-requests==2.34.2
-pyttsx3==2.99
-websocket-client==1.9.0

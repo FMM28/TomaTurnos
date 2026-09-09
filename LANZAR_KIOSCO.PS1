@@ -16,10 +16,6 @@ $URL_ANUNCIOS = "http://localhost/anuncios"
 
 $CHROME = "C:\Program Files\Google\Chrome\Application\chrome.exe"
 
-$APP_PATH = "C:\apps\tomaturnos"
-$PYTHON = "$APP_PATH\venv\Scripts\python.exe"
-$AUDIO_CLIENT = "$APP_PATH\audio_client.py"
-
 # Carpetas de perfil temporal
 $BASE_PROFILE = "$env:LOCALAPPDATA\TomaturnosKiosco"
 $PROFILE_KIOSCO = "$BASE_PROFILE\kiosco"
@@ -42,12 +38,6 @@ $COMMON_FLAGS = @(
     "--disable-gpu"
     "--disable-software-rasterizer"
 )
-
-Start-Process `
-    -FilePath $PYTHON `
-    -ArgumentList "`"$AUDIO_CLIENT`"" `
-    -WorkingDirectory $APP_PATH `
-    -WindowStyle Hidden
 
 Start-Process $CHROME `
     ($COMMON_FLAGS + @(
