@@ -16,6 +16,24 @@ $URL_ANUNCIOS = "http://localhost/anuncios"
 
 $CHROME = "C:\Program Files\Google\Chrome\Application\chrome.exe"
 
+# Directorio raíz de TomaTurnos
+$BASE_DIR = $PSScriptRoot
+
+# Cliente de audio
+$AUDIO_DIR = Join-Path $BASE_DIR "audio_client"
+$AUDIO_PYTHON = Join-Path $AUDIO_DIR ".venv\Scripts\python.exe"
+$AUDIO_CLIENT = Join-Path $AUDIO_DIR "audio_client.py"
+
+if (-not (Test-Path $AUDIO_PYTHON)) {
+    Write-Error "No se encontró el Python del entorno virtual del cliente de audio: $AUDIO_PYTHON"
+    exit 1
+}
+
+if (-not (Test-Path $AUDIO_CLIENT)) {
+    Write-Error "No se encontró el cliente de audio: $AUDIO_CLIENT"
+    exit 1
+}
+
 # Carpetas de perfil temporal
 $BASE_PROFILE = "$env:LOCALAPPDATA\TomaturnosKiosco"
 $PROFILE_KIOSCO = "$BASE_PROFILE\kiosco"
@@ -54,3 +72,9 @@ Start-Process $CHROME `
         "--window-position=$($anuncios.Bounds.X),$($anuncios.Bounds.Y)"
         "--window-size=$($anuncios.Bounds.Width),$($anuncios.Bounds.Height)"
     ))
+
+# Lanzar cliente de audio usando su entorno virtual
+Start-Process `
+    -FilePath $AUDIO_PYTHON `
+    -ArgumentList "`"$AUDIO_CLIENT`"" `
+    -WorkingDirectory $AUDIO_DIR
