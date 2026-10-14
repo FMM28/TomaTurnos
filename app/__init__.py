@@ -7,6 +7,7 @@ from .routes import register_blueprints
 import app.sockets
 from app import models
 from app.services.audio_service import AudioService
+from app.licensing import LicenseClient,init_flask
 import os
 
 def create_app():
@@ -14,6 +15,14 @@ def create_app():
     
     app = Flask(__name__)
     app.config.from_object(Config)
+    
+    lic = LicenseClient(
+        server_url=os.getenv("LICENSE_SERVER_URL"),
+        product="tomaturnos",
+        public_key=os.getenv("LICENSE_PUBLIC_KEY"),
+        storage_path=os.getenv("LICENSE_STORAGE_PATH")
+    )
+    init_flask(app, lic)
 
     db.init_app(app)
     migrate.init_app(app, db)
