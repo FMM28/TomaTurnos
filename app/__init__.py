@@ -16,19 +16,20 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     
+    csrf.init_app(app)
+    
     lic = LicenseClient(
         server_url=os.getenv("LICENSE_SERVER_URL"),
         product="tomaturnos",
         public_key=os.getenv("LICENSE_PUBLIC_KEY"),
         storage_path=os.getenv("LICENSE_STORAGE_PATH")
     )
-    init_flask(app, lic)
+    init_flask(app, csrf, lic)
 
     db.init_app(app)
     migrate.init_app(app, db)
     bcrypt.init_app(app)
     login_manager.init_app(app)
-    csrf.init_app(app)
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):

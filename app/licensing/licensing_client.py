@@ -13,6 +13,7 @@ import uuid
 from pathlib import Path
 from typing import Callable
 
+from flask_wtf.csrf import CSRFProtect
 from nacl.exceptions import BadSignatureError
 from nacl.signing import VerifyKey
 
@@ -254,7 +255,7 @@ class LicenseClient:
         return t
 
 
-def init_flask(app, client: LicenseClient, exempt: tuple[str, ...] = ("static",),
+def init_flask(app, csrf: CSRFProtect, client: LicenseClient, exempt: tuple[str, ...] = ("static",),
                exempt_prefixes: tuple[str, ...] = ("/health", "/license"),
                background_refresh: bool = True) -> None:
     """Bloquea toda la app (HTTP 403) si no hay licencia válida.
@@ -265,7 +266,8 @@ def init_flask(app, client: LicenseClient, exempt: tuple[str, ...] = ("static",)
     """
     from flask import jsonify, request
 
-    @app.route("/license/activate", methods=["POST"])
+    @csrf.exempt
+    @app.post("/license/activate")
     def _license_activate():
         key = (request.get_json(silent=True) or {}).get("license_key")
         try:
@@ -276,7 +278,7 @@ def init_flask(app, client: LicenseClient, exempt: tuple[str, ...] = ("static",)
             return jsonify(error="network", message="No se pudo contactar al servidor de licencias"), 503
         return jsonify(ok=True, plan=payload["plan"], features=payload["features"])
 
-    @app.route("/license/status")
+    @app.get("/license/status")
     def _license_status():
         try:
             p = client.cached_check()
