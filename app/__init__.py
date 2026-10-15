@@ -8,6 +8,7 @@ import app.sockets
 from app import models
 from app.services.audio_service import AudioService
 from app.licensing import LicenseClient,init_flask
+from app.commands import activate
 import os
 
 def create_app():
@@ -15,6 +16,8 @@ def create_app():
     
     app = Flask(__name__)
     app.config.from_object(Config)
+    
+    app.cli.add_command(activate)
     
     csrf.init_app(app)
     
