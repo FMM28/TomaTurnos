@@ -2,7 +2,9 @@
 
 # Stubs included by default
 from __future__ import annotations
-from typing import Any, Callable
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Any, Callable, Iterator
 from flask_wtf.csrf import CSRFProtect
 import threading
 
@@ -14,11 +16,25 @@ class LicenseError(Exception):
 class NetworkError(Exception): ...
 
 
+_TRANSIENT_CODES = {"server_error", "rate_limited"}
+
+
 def _b64d(text: str) -> bytes: ...
+
+
+def _machine_id() -> str: ...
+
+
+@contextmanager
+def _file_lock(target: Path, timeout: float = ...) -> Iterator[None]: ...
+
+
+def default_storage_path(product: str) -> str: ...
 
 
 class LicenseClient:
     CLOCK_SKEW = 300
+    HIGH_WATER_STEP = 60
 
     def __init__(
         self,
@@ -26,7 +42,7 @@ class LicenseClient:
         product: str,
         public_key: str,
         license_key: str | None = ...,
-        storage_path: str = ...,
+        storage_path: str | None = ...,
         http: Any = ...,
         timeout: float = ...,
         refresh_before_days: float = ...,
@@ -39,15 +55,19 @@ class LicenseClient:
 
     def _save(self, data: dict) -> None: ...
 
+    def _update(self, mutate: Callable[[dict], None]) -> dict: ...
+
     def _post(self, path: str, body: dict) -> dict: ...
 
     def _verify(self, token: str, fresh: bool = ...) -> dict: ...
 
-    def _check_clock(self, data: dict) -> None: ...
+    def _advance_clock(self, data: dict) -> bool: ...
 
     def activate(self, license_key: str | None = ...) -> dict: ...
 
     def _abort_quietly(self, key: str, reason: str) -> None: ...
+
+    def _refresh(self) -> dict: ...
 
     def refresh(self) -> dict: ...
 
@@ -61,17 +81,23 @@ class LicenseClient:
 
     def cached_check(self, ttl: float = ...) -> dict: ...
 
+    def ensure_licensed(self) -> None: ...
+
+    def licensed(self, fn: Any) -> Any: ...
+
     def requires_feature(self, feature: str) -> Any: ...
 
     def start_background_refresh(self, every_hours: float = ...) -> threading.Thread: ...
+
+    def stop_background_refresh(self) -> None: ...
 
 
 def init_flask(
     app: Any,
     csrf: CSRFProtect,
     client: LicenseClient,
-    exempt: tuple[str, ...] = ...,
-    exempt_prefixes: tuple[str, ...] = ...,
+    exempt_endpoints: tuple[str, ...] = ...,
+    exempt_paths: tuple[str, ...] = ...,
     background_refresh: bool = ...,
 ) -> None: ...
 
@@ -87,10 +113,12 @@ import hashlib
 import json
 import os
 import platform
+import random
 import socket
 import threading
 import time
 import uuid
+import contextlib
 import pathlib
 import pathlib.Path
 import typing
@@ -99,6 +127,8 @@ import flask_wtf.csrf
 import nacl
 import nacl.exceptions
 import nacl.signing
+import winreg
+import msvcrt
 import requests
 import flask
 import flask.jsonify
