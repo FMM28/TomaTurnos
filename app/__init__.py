@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 from .config import Config
 from .extensions import db, migrate, bcrypt, login_manager, socketio, csrf
 from app.auth.login_manager import load_user
-from .routes import register_blueprints
 import app.sockets
 from app import models
 from app.services.audio_service import AudioService
@@ -39,6 +38,7 @@ def create_app():
     def shutdown_session(exception=None):
         db.session.remove()
 
+    from .routes import register_blueprints
     register_blueprints(app)
 
     socketio.init_app(
