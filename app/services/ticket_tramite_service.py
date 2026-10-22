@@ -1,9 +1,12 @@
-from sqlalchemy import select
-from app.models import (TicketTramite, Tramite, Ticket, Asignacion, Suplente)
-from app.extensions import db
-from typing import List, Optional, Tuple
-from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
+from typing import List, Optional, Tuple
+
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+
+from app.extensions import db
+from app.licensing import licensed
+from app.models import Asignacion, Suplente, Ticket, TicketTramite, Tramite
 
 
 class TicketTramiteService:
@@ -23,6 +26,7 @@ class TicketTramiteService:
         return TicketTramite.query.get_or_404(ticket_tramite_id)
 
     @staticmethod
+    @licensed
     def create(
         id_ticket: int,
         id_tramite: int,
@@ -60,6 +64,7 @@ class TicketTramiteService:
             return None, str(e)
 
     @staticmethod
+    @licensed
     def create_multiple(
         id_ticket: int,
         tramites: List[int]
@@ -90,6 +95,7 @@ class TicketTramiteService:
             return [], str(e)
 
     @staticmethod
+    @licensed
     def get_cola_para_usuario(usuario_id: int) -> List[TicketTramite]:
         """
         Devuelve la cola de trámites pendientes que el usuario puede atender
@@ -256,6 +262,7 @@ class TicketTramiteService:
             return False, str(e)
 
     @staticmethod
+    @licensed
     def reasignar(ticket_tramite_id: int, nuevo_tramite_id: int, prioridad_extra: int = 10) -> Tuple[bool, Optional[str]]:
         """
         Regresa el trámite a la cola con más prioridad
@@ -452,6 +459,7 @@ class TicketTramiteService:
             return []
         
     @staticmethod
+    @licensed
     def get_tickets_by_estados_and_area(estados: List[str], id_area: int) -> List[TicketTramite]:
         try:
             return (

@@ -1,7 +1,10 @@
-from app.models.ventanilla import Ventanilla
-from app.extensions import db
 from typing import List, Optional, Tuple
+
 from sqlalchemy.exc import SQLAlchemyError
+
+from app.extensions import db
+from app.licensing import licensed
+from app.models.ventanilla import Ventanilla
 
 
 class VentanillaService:
@@ -62,6 +65,7 @@ class VentanillaService:
             return None
     
     @staticmethod
+    @licensed
     def create_ventanilla(name: str, id_area: Optional[int] = None) -> Tuple[Optional[Ventanilla], Optional[str]]:
         """Crea una nueva ventanilla"""
         try:
@@ -87,6 +91,7 @@ class VentanillaService:
             return None, error_msg
     
     @staticmethod
+    @licensed
     def update_ventanilla(id_ventanilla: int, name: str, id_area: Optional[int] = None) -> Tuple[Optional[Ventanilla], Optional[str]]:
         """Actualiza una ventanilla existente"""
         try:
@@ -114,6 +119,7 @@ class VentanillaService:
             return None, error_msg
     
     @staticmethod
+    @licensed
     def delete_ventanilla(id_ventanilla: int) -> Tuple[bool, Optional[str]]:
         """Elimina una ventanilla"""
         try:

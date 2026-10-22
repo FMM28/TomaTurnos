@@ -1,13 +1,15 @@
 import threading
-from typing import Optional, List, Tuple
-from datetime import datetime,time
-from sqlalchemy.exc import SQLAlchemyError
-from flask import current_app
-from app.extensions import db, socketio
-from app.models import Atencion, TicketTramite
-from app.services.ventanilla_service import VentanillaService
-from app.services.turno_service import TurnoService
+from datetime import datetime, time
+from typing import List, Optional, Tuple
 
+from flask import current_app
+from sqlalchemy.exc import SQLAlchemyError
+
+from app.extensions import db, socketio
+from app.licensing import licensed
+from app.models import Atencion, TicketTramite
+from app.services.turno_service import TurnoService
+from app.services.ventanilla_service import VentanillaService
 
 TIEMPO_LLAMADO = 10
 
@@ -20,6 +22,7 @@ class AtencionService:
     """
 
     @staticmethod
+    @licensed
     def iniciar_atencion(ticket_tramite: TicketTramite, id_usuario: int) -> Tuple[Optional[Atencion], Optional[str]]:
 
         try:
@@ -60,6 +63,7 @@ class AtencionService:
             return None, str(e)
 
     @staticmethod
+    @licensed
     def set_atendiendo(app, id_atencion: int) -> None:
         with app.app_context():
             try:
@@ -84,6 +88,7 @@ class AtencionService:
                 db.session.rollback()
 
     @staticmethod
+    @licensed
     def rellamar(atencion: Atencion) -> None:
         app = current_app._get_current_object()
         
@@ -108,6 +113,7 @@ class AtencionService:
         nuevo_timer.start()
 
     @staticmethod
+    @licensed
     def finalizar_atencion(
         atencion: Atencion,
         descripcion: Optional[str] = None
@@ -130,6 +136,7 @@ class AtencionService:
         )
         
     @staticmethod
+    @licensed
     def cancelar_atencion(
         atencion: Atencion,
         descripcion: Optional[str] = None
@@ -152,6 +159,7 @@ class AtencionService:
         )
 
     @staticmethod
+    @licensed
     def reasignar(
         atencion: Atencion,
         descripcion: Optional[str] = None
@@ -164,6 +172,7 @@ class AtencionService:
         db.session.commit()
 
     @staticmethod
+    @licensed
     def get_atencion_activa_por_usuario(
         id_usuario: int
     ) -> Optional[Atencion]:
@@ -219,6 +228,7 @@ class AtencionService:
         )
         
     @staticmethod
+    @licensed
     def get_atenciones_activas_por_tramite(id_tramite: int) -> List[Atencion]:
         return db.session.query(Atencion).join(
             TicketTramite, Atencion.id_ticket_tramite == TicketTramite.id_ticket_tramite

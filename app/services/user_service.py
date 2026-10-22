@@ -1,9 +1,12 @@
-from app.models import Usuario
-from app.extensions import db
-from datetime import timezone
+from datetime import datetime, timezone
 from typing import List, Optional, Tuple
+
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime
+
+from app.extensions import db
+from app.licensing import licensed
+from app.models import Usuario
+
 
 class UserService:
 
@@ -50,6 +53,7 @@ class UserService:
             return None
 
     @staticmethod
+    @licensed
     def get_usuarios_by_role(role: str) -> List[Usuario]:
         """Obtiene usuarios activos por rol"""
         try:
@@ -65,6 +69,7 @@ class UserService:
             return []
         
     @staticmethod
+    @licensed
     def get_usuarios_by_area(area_id: int) -> List[Usuario]:
         """Obtiene usuarios activos por area"""
         try:
@@ -95,6 +100,7 @@ class UserService:
         return db.session.query(query.exists()).scalar()
 
     @staticmethod
+    @licensed
     def create_user(
         username: str,
         nombre: str,
@@ -145,6 +151,7 @@ class UserService:
             return None, f"Error al crear el usuario: {e}"
 
     @staticmethod
+    @licensed
     def update_user(
         user_id: int,
         username: str,
@@ -188,6 +195,7 @@ class UserService:
             return None, f"Error al actualizar el usuario: {e}"
 
     @staticmethod
+    @licensed
     def delete_user(user_id: int) -> Tuple[bool, Optional[str]]:
         """
         Marca el usuario como eliminado sin borrar registros relacionados

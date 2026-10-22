@@ -1,8 +1,11 @@
-from app.models import Ticket
-from app.extensions import db
-from typing import List, Optional, Tuple
-from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
+from typing import List, Optional, Tuple
+
+from sqlalchemy.exc import SQLAlchemyError
+
+from app.extensions import db
+from app.licensing import licensed
+from app.models import Ticket
 
 
 class TicketService:
@@ -53,6 +56,7 @@ class TicketService:
             return []
 
     @staticmethod
+    @licensed
     def create_ticket(
         turno: int,
         estado: str = "activo",
@@ -75,6 +79,7 @@ class TicketService:
             return None, error_msg
 
     @staticmethod
+    @licensed
     def update_estado(
         ticket_id: int,
         nuevo_estado: str
@@ -95,6 +100,7 @@ class TicketService:
             return False, error_msg
         
     @staticmethod
+    @licensed
     def cancelar_ticket(ticket_id: int) -> Tuple[bool, Optional[str]]:
         """Cancela un ticket"""
         try:
@@ -118,6 +124,7 @@ class TicketService:
             return False, error_msg
 
     @staticmethod
+    @licensed
     def delete_ticket(ticket_id: int) -> Tuple[bool, Optional[str]]:
         """Elimina un ticket por su ID"""
         try:

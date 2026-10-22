@@ -1,15 +1,18 @@
+import json
+import os
+import shutil
+import subprocess
+import uuid
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
+
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
+
 from app.extensions import db
+from app.licensing import licensed
 from app.models.anuncio import Anuncio
 from app.services.audio_service import AudioService
-import os
-import uuid
-import subprocess
-import shutil
-from concurrent.futures import ThreadPoolExecutor
-import json
 
 
 class AnuncioService:
@@ -275,6 +278,7 @@ class AnuncioService:
         return video_rel_path, audio_rel_path, None
 
     @staticmethod
+    @licensed
     def create(archivo, titulo, tipo, duracion):
         ruta, audio, error = AnuncioService._save_file(archivo, tipo)
         if error:
@@ -296,6 +300,7 @@ class AnuncioService:
         return anuncio, None
 
     @staticmethod
+    @licensed
     def update(id_anuncio, archivo=None, duracion=None, activo=None):
         anuncio = Anuncio.query.get(id_anuncio)
         if not anuncio:
@@ -331,6 +336,7 @@ class AnuncioService:
         return Anuncio.query.get(id_anuncio)
 
     @staticmethod
+    @licensed
     def toggle_active(id_anuncio):
         anuncio = Anuncio.query.get(id_anuncio)
         if not anuncio:
@@ -343,6 +349,7 @@ class AnuncioService:
         return anuncio, None
 
     @staticmethod
+    @licensed
     def delete(id_anuncio):
         anuncio = Anuncio.query.get(id_anuncio)
         if not anuncio:

@@ -3,27 +3,35 @@ from typing import List
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import seaborn as sns
-import tempfile
 import os
 import re
+import tempfile
 from datetime import datetime
-from sqlalchemy import func, case, and_
-from app import db
-from app.models import Atencion, Tramite, Usuario, Area, Ticket
+
+import matplotlib.pyplot as plt
+import seaborn as sns
 from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer,
-    Table, TableStyle, PageBreak, Image as RLImage
-)
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import Image as RLImage
+from reportlab.platypus import (
+    PageBreak,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
+from sqlalchemy import and_, case, func
+
+from app import db
+from app.licensing import licensed
+from app.models import Area, Atencion, Ticket, Tramite, Usuario
 
 
 class ReportService:
@@ -40,6 +48,7 @@ class ReportService:
         return text.replace('_', ' ').title()
 
     @staticmethod
+    @licensed
     def generar_reporte(
         fecha_inicio,
         fecha_fin,
@@ -119,6 +128,7 @@ class ReportService:
         return ReportService._exportar_pdf(data, metadata, filtros)
 
     @staticmethod
+    @licensed
     def generar_reporte_admin_general(
         fecha_inicio,
         fecha_fin,

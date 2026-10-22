@@ -1,13 +1,17 @@
-from app.models import Suplente
-from app.models import Usuario
-from app.extensions import db
 from typing import List, Optional, Tuple
+
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
+
+from app.extensions import db
+from app.licensing import licensed
+from app.models import Suplente, Usuario
+
 
 class SuplenteService:
     
     @staticmethod
+    @licensed
     def get_suplentes_by_usuario(usuario_id: int) -> List[Suplente]:
         try:
             return (
@@ -31,6 +35,7 @@ class SuplenteService:
             return None
         
     @staticmethod
+    @licensed
     def get_usuarios_disponibles(
         id_usuario: int,
         excluir_ids: list[int] | None = None
@@ -47,6 +52,7 @@ class SuplenteService:
         return query.order_by(Usuario.username).all()
 
     @staticmethod
+    @licensed
     def get_usuarios_disponibles_por_area(
         area_id: int,
         id_usuario: int,
@@ -66,6 +72,7 @@ class SuplenteService:
         return query.order_by(Usuario.username).all()
         
     @staticmethod
+    @licensed
     def create_suplente(id_usuario: int, id_suplente_usuario: int) -> Tuple[Optional[Suplente], Optional[str]]:
         """Crea un nuevo suplente"""
         try:
@@ -84,6 +91,7 @@ class SuplenteService:
         
         
     @staticmethod
+    @licensed
     def delete_suplente(suplente_id: int) -> Optional[str]:
         """Elimina un suplente por su ID"""
         try:

@@ -1,9 +1,12 @@
-from app.models import Tramite
-from app.extensions import db
-from datetime import timezone
+from datetime import datetime, timezone
 from typing import List, Optional, Tuple
+
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime
+
+from app.extensions import db
+from app.licensing import licensed
+from app.models import Tramite
+
 
 class TramiteService:
 
@@ -104,6 +107,7 @@ class TramiteService:
             return False
 
     @staticmethod
+    @licensed
     def create_tramite(area_id: int, name: str, requerimientos: str = None) -> Tuple[Optional[Tramite], Optional[str]]:
         try:
             name = name.strip()
@@ -130,6 +134,7 @@ class TramiteService:
             return None, f"Error al crear el trámite: {e}"
 
     @staticmethod
+    @licensed
     def update_tramite(tramite_id: int, name: str, requerimientos: str = None) -> Tuple[Optional[Tramite], Optional[str]]:
         try:
             tramite = Tramite.query.filter(
@@ -197,6 +202,7 @@ class TramiteService:
             return None, f"Error al desasignar ventanilla: {e}"
 
     @staticmethod
+    @licensed
     def delete_tramite(tramite_id: int) -> Tuple[bool, Optional[str]]:
         try:
             tramite = Tramite.query.filter(
@@ -216,6 +222,7 @@ class TramiteService:
             return False, f"Error al eliminar el trámite: {e}"
 
     @staticmethod
+    @licensed
     def restore_tramite(tramite_id: int) -> Tuple[bool, Optional[str]]:
         try:
             tramite = Tramite.query.filter_by(id_tramite=tramite_id).first()

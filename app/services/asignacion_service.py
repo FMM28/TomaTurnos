@@ -1,12 +1,17 @@
-from app.models import Asignacion, Usuario, Atencion, Suplente
-from app.extensions import db
 from typing import List, Optional, Tuple
+
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.sql import exists, select, or_
+from sqlalchemy.sql import exists, or_, select
+
+from app.extensions import db
+from app.licensing import licensed
+from app.models import Asignacion, Atencion, Suplente, Usuario
+
 
 class AsignacionService:
     
     @staticmethod
+    @licensed
     def get_asignaciones_by_tramite(tramite_id: int) -> List[Asignacion]:
         """Obtiene todas las asignaciones de un trámite específico"""
         try:
@@ -44,6 +49,7 @@ class AsignacionService:
             return []
     
     @staticmethod
+    @licensed
     def create_asignacion(id_tramite: int, id_usuario: int) -> Tuple[Optional[Asignacion], Optional[str]]:
         """Crea una nueva asignación"""
         try:
@@ -61,6 +67,7 @@ class AsignacionService:
             return None, error_msg
         
     @staticmethod
+    @licensed
     def delete_asignacion(asignacion_id: int) -> Optional[str]:
         """Elimina una asignación por su ID"""
         try:
@@ -78,6 +85,7 @@ class AsignacionService:
             return error_msg
         
     @staticmethod
+    @licensed
     def get_usuarios_disponibles_para_tramite(id_tramite: int) -> List[Usuario]:
 
         suplente_activo_para_usuario = (
@@ -125,6 +133,7 @@ class AsignacionService:
         return usuarios
     
     @staticmethod
+    @licensed
     def get_usuarios_disponibles_del_area(
         id_area: int,
         excluir_ids: List[int]

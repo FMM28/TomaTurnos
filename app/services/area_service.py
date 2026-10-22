@@ -1,10 +1,13 @@
-from app.models import Area
-from app.extensions import db
-from datetime import timezone
+from datetime import datetime, timezone
 from typing import List, Optional, Tuple
+
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime
+
+from app.extensions import db
+from app.licensing import licensed
+from app.models import Area
 from app.services.tramite_service import TramiteService
+
 
 class AreaService:
 
@@ -64,6 +67,7 @@ class AreaService:
             return None
 
     @staticmethod
+    @licensed
     def create_area(name: str) -> Tuple[Optional[Area], Optional[str]]:
         """Crea una nueva área o restaura una eliminada"""
         try:
@@ -88,6 +92,7 @@ class AreaService:
             return None, f"Error al crear el área: {e}"
 
     @staticmethod
+    @licensed
     def update_area(area_id: int, name: str) -> Tuple[Optional[Area], Optional[str]]:
         """Actualiza un área existente"""
         try:
@@ -116,6 +121,7 @@ class AreaService:
             return None, f"Error al actualizar el área: {e}"
 
     @staticmethod
+    @licensed
     def delete_area(area_id: int) -> Tuple[bool, Optional[str]]:
         """Elimina un área"""
         try:

@@ -1,13 +1,15 @@
-import os
 import json
+import os
 import shutil
-import zipfile
 import subprocess
-from datetime import datetime
-from typing import Tuple, Optional, Callable
 import tempfile
+import zipfile
+from datetime import datetime
+from typing import Callable, Optional, Tuple
 
 from flask import current_app
+
+from app.licensing import licensed
 
 
 class BackupService:
@@ -23,6 +25,7 @@ class BackupService:
         return os.path.join(current_app.root_path, "static", "uploads")
 
     @staticmethod
+    @licensed
     def crear_respaldo(progress_callback: Optional[Callable[[str, int], None]] = None) -> Tuple[Optional[str], Optional[str]]:
         """
         Genera respaldo completo del sistema:

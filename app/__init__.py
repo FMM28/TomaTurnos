@@ -27,6 +27,7 @@ def create_app():
         public_key=os.getenv("LICENSE_PUBLIC_KEY"),
         storage_path=os.getenv("LICENSE_STORAGE_PATH")
     )
+    app.extensions["license_client"] = lic
     init_flask(app, csrf, lic)
 
     db.init_app(app)
