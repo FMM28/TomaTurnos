@@ -48,7 +48,7 @@ $Failed = @()
 foreach ($Module in $Modules) {
     Write-Host "`nCompilando: $($Module.FullName)" -ForegroundColor Cyan
 
-    & python -m nuitka --module --no-pyi-file $Module.FullName "--output-dir=$OutputDir"
+    & python -m nuitka --module --msvc=latest --no-pyi-file $Module.FullName "--output-dir=$OutputDir"
 
     if ($LASTEXITCODE -ne 0) {
         $Failed += $Module.FullName
