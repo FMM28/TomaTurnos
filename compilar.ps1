@@ -12,7 +12,7 @@ $ErrorActionPreference = "Stop"
 $AppDir       = Join-Path $PSScriptRoot "app"
 $ServicesDir  = Join-Path $AppDir "services"
 $LicensingDir = Join-Path $AppDir "licensing"
-$InitFile     = Join-Path $AppDir "__init__.py"
+$BootstrapFile = Join-Path $AppDir "bootstrap.py"   # contenido real, se compila
 $OutputDir    = Join-Path $PSScriptRoot "build"
 
 # Sin parametro -> las tres categorias.
@@ -28,15 +28,16 @@ if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
 $Jobs = @()
 
 if ($Only -contains "Inicializacion") {
-    if (-not (Test-Path $InitFile -PathType Leaf)) {
-        throw "No se encontró el módulo requerido: $InitFile"
+    foreach ($Required in @($BootstrapFile)) {
+        if (-not (Test-Path $Required -PathType Leaf)) {
+            throw "No se encontró el módulo requerido: $Required"
+        }
     }
-    # __init__ va directamente en build/
+    # bootstrap se compila y va directamente en build/.
     $Jobs += [pscustomobject]@{
         Category = "Inicializacion"
-        File     = Get-Item $InitFile
+        File     = Get-Item $BootstrapFile
         OutDir   = $OutputDir
-        IsInit   = $true
     }
 }
 
@@ -97,34 +98,7 @@ foreach ($Job in $Jobs) {
     $Module = $Job.File
     Write-Host "`n[$($Job.Category)] Compilando: $($Module.FullName)" -ForegroundColor Cyan
 
-    if ($Job.IsInit) {
-        # Nuitka no acepta __init__.py suelto: se compila un paquete temporal
-        # que contiene solo ese __init__.py, y luego se renombra el resultado.
-        $PkgName = Split-Path $AppDir -Leaf
-        $TempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("nuitka_init_" + [guid]::NewGuid().ToString("N"))
-        $TempPkg = Join-Path $TempRoot $PkgName
-        New-Item -ItemType Directory -Path $TempPkg -Force | Out-Null
-        Copy-Item $Module.FullName (Join-Path $TempPkg "__init__.py")
-
-        & python -m nuitka --module --msvc=latest --no-pyi-file --remove-output $TempPkg "--output-dir=$($Job.OutDir)"
-
-        Remove-Item $TempRoot -Recurse -Force -ErrorAction SilentlyContinue
-
-        if ($LASTEXITCODE -eq 0) {
-            # app.cp311-win_amd64.pyd -> __init__.cp311-win_amd64.pyd
-            $Built = Get-ChildItem -Path $Job.OutDir -Filter "$PkgName.*.pyd" -File |
-                Sort-Object LastWriteTime -Descending | Select-Object -First 1
-            if ($Built) {
-                $NewName = "__init__" + $Built.Name.Substring($PkgName.Length)
-                Move-Item $Built.FullName (Join-Path $Job.OutDir $NewName) -Force
-                Write-Host "Renombrado: $($Built.Name) -> $NewName" -ForegroundColor DarkGray
-            } else {
-                Write-Host "Aviso: no se encontró el .pyd generado para renombrar." -ForegroundColor Yellow
-            }
-        }
-    } else {
-        & python -m nuitka --module --msvc=latest --no-pyi-file --remove-output $Module.FullName "--output-dir=$($Job.OutDir)"
-    }
+    & python -m nuitka --module --msvc=latest --no-pyi-file --remove-output $Module.FullName "--output-dir=$($Job.OutDir)"
 
     if ($LASTEXITCODE -ne 0) {
         $Failed += $Module.FullName
