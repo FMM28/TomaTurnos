@@ -1,8 +1,8 @@
 [CmdletBinding()]
 param(
     # Sin parametro = compilacion completa.
-    # Se puede indicar una o varias categorias: -Only Servicios,Licencias
-    [ValidateSet("Inicializacion", "Servicios", "Licencias", "Rutas")]
+    # Se puede indicar una o varias categorias: -Only Servicios,Licencias,Auth
+    [ValidateSet("Inicializacion", "Servicios", "Licencias", "Rutas", "Auth", "Comandos")]
     [string[]]$Only
 )
 
@@ -13,12 +13,14 @@ $AppDir       = Join-Path $PSScriptRoot "app"
 $ServicesDir  = Join-Path $AppDir "services"
 $LicensingDir = Join-Path $AppDir "licensing"
 $RoutesDir    = Join-Path $AppDir "routes"
+$AuthDir      = Join-Path $AppDir "auth"
+$CommandsDir  = Join-Path $AppDir "commands"
 $BootstrapFile = Join-Path $AppDir "bootstrap.py"   # contenido real, se compila
 $OutputDir    = Join-Path $PSScriptRoot "build"
 
-# Sin parametro -> las cuatro categorias.
+# Sin parametro -> todas las categorias.
 if (-not $Only -or $Only.Count -eq 0) {
-    $Only = @("Inicializacion", "Servicios", "Licencias", "Rutas")
+    $Only = @("Inicializacion", "Servicios", "Licencias", "Rutas", "Auth", "Comandos")
 }
 
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
@@ -94,6 +96,49 @@ if ($Only -contains "Rutas") {
             Category = "Rutas"
             File     = $RouteFile
             OutDir   = Join-Path $OutputDir "routes"
+        }
+    }
+}
+
+if ($Only -contains "Auth") {
+    if (-not (Test-Path $AuthDir -PathType Container)) {
+        throw "No existe el directorio: $AuthDir"
+    }
+    # Módulos de auth solicitados, excluyendo __init__.py.
+    $AuthFiles = @(
+        "decorators.py",
+        "login_manager.py"
+    )
+    foreach ($FileName in $AuthFiles) {
+        $FilePath = Join-Path $AuthDir $FileName
+        if (-not (Test-Path $FilePath -PathType Leaf)) {
+            throw "No se encontró el módulo requerido: $FilePath"
+        }
+        $Jobs += [pscustomobject]@{
+            Category = "Auth"
+            File     = Get-Item $FilePath
+            OutDir   = Join-Path $OutputDir "auth"
+        }
+    }
+}
+
+if ($Only -contains "Comandos") {
+    if (-not (Test-Path $CommandsDir -PathType Container)) {
+        throw "No existe el directorio: $CommandsDir"
+    }
+    # Módulos de commands solicitados, excluyendo __init__.py.
+    $CommandFiles = @(
+        "commands.py"
+    )
+    foreach ($FileName in $CommandFiles) {
+        $FilePath = Join-Path $CommandsDir $FileName
+        if (-not (Test-Path $FilePath -PathType Leaf)) {
+            throw "No se encontró el módulo requerido: $FilePath"
+        }
+        $Jobs += [pscustomobject]@{
+            Category = "Comandos"
+            File     = Get-Item $FilePath
+            OutDir   = Join-Path $OutputDir "commands"
         }
     }
 }
