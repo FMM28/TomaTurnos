@@ -63,7 +63,6 @@ class AtencionService:
             return None, str(e)
 
     @staticmethod
-    @licensed
     def set_atendiendo(app, id_atencion: int) -> None:
         with app.app_context():
             try:
