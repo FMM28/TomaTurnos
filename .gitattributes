@@ -27,5 +27,9 @@ installer/**/* linguist-vendored
 *.ps1 linguist-vendored
 *.bat linguist-vendored
 
+# ---- Archivos generados por compilación ----
+build/**/* linguist-generated
+build/**/* linguist-vendored
+
 # ---- Python es código real ----
 *.py linguist-detectable=true
