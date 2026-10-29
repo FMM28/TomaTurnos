@@ -1,0 +1,46 @@
+{% extends "admin/base_table.html" %}
+
+{% set page_title = "Gestión de Ventanillas" %}
+
+{% block header_actions %}
+    <a href="{{ url_for('admin.areas') }}" class="btn-secondary">← Volver a Áreas</a>
+{% endblock %}
+
+{% block table_title %}Lista de Ventanillas{% endblock %}
+
+{% block table_actions %}
+    <a href="{{ url_for('admin.create_ventanilla') }}" class="btn-create">+ Nueva Ventanilla</a>
+{% endblock %}
+
+{% block table_columns %}
+    <th>ID</th>
+    <th>Nombre</th>
+    <th>Área</th>
+    <th>Acciones</th>
+{% endblock %}
+
+{% block table_body %}
+    {% if ventanillas %}
+        {% for ventanilla in ventanillas %}
+        <tr>
+            <td>{{ ventanilla.id_ventanilla }}</td>
+            <td><strong>{{ ventanilla.name }}</strong></td>
+            <td>{{ ventanilla.area.name if ventanilla.area else 'Sin área asignada' }}</td>
+            <td>
+                <div class="actions-cell">
+                    <a href="{{ url_for('admin.ventanilla_tramites', id_ventanilla=ventanilla.id_ventanilla) }}" class="btn-view">Trámites</a>
+                    <a href="{{ url_for('admin.edit_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" class="btn-edit">Editar</a>
+                    <form method="POST" action="{{ url_for('admin.delete_ventanilla', id_ventanilla=ventanilla.id_ventanilla) }}" class="delete-form" onsubmit="return confirm('¿Está seguro de eliminar esta ventanilla?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn-delete">Eliminar</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+    {% else %}
+        <tr>
+            <td colspan="5" class="empty-state">No hay ventanillas registradas</td>
+        </tr>
+    {% endif %}
+{% endblock %}

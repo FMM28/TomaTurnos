@@ -1,0 +1,235 @@
+{% extends "admin_area/base.html" %}
+
+{% block title %}Generar Reportes - {{ area.name if area else 'Área' }}{% endblock %}
+
+{% block content %}
+<div class="report-page">
+
+    <div class="page-header">
+        <h1>Generar Reporte de Estadísticas</h1>
+        {% if area %}
+        <div class="area-name">{{ area.name }}</div>
+        {% endif %}
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('admin_area.generar_reporte') }}" class="report-form" id="reportForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-section">
+            <h2>Periodo del Reporte</h2>
+            <div class="section-description">Selecciona el rango de fechas que deseas analizar</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <div>
+                        <label for="fecha_inicio">Fecha de inicio</label>
+                        <input type="date" 
+                            id="fecha_inicio"
+                            name="fecha_inicio"
+                            value="{{ fecha_inicio }}"
+                            max="{{ fecha_inicio }}"
+                            required>
+                    </div>
+                    <span class="help-text">Primer día del periodo a analizar</span>
+                </div>
+
+                <div class="form-group">
+                    <div>
+                        <label for="fecha_fin">Fecha de fin</label>
+                        <input type="date" 
+                            id="fecha_fin"
+                            name="fecha_fin"
+                            value="{{ fecha_fin }}"
+                            max="{{ fecha_fin }}"
+                            required>
+                    </div>
+                    <span class="help-text">Último día del periodo a analizar</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>Tipo de Análisis</h2>
+            <div class="section-description">Elige cómo quieres ver la información</div>
+            <div class="radio-group">
+                <div class="radio-option" data-option="tramites">
+                    <input type="radio" 
+                           id="modo_tramites" 
+                           name="modo" 
+                           value="tramites">
+                    <label for="modo_tramites">
+                        <strong>Por Trámites</strong>
+                        <div class="help-text">Ver estadísticas agrupadas por trámite atendido</div>
+                    </label>
+                </div>
+
+                <div class="radio-option" data-option="usuarios">
+                    <input type="radio" 
+                           id="modo_usuarios" 
+                           name="modo" 
+                           value="usuarios">
+                    <label for="modo_usuarios">
+                        <strong>Por Empleados</strong>
+                        <div class="help-text">Ver estadísticas agrupadas por empleado</div>
+                    </label>
+                </div>
+
+                <div class="radio-option selected" data-option="ambos">
+                    <input type="radio" 
+                           id="modo_ambos" 
+                           name="modo" 
+                           value="ambos"
+                           checked>
+                    <label for="modo_ambos">
+                        <strong>Análisis Completo</strong>
+                        <div class="help-text">Incluye ambos análisis: por trámites y por empleados</div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>Contenido del Reporte</h2>
+            <div class="section-description">Selecciona la información que deseas incluir en tu reporte</div>
+            
+            <div class="select-all-metrics">
+                <button type="button" class="btn-select-all" id="btnSelectAll">
+                    ✓ Seleccionar Todo
+                </button>
+                <button type="button" class="btn-deselect-all" id="btnDeselectAll">
+                    ✗ Deseleccionar Todo
+                </button>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-option selected" data-metric="resumen_general">
+                    <input type="checkbox" 
+                           id="metric_resumen" 
+                           name="metricas" 
+                           value="resumen_general"
+                           checked>
+                    <div class="metric-content">
+                        <div class="metric-title">Resumen General</div>
+                        <div class="metric-description">Totales generales</div>
+                    </div>
+                </div>
+
+                <div class="metric-option selected" data-metric="estadisticas_base">
+                    <input type="checkbox" 
+                           id="metric_base" 
+                           name="metricas" 
+                           value="estadisticas_base"
+                           checked>
+                    <div class="metric-content">
+                        <div class="metric-title">Detalles por Trámite/Empleado</div>
+                        <div class="metric-description">Listado detallado con totales por cada trámite o empleado</div>
+                    </div>
+                </div>
+
+                <div class="metric-option selected" data-metric="tiempos_atencion">
+                    <input type="checkbox" 
+                           id="metric_tiempos" 
+                           name="metricas" 
+                           value="tiempos_atencion"
+                           checked>
+                    <div class="metric-content">
+                        <div class="metric-title">Tiempo Promedio de Atención</div>
+                        <div class="metric-description">Duración promedio de cada atención (en minutos)</div>
+                    </div>
+                </div>
+
+                <div class="metric-option selected" data-metric="descripcion_estados">
+                    <input type="checkbox" 
+                           id="metric_descripcion" 
+                           name="metricas" 
+                           value="descripcion_estados"
+                           checked>
+                    <div class="metric-content">
+                        <div class="metric-title">Descripción de Estados</div>
+                        <div class="metric-description">Conteo de motivos de Reasignación/Cancelación y Descripción de Finalización de las atenciones</div>
+                    </div>
+                </div>
+
+                <div class="metric-option selected" data-metric="horas_pico">
+                    <input type="checkbox" 
+                           id="metric_horas" 
+                           name="metricas" 
+                           value="horas_pico"
+                           checked>
+                    <div class="metric-content">
+                        <div class="metric-title">Distribución por Hora del Día</div>
+                        <div class="metric-description">Cantidad de atenciones en cada hora del día</div>
+                    </div>
+                </div>
+
+                <div class="metric-option selected" data-metric="horas_pico_semanal">
+                    <input type="checkbox" 
+                           id="metric_semanal" 
+                           name="metricas" 
+                           value="horas_pico_semanal"
+                           checked>
+                    <div class="metric-content">
+                        <div class="metric-title">Patrón Semanal de Atención</div>
+                        <div class="metric-description">Mapa de calor: días y horas con más actividad</div>
+                    </div>
+                </div>
+
+                <div class="metric-option" id="metric_cruzada_block" data-metric="tabla_cruzada">
+                    <input type="checkbox" 
+                           id="metric_cruzada" 
+                           name="metricas" 
+                           value="tabla_cruzada">
+                    <div class="metric-content">
+                        <div class="metric-title">Tabla Cruzada Trámites x Empleados</div>
+                        <div class="metric-description">Solo disponible en formato Excel y modo Analisis Completo</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>Formato del Reporte</h2>
+            <div class="section-description">Elige cómo deseas recibir el reporte</div>
+            <div class="format-options">
+                <div class="format-card selected" data-format="excel">
+                    <input type="radio" 
+                           id="formato_excel" 
+                           name="formato" 
+                           value="excel"
+                           checked>
+                    <div class="title">Excel (.xlsx)</div>
+                    <div class="description">Ideal para análisis detallado y manipulación de datos</div>
+                </div>
+
+                <div class="format-card" data-format="pdf">
+                    <input type="radio" 
+                           id="formato_pdf" 
+                           name="formato" 
+                           value="pdf">
+                    <div class="title">PDF (.pdf)</div>
+                    <div class="description">Listo para imprimir o compartir, con gráficas incluidas</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="submit-section">
+            <button type="submit" class="btn-generate" id="btnGenerate">
+                Generar y Descargar Reporte
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/estadisticas_admin_area.js') }}"></script>
+{% endblock %}

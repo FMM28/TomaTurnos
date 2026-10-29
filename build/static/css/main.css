@@ -1,0 +1,124 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background: #f4f4f3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.login-wrapper {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.login-logo {
+    margin-bottom: 2.5rem;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.login-logo img {
+    width: 100%;
+    max-width: 320px;
+    max-height: 160px;
+    height: auto;
+    object-fit: contain;
+}
+
+.login-card {
+    width: 100%;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.login-form {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.login-form h2 {
+    text-align: center;
+    font-weight: 600;
+    color: #333;
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.flash-container {
+    width: 100%;
+    max-width: 420px;
+    margin-top: 1rem;
+    text-align: center;
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.875rem;
+    color: #444;
+    gap: 0.4rem;
+    font-weight: 500;
+}
+
+input {
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: #4b5563;
+    box-shadow: 0 0 0 2px rgba(75, 85, 99, 0.2);
+}
+
+button {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    background: #3f3f3f;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: background-color 0.2s ease;
+}
+
+button:hover {
+    background: #262626;
+}
+
+@media (max-width: 375px) {
+    .login-form {
+        padding: 1.5rem;
+    }
+
+    .login-logo {
+        margin-bottom: 2rem;
+    }
+
+    button {
+        font-size: 0.95rem;
+        padding: 0.7rem;
+    }
+}

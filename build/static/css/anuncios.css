@@ -1,0 +1,217 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, system-ui, sans-serif;
+}
+
+body {
+    background-color: #f4f4f4;
+    color: #2d2d2d;
+    line-height: 1.6;
+    overflow: hidden;
+    height: 100vh;
+}
+
+/* Contenedor principal */
+.container {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100%;
+}
+
+/* Header con logo */
+.header-logo {
+    width: 100%;
+    height: 17vh;
+    background: #183B70;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header-logo img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+/* Contenido principal */
+.contenido-principal {
+    width: 100%;
+    height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Sección superior dividida en dos columnas */
+.seccion-superior {
+    display: flex;
+    width: 100%;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Turnos en llamado */
+.turnos-llamado {
+    width: 40%;
+    padding: 20px;
+    background: #fff;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.turnos-llamado h2 {
+    margin-bottom: 16px;
+    font-size: 2.5rem;
+    color: #333;
+}
+
+.llamado-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(auto-fill, minmax(4.5rem, 1fr));
+    gap: 16px;
+    width: 100%;
+    height: 100%;
+}
+
+.turno-card {
+    background: #e2e2e2;
+    border: 2px solid #7a7a7a;
+    border-radius: 10px;
+    text-align: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+.turno-numero {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #000000;
+}
+
+.turno-info {
+    display: flex;
+    flex-direction: column;
+    font-size: 2rem;
+    color: #555;
+}
+
+.sin-turnos {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px;
+    color: #686868;
+    font-size: 1.5rem;
+}
+
+/* Estilos para lista de espera */
+.espera-lista {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    align-items: center;
+    width: max-content;
+}
+
+.espera-lista.carousel {
+    animation: scrollHorizontal 15s linear infinite;
+}
+
+.espera-lista.carousel:hover {
+    animation-play-state: paused;
+}
+
+@keyframes scrollHorizontal {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(calc(-50% - 6px));
+    }
+}
+
+.turno-card-pequeno {
+    background: #e8eaf6;
+    border: 1px solid #929292;
+    border-radius: 8px;
+    width: 4rem;
+    height: 4rem;
+    padding: 12px;
+    font-weight: bold;
+    color: #000000;
+    font-size: 1.5rem;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    text-align: center;
+}
+
+.texto-secundario {
+    color: #888;
+    font-style: italic;
+}
+
+/* Sección En Espera */
+.turnos-espera {
+    width: 100%;
+    background: #fff;
+    padding: 20px;
+    border-top: 2px solid #e0e0e0;
+    overflow: hidden;
+    height: 17vh;
+}
+
+.turnos-espera h3 {
+    font-size: 2rem;
+    color: #444;
+}
+
+/* Publicidad */
+.publicidad-section {
+    width: 60%;
+    background: #ffc341;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 66vh;
+}
+
+.ad-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: rgb(255, 255, 255);
+}
+
+.ad-video {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit:contain;
+    object-position: center;
+
+    border-radius: 0;
+}
+
+.espera-lista::-webkit-scrollbar {
+    width: 6px;
+}
+
+.espera-lista::-webkit-scrollbar-thumb {
+    background: #bbb;
+    border-radius: 3px;
+}

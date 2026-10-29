@@ -1,0 +1,138 @@
+{% extends "admin/base_admin.html" %}
+
+{% set page_title = 'Editar Anuncio' if anuncio else 'Nuevo Anuncio' %}
+{% set submit_text = 'Actualizar' if anuncio else 'Crear' %}
+{% set cancel_url = url_for('admin.anuncios') %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="page-header">
+        <h1 class="page-title">{{ page_title }}</h1>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="form-card">
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-group">
+                <label class="form-label">Título *</label>
+                <input type="text"
+                       class="form-input"
+                       name="titulo"
+                       id="titulo"
+                       required
+                       value="{{ anuncio.titulo if anuncio else '' }}">
+            </div>
+
+            <div class="form-group"
+                 id="archivo-group"
+                 data-modo="{{ 'edit' if anuncio else 'create' }}"
+                 data-duracion="{{ anuncio.duracion if anuncio else '' }}"
+                 data-tipo="{{ anuncio.tipo if anuncio else '' }}"
+                 {% if anuncio and anuncio.enlace %}
+                 data-archivo-url="{{ url_for('static', filename=anuncio.enlace.replace('\\', '/')) }}"
+                 {% endif %}>
+
+                <label class="form-label">
+                    Archivo {% if not anuncio %}*{% endif %}
+                </label>
+
+                <input type="file"
+                    class="form-input"
+                    id="archivo"
+                    name="archivo"
+                    {% if not anuncio %}required{% endif %}
+                    accept="
+                        video/mp4,
+                        video/webm,
+                        video/ogg,
+                        video/quicktime,
+                        video/x-matroska,
+                        image/png,
+                        image/jpeg,
+                        image/webp
+                    ">
+                <small class="form-hint">
+                    Formatos de video soportados:
+                    <strong>MP4, WebM, OGG, MOV, MKV</strong>
+                    <br>
+                    Formatos de imagen:
+                    <strong>JPG, PNG, WEBP</strong>
+                    <br>
+                    Tamaño máximo: <strong>100 MB</strong>
+                </small>
+
+                <input type="hidden" name="tipo" id="tipo" value="{{ anuncio.tipo if anuncio else '' }}">
+            </div>
+
+            <div class="form-group" id="duracion-group" style="display:none;">
+                <label class="form-label">Duración (segundos) *</label>
+                <input type="number"
+                       class="form-input"
+                       name="duracion"
+                       id="duracion"
+                       min="1"
+                       value="{{ anuncio.duracion if anuncio else '5' }}"
+                       placeholder="Ingresa la duración en segundos">
+            </div>
+
+            <div id="preview-box" class="preview-box" style="display:none;">
+
+                <div class="preview-media">
+                    <video id="video-preview"
+                           controls
+                           muted
+                           playsinline
+                           style="max-width:100%; border-radius:6px; display:none;"></video>
+                    <img id="image-preview"
+                         style="max-width:100%; border-radius:6px; display:none;"
+                         alt="Vista previa">
+                </div>
+
+                <div class="preview-meta">
+                    <p><strong>Título:</strong> <span id="preview-titulo"></span></p>
+                    <p><strong>Tipo:</strong> <span id="preview-tipo"></span></p>
+                    <p id="preview-duracion-container"><strong>Duración:</strong> <span id="preview-duracion"></span> s</p>
+                </div>
+            </div>
+
+            {% if anuncio %}
+            <div class="form-group checkbox-group">
+                <label>
+                    <input type="checkbox"
+                           name="activo"
+                           value="1"
+                           {% if anuncio.activo %}checked{% endif %}>
+                    Anuncio activo
+                </label>
+            </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    {{ submit_text }}
+                </button>
+                <a href="{{ cancel_url }}" class="btn-secondary">
+                    Cancelar
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/admin_anuncio.js') }}"></script>
+
+{% endblock %}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pantalla</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/anuncios.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <main class="container">
+        <div class="container">
+
+            <div class="header-logo">
+                <img src="{{ url_for('static',filename='img/dgf_header.svg') }}" alt="">
+            </div>
+
+            <div class="contenido-principal">
+                
+                <div class="seccion-superior">
+                    
+                    <div class="turnos-llamado">
+                        <h2>Turnos en Llamado</h2>
+
+                        <div class="llamado-grid" id="llamadoGrid">
+                        </div>
+                    </div>
+
+                        <div id="ad-container" class="ad-container">
+                            <video
+                                id="ad-video"
+                                class="ad-video"
+                                muted
+                                playsinline
+                                style="display:none;">
+                            </video>
+
+                            <img
+                                id="ad-image"
+                                class="ad-video"
+                                style="display:none;">
+                        </div>
+
+                </div>
+
+                <div class="turnos-espera">
+                    <h3>En Espera</h3>
+
+                    <div class="espera-lista" id="esperaLista">
+                        <p class="texto-secundario">Cargando turnos...</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+</body>
+
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pantalla.js') }}"></script>
+
+</html>

@@ -1,0 +1,113 @@
+{% extends "admin/base_form.html" %}
+
+{% set page_title = 'Editar usuario: ' ~ user.username if user else 'Nuevo Usuario' %}
+{% set submit_text = 'Actualizar' if user else 'Crear' %}
+{% set cancel_url = url_for('admin.users') %}
+
+{% block form_fields %}
+    <div class="form-group">
+        <label for="username" class="form-label">Nombre de usuario *</label>
+        <input type="text" 
+               id="username" 
+               name="username" 
+               class="form-input" 
+               value="{{ user.username if user else '' }}" 
+               required
+               maxlength="45">
+    </div>
+
+    <div class="form-group">
+        <label for="nombre" class="form-label">Nombre *</label>
+        <input type="text" 
+               id="nombre" 
+               name="nombre" 
+               class="form-input" 
+               value="{{ user.nombre if user and user.nombre else '' }}" 
+               required
+               maxlength="45">
+    </div>
+
+    <div class="form-group">
+        <label for="ap_paterno" class="form-label">Apellido Paterno *</label>
+        <input type="text" 
+               id="ap_paterno" 
+               name="ap_paterno" 
+               class="form-input" 
+               value="{{ user.ap_paterno if user and user.ap_paterno else '' }}" 
+               required
+               maxlength="45">
+    </div>
+
+    <div class="form-group">
+        <label for="ap_materno" class="form-label">Apellido Materno</label>
+        <input type="text" 
+               id="ap_materno" 
+               name="ap_materno" 
+               class="form-input" 
+               value="{{ user.ap_materno if user and user.ap_materno else '' }}"
+               maxlength="45">
+    </div>
+
+    <div class="form-group">
+        <label for="password" class="form-label">
+            {{ 'Nueva contraseña (opcional)' if user else 'Contraseña *' }}
+        </label>
+        <input type="password" 
+               id="password" 
+               name="password" 
+               class="form-input" 
+               placeholder="{{ 'Deja vacío si no deseas cambiarla' if user else 'Ingresa una contraseña segura' }}"
+               {{ '' if user else 'required' }}>
+    </div>
+
+    <div class="form-group">
+        <label for="area" class="form-label">Área *</label>
+        <select id="area"
+                name="area"
+                class="form-input"
+                required>
+
+            <option value="" disabled
+                {% if not user or not user.area_id %}selected{% endif %}>
+                Selecciona un área
+            </option>
+
+            {% for area in areas %}
+                <option value="{{ area.id_area }}"
+                    {% if user and user.area_id == area.id_area %}selected{% endif %}>
+                    {{ area.name }}
+                </option>
+            {% endfor %}
+
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="role" class="form-label">Rol *</label>
+        <select id="role" 
+                name="role" 
+                class="form-input" 
+                required>
+
+            <option value="admin"
+                {% if user and user.role == 'admin' %}selected{% endif %}>
+                Administrador General
+            </option>
+
+            <option value="admin_area"
+                {% if user and user.role == 'admin_area' %}selected{% endif %}>
+                Administrador de Area
+            </option>
+
+            <option value="ventanilla"
+                {% if not user or user.role == 'ventanilla' %}selected{% endif %}>
+                Usuario
+            </option>
+
+        </select>
+    </div>
+
+<script src="{{ url_for('static', filename='js/admin_user.js') }}"></script>
+
+
+{% endblock %}

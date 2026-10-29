@@ -1,0 +1,410 @@
+{% extends "ventanilla/base.html" %}
+
+{% block title %}Dashboard ventanilla{% endblock %}
+
+{% block content %}
+
+<div class="modal-overlay" id="modal-finalizar">
+    <div class="modal">
+        <h3>Finalizar trámite</h3>
+
+        <form method="POST" action="{{ url_for('ventanilla.finalizar') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="descripcion">Observaciones:</label>
+
+            <textarea
+                name="descripcion"
+                id="descripcion"
+                rows="4"
+                maxlength="100"
+                placeholder="Escribe aquí las observaciones del trámite..."
+            ></textarea>
+
+            <div class="modal-acciones">
+                <button type="button" class="btn" id="btn-cancelar-modal">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-success">
+                    Confirmar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-cancelar">
+    <div class="modal">
+        <h3>Cancelar trámite</h3>
+
+        <form method="POST" action="{{ url_for('ventanilla.cancelar') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="motivo_cancelacion">Motivo de cancelación:</label>
+
+            <select name="motivo_cancelacion" id="motivo_cancelacion" required>
+                <option value="" disabled selected>Selecciona un motivo</option>
+                <option value="trabajador_no_acudio">El trabajador no acudió al llamado</option>
+                <option value="error_registro">Error de registro</option>
+                <option value="otro">Otro</option>
+            </select>
+
+            <div id="motivo-otro-container" style="display:none;">
+                <label for="motivo_otro">Especifica el motivo:</label>
+                <textarea
+                    name="motivo_otro"
+                    id="motivo_otro"
+                    rows="3"
+                    maxlength="100"
+                    placeholder="Describe el motivo de cancelación..."
+                ></textarea>
+            </div>
+
+            <div class="modal-acciones">
+                <button type="button" class="btn" id="btn-cancelar-modal-cancelar">
+                    Volver
+                </button>
+                <button type="submit" class="btn btn-danger">
+                    Confirmar cancelación
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay modal-importante" id="modal-ticket-asignado">
+    <div class="modal modal-destacado">
+
+        <h2>Ticket asignado</h2>
+
+        <p class="mensaje-principal">
+            Un administrador te asignó un nuevo ticket
+        </p>
+
+        <div class="ticket-info">
+            <div class="ticket-numero">
+                <strong id="asignado-turno">—</strong>
+            </div>
+            <div class="ticket-tramite">
+                <span id="asignado-tramite">—</span>
+            </div>
+        </div>
+
+        <p class="mensaje-secundario">
+            El turno aún <strong>no ha sido llamado</strong>.
+        </p>
+
+        <div class="modal-acciones">
+            <form method="POST" action="{{ url_for('ventanilla.llamar_asignado') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-success btn-lg">
+                    Llamar ahora
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<header class="ventanilla-header">
+    <div class="usuario-info">
+        <strong>
+            {{ usuario.nombre }} {{ usuario.ap_paterno }} {{ usuario.ap_materno or "" }}
+        </strong>
+    </div>
+
+    <a href="{{ url_for('auth.logout') }}" class="btn btn-logout">
+        Cerrar sesión
+    </a>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+        {% for category, message in messages %}
+            <div class="flash-message {{ category }}">
+                <span class="flash-icon">
+                    {% if category == 'success' %}✓
+                    {% elif category == 'error' %}✕
+                    {% elif category == 'warning' %}⚠
+                    {% else %}ℹ{% endif %}
+                </span>
+                <span class="flash-text">{{ message }}</span>
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<div class="ventanilla-main">
+
+    <section class="cola">
+        <h3>En espera</h3>
+
+        <div class="cola-contador">
+            {{ turnos_en_espera|length }} personas
+        </div>
+
+        <ul class="cola-lista">
+            {% for tt in turnos_en_espera %}
+                <li>
+                    <strong>{{ tt.ticket.turno }}</strong>
+                    <span class="tramite">{{ tt.tramite.name }}</span>
+                    <span class="badge badge-estado">{{ tt.estado }}</span>
+                </li>
+            {% else %}
+                <li class="vacio">Sin turnos</li>
+            {% endfor %}
+        </ul>
+
+        <form method="POST" action="{{ url_for('ventanilla.llamar_siguiente') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button
+                id="btn-llamar"
+                class="btn btn-primary"
+                {% if turno_actual or turnos_en_espera|length == 0 %}disabled{% endif %}
+            >
+                Llamar siguiente
+            </button>
+        </form>
+    </section>
+
+    <section class="turno-actual" {% if turno_actual %}id="turno-actual"{% endif %}>
+        {% if turno_actual %}
+        <h3>Turno en curso</h3>
+
+        <div class="turno-numero">
+            {{ turno_actual.ticket_tramite.ticket.turno }}
+        </div>
+
+        <div class="turno-tiempo"
+            id="turno-tiempo"
+            data-inicio="{{ turno_actual.hora_inicio }}">
+            Tiempo transcurrido: <span id="tiempo-atencion">00:00</span>
+        </div>
+
+        <div class="turno-info">
+            <p><strong>Trámite:</strong> {{ turno_actual.ticket_tramite.tramite.name }}</p>
+            <p><strong>Estado:</strong> {{ turno_actual.estado | capitalize }}</p>
+        </div>
+
+        {% set proximos = turno_actual.ticket_tramite.ticket.ticket_tramites
+            | selectattr("estado", "equalto", "pendiente")
+            | list %}
+
+        {% if proximos %}
+        <div class="turno-historial">
+            <h4>Próximos trámites del ticket</h4>
+
+            <ul>
+                {% for pt in proximos %}
+                <li>
+                    <strong>{{ pt.tramite.name }}</strong>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="turno-historial">
+            <h4>Historial del ticket</h4>
+            <ul>
+                {% for tt in turno_actual.ticket_tramite.ticket.ticket_tramites %}
+                    {% for t in tt.atenciones %}
+                    <li>
+                        {{ t.tramite.name }}
+                        {% if t.estado != "espera" %}
+                            <span class="estado">({{ t.estado }})</span>
+                            {% if t.descripcion_estado %}
+                                <span>{{ t.descripcion_estado }}</span>
+                            {% endif %}
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="acciones">
+            <form method="POST" action="{{ url_for('ventanilla.rellamar') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn">Volver a llamar</button>
+            </form>
+
+            <form method="GET" action="{{ url_for('ventanilla.reasignar_ticket_view') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn">Reasignar</button>
+            </form>
+
+            <button class="btn btn-danger" id="btn-cancelar-tramite">Cancelar trámite</button>
+            <button class="btn btn-success" id="btn-finalizar">Finalizar trámite</button>
+        </div>
+
+        {% else %}
+        <div class="sin-turno">No hay turno activo</div>
+        {% endif %}
+    </section>
+
+<section class="historial">
+    <h3>Historial de atenciones</h3>
+
+    {% if historial_atencion.turnos %}
+        <ul class="historial-lista">
+            {% for h in historial_atencion.turnos %}
+            <li class="item estado-{{ h.estado }}">
+                <div class="top">
+                    <span class="turno">Turno {{ h.turno }}</span>
+                    <span class="hora">{{ h.hora_inicio or "—" }} - {{ h.hora_fin }}</span>
+                </div>
+                <div class="tramite">{{ h.tramite }}</div>
+                <div class="estado">{{ h.estado | capitalize }}</div>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="vacio">Sin atenciones hoy</p>
+    {% endif %}
+</section>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="{{ url_for('static', filename='js/socket.io.min.js') }}"></script>
+
+<script>
+const socket = io({
+    transports: ["websocket"],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000
+});
+
+socket.on("connect", () => {
+    console.log("Socket base conectado");
+    socket.emit("user_connect");
+});
+
+socket.on("cola_actualizada", () => {
+    actualizarCola();
+});
+
+socket.on("ticket_asignado", (data) => {
+    console.log('Ticket asignado recibido:', data);
+    mostrarModalAsignado(data);
+});
+
+function actualizarCola() {
+    fetch("/ventanilla/cola")
+        .then(r => r.json())
+        .then(data => {
+            const lista = document.querySelector(".cola-lista");
+            const contador = document.querySelector(".cola-contador");
+            const btn = document.getElementById("btn-llamar");
+            const turnoActivo = document.getElementById("turno-actual");
+
+            lista.innerHTML = "";
+
+            if (!data.cola || data.cola.length === 0) {
+                lista.innerHTML = "<li class='vacio'>Sin turnos</li>";
+                contador.textContent = "0 personas";
+                if (btn) {
+                    btn.disabled = turnoActivo || data.cola.length === 0;
+                }
+                return;
+            }
+
+            data.cola.forEach(tt => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <strong>${tt.ticket}</strong>
+                    <span class="tramite">${tt.tramite}</span>
+                    <span class="badge badge-estado">${tt.estado}</span>
+                `;
+                lista.appendChild(li);
+            });
+
+            contador.textContent = `${data.total} personas`;
+
+            if (btn) {
+                btn.disabled = turnoActivo || data.cola.length === 0;
+            }
+        })
+        .catch(err => console.error("Error actualizando cola:", err));
+}
+
+function mostrarModalAsignado(data) {
+    const modal = document.getElementById("modal-ticket-asignado");
+    const turno = document.getElementById("asignado-turno");
+    const tramite = document.getElementById("asignado-tramite");
+    const sonido = document.getElementById("sonido-asignado");
+
+    turno.textContent = data.turno;
+    tramite.textContent = data.tramite;
+
+    modal.classList.add("activo");
+
+    if (sonido) {
+        sonido.currentTime = 0;
+        sonido.play().catch(() => {
+            console.log('No se pudo reproducir el sonido');
+        });
+    }
+}
+
+function revalidarBotonLlamar() {
+    const turnoActivo = document.getElementById("turno-actual");
+    const btn = document.getElementById("btn-llamar");
+    
+    if (!btn) return;
+    
+    const colaItems = document.querySelectorAll(".cola-lista li:not(.vacio)");
+    const hayElementosEnCola = colaItems.length > 0;
+
+    btn.disabled = turnoActivo || !hayElementosEnCola;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const turnoActivo = document.getElementById("turno-actual");
+    const btn = document.getElementById("btn-llamar");
+
+    if (turnoActivo && btn) {
+        btn.disabled = true;
+    }
+
+    actualizarCola();
+});
+</script>
+
+<script>
+function iniciarCronometro(inicioISO) {
+    const inicio = new Date(inicioISO);
+
+    setInterval(() => {
+        const ahora = new Date();
+        const diff = Math.floor((ahora - inicio) / 1000);
+
+        const minutos = String(Math.floor(diff / 60)).padStart(2, "0");
+        const segundos = String(diff % 60).padStart(2, "0");
+
+        document.getElementById("tiempo-atencion").textContent =
+            `${minutos}:${segundos}`;
+    }, 1000);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const contenedor = document.getElementById("turno-tiempo");
+    if (!contenedor) return;
+
+    const inicio = contenedor.dataset.inicio;
+    if (inicio) iniciarCronometro(inicio);
+});
+</script>
+  
+<audio id="sonido-asignado" preload="auto">
+    <source src="{{ url_for('static', filename='sounds/notificacion.mp3') }}" type="audio/mpeg">
+</audio>
+
+<script src="{{ url_for('static', filename='js/modal_ventanilla.js') }}"></script>
+<script src="{{ url_for('static', filename='js/flash_messages.js') }}"></script>
+
+{% endblock %}

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}Ventanilla{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ventanilla.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='icons/ticketsQLogo_white.svg') }}" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+
+{% block scripts %}{% endblock %}
+<script src="{{ url_for('static', filename='js/refresh_csrf.js') }}"></script>
+</html>

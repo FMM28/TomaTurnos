@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+
+    <div class="login-logo">
+        <img src="{{ url_for('static', filename='icons/ticketsQLogo.svg') }}" alt="Logo">
+    </div>
+
+    <div class="login-card">
+        <form method="POST" class="login-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <h2>Iniciar sesión</h2>
+
+            <label>
+                Usuario
+                <input type="text" name="username" required>
+            </label>
+
+            <label>
+                Contraseña
+                <input type="password" name="password" required>
+            </label>
+
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-container">
+        {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% endwith %}
+
+</div>
+<script src="{{ url_for('static', filename='js/refresh_csrf.js') }}"></script>
+{% endblock %}

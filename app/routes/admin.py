@@ -1,23 +1,35 @@
-from flask import Blueprint, current_app, render_template, request, redirect, url_for, flash, send_file
-from flask import Response, stream_with_context
-from flask_login import login_required, current_user
-from app.auth.decorators import role_required
-from app.services.anuncio_service import AnuncioService
-from app.services.backup_service import BackupService
-from app.services.report_service import ReportService
-from app.services.user_service import UserService
-from app.services.area_service import AreaService
-from app.services.tramite_service import TramiteService
-from app.services.ticket_tramite_service import TicketTramiteService
-from app.services.ticket_service import TicketService
-from app.services.ventanilla_service import VentanillaService
-from app.services.asignacion_service import AsignacionService
-from app.services.suplente_service import SuplenteService
+import json
 import os
 import threading
-from datetime import datetime, timedelta
-import json
 import time
+from datetime import datetime, timedelta
+
+from flask import (
+    Blueprint,
+    Response,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    stream_with_context,
+    url_for,
+)
+from flask_login import current_user, login_required
+
+from app.auth.decorators import role_required
+from app.services.anuncio_service import AnuncioService
+from app.services.area_service import AreaService
+from app.services.asignacion_service import AsignacionService
+from app.services.backup_service import BackupService
+from app.services.report_service import ReportService
+from app.services.suplente_service import SuplenteService
+from app.services.ticket_service import TicketService
+from app.services.ticket_tramite_service import TicketTramiteService
+from app.services.tramite_service import TramiteService
+from app.services.user_service import UserService
+from app.services.ventanilla_service import VentanillaService
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 backup_progress = {}
@@ -930,3 +942,5 @@ def generar_reporte():
         traceback.print_exc()
         flash(f"Error al generar el reporte: {str(e)}", "error")
         return redirect(url_for('admin.estadisticas'))
+    
+    
